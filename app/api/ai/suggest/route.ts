@@ -1,0 +1,81 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { STYLES, CONTENT_TYPES, LEVELS, DURATIONS } from "@/lib/categories";
+
+/**
+ * AI-powered listing metadata suggestions.
+ * Feature-flagged: without ANTHROPIC_API_KEY this returns { enabled: false }
+ * and the upload dialog hides the button. Costs pennies per call when on.
+ */
+export async function GET() {
+  return NextResponse.json({ enabled: !!process.env.ANTHROPIC_API_KEY });
+}
+
+export async function POST(request: Request) {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key)
+    return NextResponse.json({ error: "AI suggestions not configured" }, { status: 501 });
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Please log in first" }, { status: 401 });
+
+  const { description } = await request.json().catch(() => ({}));
+  if (!description || String(description).trim().length < 20)
+    return NextResponse.json(
+      { error: "Write a couple of sentences of description first" },
+      { status: 400 }
+    );
+
+  const prompt = `You label yoga-teaching content listings for a marketplace. Based on the seller's description below, suggest listing metadata.
+
+Description:
+"""${String(description).slice(0, 4000)}"""
+
+Reply with ONLY a JSON object (no prose, no markdown fences) with these keys:
+- "title": a compelling listing title, max 60 chars
+- "category": one of ${JSON.stringify(STYLES)}
+- "content_type": one of ${JSON.stringify(CONTENT_TYPES)}
+- "level": one of ${JSON.stringify(LEVELS)}
+- "duration_minutes": one of ${JSON.stringify(DURATIONS)}
+- "teachability": "ready" | "adapt" | "inspiration"
+- "theme": short phrase (e.g. "hip openers & letting go")
+- "peak_pose": pose name or null`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5",
+        max_tokens: 400,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: "AI service unavailable right now" },
+        { status: 502 }
+      );
+    }
+    const data = await res.json();
+    const text: string = data?.content?.[0]?.text ?? "";
+    const jsonStart = text.indexOf("{");
+    const jsonEnd = text.lastIndexOf("}");
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error("no json");
+    const suggestions = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    return NextResponse.json({ suggestions });
+  } catch {
+    return NextResponse.json(
+      { error: "Couldn't generate suggestions — try again" },
+      { status: 502 }
+    );
+  }
+}

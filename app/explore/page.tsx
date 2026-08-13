@@ -1,20 +1,30 @@
 import { createClient } from "@/lib/supabase/server";
-import type { PlatformSettings, Product } from "@/lib/types";
+import type { Product } from "@/lib/types";
 import ExploreClient from "./explore-client";
 
 export const dynamic = "force-dynamic";
 
+export type RatingMap = Record<string, { avg: number; count: number }>;
+
 export default async function ExplorePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, { data: settings }] = await Promise.all([
+  const [{ data: products }, { data: reviews }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false }),
-    supabase.from("platform_settings").select("*").single(),
+    supabase.from("reviews").select("product_id, rating"),
   ]);
+
+  const ratings: RatingMap = {};
+  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
+    const entry = (ratings[r.product_id] ??= { avg: 0, count: 0 });
+    entry.avg += r.rating;
+    entry.count += 1;
+  }
+  for (const id of Object.keys(ratings)) ratings[id].avg /= ratings[id].count;
 
   return (
     <div>
@@ -32,7 +42,7 @@ export default async function ExplorePage() {
       </section>
       <ExploreClient
         products={(products as Product[] | null) ?? []}
-        settings={settings as PlatformSettings | null}
+        ratings={ratings}
       />
     </div>
   );

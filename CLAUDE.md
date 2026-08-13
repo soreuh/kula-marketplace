@@ -1,8 +1,13 @@
 # Kula Marketplace — notes for AI coding sessions
 
-Multi-vendor marketplace (yoga teaching resources). Buyers/sellers/admin.
-Stripe Connect Express with destination charges + `application_fee_amount`.
-Supabase = auth, Postgres w/ RLS, private storage. Netlify hosting. Next.js 16.
+Peer-to-peer marketplace (yoga teaching resources). Roles overlap: any user
+can self-upgrade buyer→seller; admin transitions are admin-only.
+COMMISSION MODEL: buyer pays the listed price; kula takes fee_percent + flat
+(default 30% + 25¢) via Stripe `application_fee_amount`; seller nets the rest
+(monthly Express payouts). Supabase = auth, Postgres w/ RLS, private
+`product-files` bucket + public `covers` bucket. Netlify hosting. Next.js 16.
+Optional keyed features (hidden without env): ANTHROPIC_API_KEY → AI listing
+suggestions; RESEND_API_KEY → sale-notification emails.
 
 ## Invariants — never violate
 
@@ -12,7 +17,9 @@ Supabase = auth, Postgres w/ RLS, private storage. Netlify hosting. Next.js 16.
   `app/api/download/[productId]/route.ts` (paid-order check → signed URL).
 - The service-role client (`lib/supabase/admin.ts`) is server-only. Everything
   user-facing goes through RLS-enforced clients.
-- Platform fee comes from the `platform_settings` table, never hardcoded.
+- The commission comes from the `platform_settings` table, never hardcoded;
+  it is taken OUT of the listing price (never added on top).
+- Reviews only via RLS (paid order required); orders/downloads unchanged.
 - All secrets/config via env vars (see `.env.example`) — the app must remain
   portable to a new owner's accounts by swapping env values only.
 

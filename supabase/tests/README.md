@@ -12,10 +12,12 @@ sudo -u postgres psql -c "drop database if exists kula_test" -c "create database
 sudo -u postgres psql -v ON_ERROR_STOP=1 -d kula_test \
   -f supabase/tests/stub_supabase.sql \
   -f supabase/migrations/001_init.sql \
-  -f supabase/tests/rls_test.sql
+  -f supabase/migrations/002_product_v2.sql \
+  -f supabase/tests/rls_test.sql \
+  -f supabase/tests/rls_test_002.sql
 ```
 
-Expected output ends with: `=== ALL RLS SMOKE TESTS PASSED ===`
+Expected output ends with: `=== ALL 002 RLS SMOKE TESTS PASSED ===`
 
 Re-run after ANY change to the migration/policies. If you add a migration file
 (002_...), add it to the command between 001 and the tests.

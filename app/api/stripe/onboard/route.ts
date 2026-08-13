@@ -4,8 +4,10 @@ import { getStripe, siteUrl } from "@/lib/stripe";
 
 /**
  * POST /api/stripe/onboard
- * Creates (once) a Stripe Connect Express account for the logged-in seller
- * and returns an onboarding link. Stripe handles KYC, bank details, tax forms.
+ * Any logged-in user can become an instructor: this upgrades their role to
+ * seller (self-upgrade is allowed buyer↔seller), creates a Stripe Connect
+ * Express account (monthly payout schedule) if needed, and returns the
+ * hosted onboarding link.
  */
 export async function POST() {
   const supabase = await createClient();
@@ -20,9 +22,18 @@ export async function POST() {
     .select("role, stripe_account_id, email")
     .eq("id", user.id)
     .single();
+  if (!profile)
+    return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  if (!profile || (profile.role !== "seller" && profile.role !== "admin"))
-    return NextResponse.json({ error: "Sellers only" }, { status: 403 });
+  // Roles overlap: buyers self-upgrade the moment they start selling.
+  if (profile.role === "buyer") {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: "seller" })
+      .eq("id", user.id);
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   const stripe = getStripe();
   let accountId = profile.stripe_account_id;
@@ -32,9 +43,13 @@ export async function POST() {
       type: "express",
       email: profile.email,
       metadata: { supabase_user_id: user.id },
+      settings: {
+        payouts: {
+          schedule: { interval: "monthly", monthly_anchor: 1 },
+        },
+      },
     });
     accountId = account.id;
-    // Sellers may update their own profile row (RLS), so no service key needed.
     const { error } = await supabase
       .from("profiles")
       .update({ stripe_account_id: accountId })
@@ -46,8 +61,8 @@ export async function POST() {
   const link = await stripe.accountLinks.create({
     account: accountId,
     type: "account_onboarding",
-    refresh_url: `${siteUrl()}/dashboard/seller?stripe=refresh`,
-    return_url: `${siteUrl()}/dashboard/seller?stripe=return`,
+    refresh_url: `${siteUrl()}/dashboard?stripe=refresh`,
+    return_url: `${siteUrl()}/dashboard?stripe=return`,
   });
 
   return NextResponse.json({ url: link.url });

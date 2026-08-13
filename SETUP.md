@@ -14,10 +14,14 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
 1. supabase.com → **New project** → name it `kula-marketplace`, pick a strong DB
    password (save it somewhere), region close to you → **Create**.
 2. When it finishes provisioning: left sidebar → **SQL Editor** → **New query**.
-3. Open `supabase/migrations/001_init.sql` from this repo, copy the ENTIRE file,
-   paste, hit **Run**. You should see "Success. No rows returned".
-   That one file is the whole database: tables, security policies, the private
-   file bucket, triggers.
+3. Run BOTH migrations, in order (each: copy the ENTIRE file, paste, **Run**):
+   1. `supabase/migrations/001_init.sql` — tables, security policies, private
+      file bucket, triggers.
+   2. `supabase/migrations/002_product_v2.sql` — listing metadata, reviews,
+      mailing list, covers bucket, instructor profiles, the 30% + 25¢
+      commission defaults.
+
+   (Already ran 001 on an existing project? Just run 002 on top.)
 
 ## 2. While testing: turn off email confirmation
 
@@ -43,6 +47,10 @@ From **Stripe → Developers → API keys** (test mode toggle ON):
 
 Leave `STRIPE_WEBHOOK_SECRET` for step 5 and `NEXT_PUBLIC_SITE_URL` as
 `http://localhost:3000`.
+
+Optional (both features stay hidden until keyed): `ANTHROPIC_API_KEY` turns on
+AI metadata suggestions in the upload dialog; `RESEND_API_KEY` turns on sale
+notification emails to sellers.
 
 ## 4. Run it
 
@@ -73,14 +81,17 @@ it is what marks orders as paid.
    info; phone `000-000-0000`, SMS code `000-000`, and the test bank account
    it offers. (This is Stripe Connect **Express** — in live mode Stripe
    handles the seller's real identity + bank + tax forms.)
-3. Create a listing: title, price (e.g. $20), attach any PDF. Publish.
+3. Create a listing: attach a PDF, fill the required fields (style, type,
+   duration, level, theme, teachability), price it e.g. $10, tick the
+   IP-ownership box, publish. A blurred first-page preview generates
+   automatically for PDFs.
 4. Log out → sign up again as a **buyer** (different email; with confirmations
    off, fake emails like `buyer1@test.com` work).
-5. Buy it — card `4242 4242 4242 4242`, any future expiry, any CVC.
-   Note the checkout shows the listing price and the platform fee as separate
-   line items.
-6. You land on the success page → **Download**. Check the buyer library and,
-   logged back in as the seller, the sales list.
+5. Buy it — card `4242 4242 4242 4242`, any future expiry, any CVC. The buyer
+   pays the listed price; the commission comes out of it invisibly.
+6. The success page auto-downloads the file after a second. Then check: your
+   library, the review form on the listing, and — back as the seller — the
+   earnings tab: $10.00 gross, $3.25 kula fee, **$6.75 your net**.
 
 ## 7. Make yourself admin
 

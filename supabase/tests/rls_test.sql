@@ -109,12 +109,12 @@ end $$;
 
 -- settings: readable, not writable
 do $$ begin
-  assert (select fee_percent from public.platform_settings) = 25.00,
-    'settings readable with default 25%';
+  assert (select fee_percent from public.platform_settings) = 30.00,
+    'settings readable with commission default 30%';
 end $$;
 update public.platform_settings set fee_percent = 0 where id = true;
 do $$ begin
-  assert (select fee_percent from public.platform_settings) = 25.00,
+  assert (select fee_percent from public.platform_settings) = 30.00,
     'non-admin settings update must affect 0 rows';
 end $$;
 \echo 'PASS settings: public read, non-admin write blocked'

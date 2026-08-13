@@ -1,26 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { buyerTotalCents, formatUsd } from "@/lib/fees";
-import type { PlatformSettings, Product } from "@/lib/types";
+import { formatUsd } from "@/lib/fees";
+import type { Product } from "@/lib/types";
 import { ProductCard, btnPrimary, btnOutline, EmptyState } from "@/components/ui";
+import WaitlistForm from "@/components/waitlist-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, { data: settings }] = await Promise.all([
+  const [{ data: products }, { data: reviews }] = await Promise.all([
     supabase
       .from("products")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(3),
-    supabase.from("platform_settings").select("*").single(),
+    supabase.from("reviews").select("product_id, rating"),
   ]);
 
-  const s = settings as PlatformSettings | null;
   const featured = (products as Product[] | null) ?? [];
+  const ratings: Record<string, { avg: number; count: number }> = {};
+  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
+    const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
+    e.avg += r.rating;
+    e.count += 1;
+  }
+  for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
   return (
     <div>
@@ -41,6 +48,23 @@ export default async function HomePage() {
           <Link href="/signup" className={btnOutline}>
             start selling
           </Link>
+        </div>
+
+        {/* waitlist */}
+        <div className="mx-auto mt-12 max-w-md rounded-2xl bg-white p-6 text-left shadow-sm">
+          <div className="flex items-center gap-2 font-display font-bold lowercase">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-sage-600)" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+              <circle cx="9" cy="8" r="3.2" />
+              <path d="M3.5 19c1-2.8 3-4.2 5.5-4.2s4.5 1.4 5.5 4.2" />
+              <circle cx="17" cy="9" r="2.6" />
+              <path d="M15.5 14.6c2.3.1 4 1.4 4.9 3.9" />
+            </svg>
+            stay in the loop
+          </div>
+          <p className="mb-3 mt-1 text-sm text-fog">
+            get notified about new content, features, and updates from kula.
+          </p>
+          <WaitlistForm />
         </div>
       </section>
 
@@ -70,7 +94,9 @@ export default async function HomePage() {
               <ProductCard
                 key={p.id}
                 product={p}
-                priceLabel={s ? formatUsd(buyerTotalCents(p.price_cents, s)) : "—"}
+                priceLabel={formatUsd(p.price_cents)}
+                rating={ratings[p.id]?.avg ?? null}
+                reviewCount={ratings[p.id]?.count ?? 0}
               />
             ))}
           </div>
@@ -83,29 +109,52 @@ export default async function HomePage() {
           <h2 className="text-center font-display text-3xl font-bold lowercase">
             how it works
           </h2>
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <HowCard
-              title="browse"
-              body="find what you actually want to offer for a future class, not a generic results page."
-              icon={
-                <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v15H6.5A2.5 2.5 0 0 0 4 20.5zM20 5.5A2.5 2.5 0 0 0 17.5 3H12v15h5.5a2.5 2.5 0 0 1 2.5 2.5z" />
-              }
-            />
-            <HowCard
-              title="buy"
-              body={'pay once. it’s yours. no subscription, no login hoops, no "limited time access."'}
-              icon={
-                <>
-                  <path d="M12 2v20" />
-                  <path d="M17 6.5C17 4.6 14.8 3.5 12 3.5S7 4.6 7 6.5 9 9.5 12 9.5s5 1.1 5 3-2.2 3-5 3-5-1.1-5-3" />
-                </>
-              }
-            />
-            <HowCard
-              title="teach"
-              body="use it tomorrow. or upload the workshop you developed last year and let it earn while you sleep."
-              icon={<path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H13z" />}
-            />
+
+          <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-2">
+            <div>
+              <h3 className="mb-4 text-center font-display text-lg font-bold lowercase text-sage-700">
+                for buyers
+              </h3>
+              <div className="flex flex-col gap-4">
+                <StepCard
+                  n={1}
+                  title="browse"
+                  body="find what you actually want to offer for a future class, not a generic results page."
+                />
+                <StepCard
+                  n={2}
+                  title="buy"
+                  body={'pay once. it’s yours. no subscription, no login hoops, no "limited time access."'}
+                />
+                <StepCard
+                  n={3}
+                  title="teach"
+                  body="download instantly and use it tomorrow — or adapt it until it sounds like you."
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-4 text-center font-display text-lg font-bold lowercase text-sage-700">
+                for sellers
+              </h3>
+              <div className="flex flex-col gap-4">
+                <StepCard
+                  n={1}
+                  title="upload"
+                  body="post the sequence, workshop, or meditation you've already built. set your own price."
+                />
+                <StepCard
+                  n={2}
+                  title="get discovered"
+                  body="teachers searching by style, level, and teachability find your work."
+                />
+                <StepCard
+                  n={3}
+                  title="get paid"
+                  body="every sale pays your net straight to your bank via stripe, monthly. it earns while you sleep."
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -136,24 +185,16 @@ export default async function HomePage() {
   );
 }
 
-function HowCard({
-  title,
-  body,
-  icon,
-}: {
-  title: string;
-  body: string;
-  icon: React.ReactNode;
-}) {
+function StepCard({ n, title, body }: { n: number; title: string; body: string }) {
   return (
-    <div className="rounded-2xl bg-white p-7 shadow-sm">
-      <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-sage-100 text-sage-600">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          {icon}
-        </svg>
+    <div className="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sage-100 font-display font-bold text-sage-700">
+        {n}
       </span>
-      <h3 className="mt-5 font-display text-xl font-bold lowercase">{title}</h3>
-      <p className="mt-2 text-fog">{body}</p>
+      <div>
+        <h4 className="font-display text-lg font-bold lowercase">{title}</h4>
+        <p className="mt-0.5 text-fog">{body}</p>
+      </div>
     </div>
   );
 }

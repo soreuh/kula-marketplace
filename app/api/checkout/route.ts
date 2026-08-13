@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe, siteUrl } from "@/lib/stripe";
-import { buyerTotalCents, feeCents } from "@/lib/fees";
+import { feeCents, sellerNetCents } from "@/lib/fees";
 import type { PlatformSettings, Product } from "@/lib/types";
 
 /**
  * POST /api/checkout  { productId }
- * Creates a Stripe Checkout Session (destination charge to the seller,
- * application fee kept by the platform) and a pending order row.
+ * COMMISSION MODEL: the buyer pays the listed price (one line item).
+ * Kula's commission (fee_percent + flat, e.g. 30% + 25¢) is taken via
+ * `application_fee_amount`; Stripe transfers the rest to the seller.
  * The webhook — never the client — marks the order paid.
  */
 export async function POST(request: Request) {
@@ -23,7 +24,6 @@ export async function POST(request: Request) {
   if (!productId)
     return NextResponse.json({ error: "Missing productId" }, { status: 400 });
 
-  // Product must exist and be live (RLS also enforces visibility)
   const { data: product } = await supabase
     .from("products")
     .select("*")
@@ -40,8 +40,20 @@ export async function POST(request: Request) {
       { status: 400 }
     );
 
-  // Seller's Stripe account — read via service role (buyers can't read
-  // other users' profiles under RLS, by design).
+  // Already own it? Don't charge twice.
+  const { data: existing } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("buyer_id", user.id)
+    .eq("product_id", p.id)
+    .eq("status", "paid")
+    .maybeSingle();
+  if (existing)
+    return NextResponse.json(
+      { error: "You already own this — find it in your library" },
+      { status: 409 }
+    );
+
   const admin = createAdminClient();
   const { data: seller } = await admin
     .from("profiles")
@@ -72,13 +84,14 @@ export async function POST(request: Request) {
   const s = settings as PlatformSettings;
 
   const fee = feeCents(p.price_cents, s);
-  const total = buyerTotalCents(p.price_cents, s);
+  const net = sellerNetCents(p.price_cents, s);
 
   const meta = {
     product_id: p.id,
     buyer_id: user.id,
     price_cents: String(p.price_cents),
     fee_cents: String(fee),
+    net_cents: String(net),
   };
 
   const session = await stripe.checkout.sessions.create({
@@ -90,15 +103,10 @@ export async function POST(request: Request) {
         price_data: {
           currency: "usd",
           unit_amount: p.price_cents,
-          product_data: { name: p.title },
-        },
-      },
-      {
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: fee,
-          product_data: { name: "Platform fee" },
+          product_data: {
+            name: p.title,
+            description: "one-time payment · lifetime access",
+          },
         },
       },
     ],
@@ -108,17 +116,16 @@ export async function POST(request: Request) {
       metadata: meta,
     },
     metadata: meta,
-    success_url: `${siteUrl()}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl()}/product/${p.id}`,
+    success_url: `${siteUrl()}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl()}/products/${p.id}`,
   });
 
-  // Pending order — the webhook flips it to 'paid'.
   await admin.from("orders").insert({
     buyer_id: user.id,
     product_id: p.id,
-    amount_cents: total,
+    amount_cents: p.price_cents,
     fee_cents: fee,
-    seller_amount_cents: p.price_cents,
+    seller_amount_cents: net,
     stripe_checkout_session: session.id,
     status: "pending",
   });

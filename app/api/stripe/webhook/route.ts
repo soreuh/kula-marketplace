@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendSaleEmail } from "@/lib/email";
 
 /**
  * POST /api/stripe/webhook
@@ -39,16 +40,18 @@ export async function POST(request: Request) {
 
       const priceCents = parseInt(meta.price_cents ?? "0", 10);
       const feeCents = parseInt(meta.fee_cents ?? "0", 10);
+      const netCents = parseInt(
+        meta.net_cents ?? String(priceCents - feeCents),
+        10
+      );
 
-      // Upsert keyed on the session id: updates the pending row from
-      // checkout, or creates the order if that insert never happened.
       const { error } = await admin.from("orders").upsert(
         {
           buyer_id: meta.buyer_id,
           product_id: meta.product_id,
-          amount_cents: session.amount_total ?? priceCents + feeCents,
+          amount_cents: session.amount_total ?? priceCents,
           fee_cents: feeCents,
-          seller_amount_cents: priceCents,
+          seller_amount_cents: netCents,
           currency: session.currency ?? "usd",
           stripe_checkout_session: session.id,
           stripe_payment_intent:
@@ -62,6 +65,29 @@ export async function POST(request: Request) {
       if (error) {
         // Non-2xx makes Stripe retry — good: we don't want to lose orders.
         return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      // Sale notification (feature-flagged on RESEND_API_KEY; fail-soft).
+      const { data: product } = await admin
+        .from("products")
+        .select("title, seller_id")
+        .eq("id", meta.product_id)
+        .single();
+      if (product) {
+        const { data: seller } = await admin
+          .from("profiles")
+          .select("email, sale_notifications")
+          .eq("id", product.seller_id)
+          .single();
+        if (seller?.sale_notifications) {
+          await sendSaleEmail({
+            to: seller.email,
+            productTitle: product.title,
+            netCents,
+            grossCents: session.amount_total ?? priceCents,
+            feeCents,
+          });
+        }
       }
       break;
     }

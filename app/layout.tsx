@@ -7,6 +7,8 @@ import "@fontsource-variable/nunito-sans";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark, LeafLogo } from "@/components/ui";
+import UserMenu from "@/components/user-menu";
+import ConsentModal from "@/components/consent-modal";
 import type { Profile } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -33,6 +35,9 @@ export default async function RootLayout({
     profile = data;
   }
 
+  const displayName =
+    profile?.display_name || profile?.email?.split("@")[0] || "you";
+
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
@@ -46,11 +51,16 @@ export default async function RootLayout({
                 explore
               </Link>
               <Link
-                href={profile ? "/dashboard/seller" : "/signup"}
+                href={profile ? "/dashboard" : "/login"}
                 className="hover:text-sage-600"
               >
                 sell
               </Link>
+              {profile && (
+                <Link href="/library" className="hover:text-sage-600">
+                  library
+                </Link>
+              )}
             </div>
 
             <div className="ml-auto flex items-center gap-3">
@@ -62,19 +72,12 @@ export default async function RootLayout({
                   >
                     dashboard
                   </Link>
-                  <form action="/auth/signout" method="post" className="hidden sm:block">
-                    <button className="font-display text-sm lowercase text-fog hover:text-ink">
-                      log out
-                    </button>
-                  </form>
-                  {/* mobile: round account button */}
-                  <Link
-                    href="/dashboard"
-                    aria-label="Your dashboard"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-ink sm:hidden"
-                  >
-                    <PersonIcon />
-                  </Link>
+                  <UserMenu
+                    userId={user.id}
+                    name={displayName}
+                    email={profile.email}
+                    isAdmin={profile.role === "admin"}
+                  />
                 </>
               ) : (
                 <>
@@ -100,7 +103,10 @@ export default async function RootLayout({
                     aria-label="Log in"
                     className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-ink sm:hidden"
                   >
-                    <PersonIcon />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
+                    </svg>
                   </Link>
                 </>
               )}
@@ -109,6 +115,11 @@ export default async function RootLayout({
         </nav>
 
         <main className="flex-1">{children}</main>
+
+        {/* marketing consent — once per user, after first login */}
+        {user && profile && profile.marketing_consent === null && (
+          <ConsentModal userId={user.id} email={profile.email} />
+        )}
 
         <footer className="mt-16 border-t border-ink/5 bg-cream">
           <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-10 text-sm text-fog sm:flex-row">
@@ -120,6 +131,15 @@ export default async function RootLayout({
               <Link href="/explore" className="lowercase hover:text-ink">
                 explore
               </Link>
+              <Link href="/about" className="lowercase hover:text-ink">
+                about
+              </Link>
+              <Link href="/privacy" className="lowercase hover:text-ink">
+                privacy policy
+              </Link>
+              <Link href="/terms" className="lowercase hover:text-ink">
+                terms &amp; conditions
+              </Link>
               <a href="mailto:discoverkula@gmail.com" className="hover:text-ink">
                 discoverkula@gmail.com
               </a>
@@ -129,14 +149,5 @@ export default async function RootLayout({
         </footer>
       </body>
     </html>
-  );
-}
-
-function PersonIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
-    </svg>
   );
 }

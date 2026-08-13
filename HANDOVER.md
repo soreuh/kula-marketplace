@@ -67,12 +67,13 @@ Aleks transfers the repository (the code folder) to you:
    - Region: East US.
    - Wait ~2 minutes while it sets up.
 2. Left sidebar → **SQL Editor** → **New query**.
-3. Open the file `supabase/migrations/001_init.sql` from the code
-   (on GitHub: browse to `supabase` → `migrations` → click the file → the
-   **copy** icon copies the whole thing).
-4. Paste into the editor → **Run**. "Success. No rows returned" = your entire
-   database now exists: user accounts, listings, orders, file storage, and all
-   the security rules.
+3. Run BOTH migration files, in order (on GitHub: browse to `supabase` →
+   `migrations` → click a file → the **copy** icon copies the whole thing):
+   first `001_init.sql`, then — in a new query — `002_product_v2.sql`.
+4. Each should say "Success". Together they are your entire database: user
+   accounts, listings with all their metadata, orders, reviews, the mailing
+   list, file storage, and all the security rules — including your 30% + 25¢
+   commission.
 5. Collect your keys (you'll paste them into Netlify in Part 4):
    **Project Settings (gear icon) → API** — keep this browser tab open:
    - **Project URL**
@@ -146,14 +147,16 @@ Without it, purchases never complete.
 
 Stripe is still in test mode, so play freely:
 
-1. Sign up (second email or `test-seller@example.com`) as a **seller** →
-   Dashboard → **Connect Stripe** → fill the onboarding with fake info
-   (phone `000-000-0000`, code `000-000`, use the test bank it offers).
-2. Create a listing with any PDF, price it $20, publish.
+1. Sign up (second email or `test-seller@example.com`) → Dashboard →
+   **Connect Stripe** → fill the onboarding with fake info (phone
+   `000-000-0000`, code `000-000`, use the test bank it offers).
+2. Post a listing with any PDF, price it $10, fill the required details,
+   publish.
 3. In a private/incognito window sign up as a **buyer** and buy it with card
    number `4242 4242 4242 4242`, any future date, any CVC.
-4. Confirm: checkout showed your platform fee as its own line; the download
-   worked; the order appears in your admin dashboard with your fee counted.
+4. Confirm: the file auto-downloaded on the success page; the seller's
+   earnings tab shows $10.00 gross → **$6.75 net** with your $3.25 fee; and
+   the order (with your fee) appears in your admin dashboard.
 
 ---
 
