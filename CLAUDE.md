@@ -20,8 +20,11 @@ suggestions; RESEND_API_KEY → sale-notification emails.
 - The commission comes from the `platform_settings` table, never hardcoded;
   it is taken OUT of the listing price (never added on top). Partner sellers
   may have a per-seller `profiles.commission_override` percent (null =
-  default; flat fee always applies) — negotiated rates are PRIVATE: never
+  default; flat fee always applies; override takes precedence over any later
+  change to the platform default) — negotiated rates are PRIVATE: never
   expose them in the public `instructors` view or any buyer-facing UI.
+  `profiles.partner`: auto-true when a rate is set; unmarking partner clears
+  the override (see togglePartner in admin actions).
 - Reviews only via RLS (paid order required); orders/downloads unchanged.
 - All secrets/config via env vars (see `.env.example`) — the app must remain
   portable to a new owner's accounts by swapping env values only.

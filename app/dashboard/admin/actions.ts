@@ -83,9 +83,33 @@ export async function setCommissionOverride(formData: FormData) {
       throw new Error("Rate must be 0–100, or blank for the default");
   }
 
+  // Setting a custom rate auto-marks the seller as a partner.
+  // Clearing the rate leaves partner status alone (badge-only partners exist).
+  const patch: { commission_override: number | null; partner?: boolean } = {
+    commission_override: value,
+  };
+  if (value !== null) patch.partner = true;
+
+  await supabase.from("profiles").update(patch).eq("id", userId);
+  revalidatePath("/dashboard/admin");
+}
+
+/**
+ * Partner toggle. Turning partner OFF also clears any negotiated rate —
+ * the deal ends with the partnership, and they return to platform defaults.
+ */
+export async function togglePartner(formData: FormData) {
+  const supabase = await requireAdmin();
+  const userId = String(formData.get("user_id"));
+  const makePartner = String(formData.get("make_partner")) === "true";
+
   await supabase
     .from("profiles")
-    .update({ commission_override: value })
+    .update(
+      makePartner
+        ? { partner: true }
+        : { partner: false, commission_override: null }
+    )
     .eq("id", userId);
   revalidatePath("/dashboard/admin");
 }

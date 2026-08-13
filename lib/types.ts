@@ -19,6 +19,8 @@ export interface Profile {
   stripe_charges_enabled: boolean;
   /** Partner rate: custom commission percent; null = platform default. Private. */
   commission_override: number | null;
+  /** Partner status; auto-set when a rate override exists. */
+  partner: boolean;
 }
 
 /** Public-safe instructor info (the `instructors` view). */

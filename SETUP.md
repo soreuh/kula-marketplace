@@ -20,7 +20,9 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
    2. `002_product_v2.sql` — listing metadata, reviews, mailing list, covers
       bucket, instructor profiles, the 30% + 25¢ commission defaults.
    3. `003_partner_rates.sql` — per-seller negotiated commission (partner
-      rates; set from the admin People panel).
+      rates; set from the admin Sellers panel).
+   4. `004_partner_flag.sql` — explicit partner status (auto-set when a rate
+      is negotiated; removing it clears the deal).
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 

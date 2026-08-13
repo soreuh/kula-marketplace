@@ -4,11 +4,12 @@ import { formatUsd } from "@/lib/fees";
 import { StatTile, StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
-  changeUserRole,
   setCommissionOverride,
   setProductStatus,
+  togglePartner,
   updateFeeSettings,
 } from "./actions";
+import UsersPanel from "./users-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -150,41 +151,7 @@ export default async function AdminDashboard() {
           </ul>
         </section>
 
-        <section>
-          <h2 className="mb-3 font-display text-xl font-bold lowercase">
-            people
-          </h2>
-          <ul className="overflow-hidden rounded-2xl border border-ink/5 bg-white text-sm shadow-sm">
-            {((users as Profile[] | null) ?? []).map((u) => (
-              <li
-                key={u.id}
-                className="flex flex-wrap items-center gap-3 border-b border-ink/5 p-3.5 last:border-0"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">
-                    {u.display_name ?? u.email}
-                  </div>
-                  <div className="truncate text-fog">{u.email}</div>
-                </div>
-                <form action={changeUserRole} className="flex items-center gap-2">
-                  <input type="hidden" name="user_id" value={u.id} />
-                  <select
-                    name="role"
-                    defaultValue={u.role}
-                    className="rounded-xl border border-ink/10 px-2.5 py-1.5"
-                  >
-                    <option value="buyer">buyer</option>
-                    <option value="seller">seller</option>
-                    <option value="admin">admin</option>
-                  </select>
-                  <button className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30">
-                    set
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <UsersPanel users={(users as Profile[] | null) ?? []} />
 
         <section>
           <h2 className="mb-3 font-display text-xl font-bold lowercase">
@@ -254,6 +221,7 @@ function SellersSection({
               <th className="p-3.5 font-display font-semibold lowercase">status</th>
               <th className="p-3.5 font-display font-semibold lowercase">listings</th>
               <th className="p-3.5 font-display font-semibold lowercase">paid sales</th>
+              <th className="p-3.5 font-display font-semibold lowercase">partner</th>
               <th className="p-3.5 font-display font-semibold lowercase">rate</th>
               <th className="p-3.5 font-display font-semibold lowercase">set rate</th>
             </tr>
@@ -293,9 +261,34 @@ function SellersSection({
                   <td className="p-3.5 tabular-nums">{theirListings.length}</td>
                   <td className="p-3.5 tabular-nums">{theirSales.length}</td>
                   <td className="p-3.5">
+                    <form action={togglePartner}>
+                      <input type="hidden" name="user_id" value={u.id} />
+                      <input
+                        type="hidden"
+                        name="make_partner"
+                        value={u.partner ? "false" : "true"}
+                      />
+                      <button
+                        title={
+                          u.partner
+                            ? "Remove partner status (also clears their custom rate)"
+                            : "Mark as partner"
+                        }
+                        className={
+                          "rounded-full px-3 py-1.5 text-xs font-semibold transition " +
+                          (u.partner
+                            ? "bg-sage-500 text-white hover:bg-sage-600"
+                            : "border border-ink/15 text-fog hover:border-ink/40")
+                        }
+                      >
+                        {u.partner ? "partner ✓" : "mark partner"}
+                      </button>
+                    </form>
+                  </td>
+                  <td className="p-3.5">
                     {u.commission_override !== null ? (
                       <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-semibold text-sage-700">
-                        partner · {Number(u.commission_override)}%
+                        deal · {Number(u.commission_override)}%
                       </span>
                     ) : (
                       <span className="text-fog">default · {defaultPercent}%</span>
