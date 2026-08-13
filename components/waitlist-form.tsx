@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export default function WaitlistForm() {
   const [email, setEmail] = useState("");
@@ -12,20 +11,19 @@ export default function WaitlistForm() {
     e.preventDefault();
     setState("busy");
     setError(null);
-    const supabase = createClient();
-    const { error: insertError } = await supabase
-      .from("mailing_list")
-      .insert({ email: email.trim().toLowerCase(), source: "waitlist" });
-    if (insertError) {
-      if (insertError.code === "23505") {
-        setState("already");
-        return;
-      }
+    // one door for all signups: DB first, Mailchimp mirror when keyed
+    const res = await fetch("/api/mailing-list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, source: "waitlist" }),
+    }).catch(() => null);
+    const json = await res?.json().catch(() => ({}));
+    if (!res?.ok) {
       setState("idle");
-      setError("that didn't work — try again?");
+      setError(json?.error ?? "that didn't work — try again?");
       return;
     }
-    setState("done");
+    setState(json?.already ? "already" : "done");
   }
 
   if (state === "done" || state === "already")

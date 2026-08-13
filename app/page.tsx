@@ -103,58 +103,45 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* ── how it works ── */}
+      {/* ── how it works — one merged flow, no buyer/seller split ── */}
       <section className="bg-mist/60 px-5 py-16">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <h2 className="text-center font-display text-3xl font-bold lowercase">
             how it works
           </h2>
 
-          <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-2">
-            <div>
-              <h3 className="mb-4 text-center font-display text-lg font-bold lowercase text-sage-700">
-                for buyers
-              </h3>
-              <div className="flex flex-col gap-4">
-                <StepCard
-                  n={1}
-                  title="browse"
-                  body="find what you actually want to offer for a future class, not a generic results page."
-                />
-                <StepCard
-                  n={2}
-                  title="buy"
-                  body={'pay once. it’s yours. no subscription, no login hoops, no "limited time access."'}
-                />
-                <StepCard
-                  n={3}
-                  title="teach"
-                  body="download instantly and use it tomorrow — or adapt it until it sounds like you."
-                />
-              </div>
-            </div>
-            <div>
-              <h3 className="mb-4 text-center font-display text-lg font-bold lowercase text-sage-700">
-                for sellers
-              </h3>
-              <div className="flex flex-col gap-4">
-                <StepCard
-                  n={1}
-                  title="upload"
-                  body="post the sequence, workshop, or meditation you've already built. set your own price."
-                />
-                <StepCard
-                  n={2}
-                  title="get discovered"
-                  body="teachers searching by style, level, and teachability find your work."
-                />
-                <StepCard
-                  n={3}
-                  title="get paid"
-                  body="every sale pays your net straight to your bank via stripe, monthly. it earns while you sleep."
-                />
-              </div>
-            </div>
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <HowCard
+              title="browse"
+              body="find what you actually want to offer for a future class, not a generic results page."
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4-4" />
+                </svg>
+              }
+            />
+            <HowCard
+              title="buy"
+              body={'pay once. it’s yours. no subscription, no login hoops, no "limited time access."'}
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M6 7h12l1.2 13H4.8L6 7z" />
+                  <path d="M9 10V6a3 3 0 0 1 6 0v4" />
+                </svg>
+              }
+            />
+            <HowCard
+              title="teach"
+              body="download instantly and use it tomorrow — or adapt it until it sounds like you. then sell your own."
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M21 8 12 3 3 8l9 5z" />
+                  <path d="M3 8v8l9 5 9-5V8" />
+                  <path d="M12 13v8" />
+                </svg>
+              }
+            />
           </div>
         </div>
       </section>
@@ -185,16 +172,22 @@ export default async function HomePage() {
   );
 }
 
-function StepCard({ n, title, body }: { n: number; title: string; body: string }) {
+function HowCard({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
   return (
-    <div className="flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sage-100 font-display font-bold text-sage-700">
-        {n}
+    <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-sage-100 text-sage-600">
+        {icon}
       </span>
-      <div>
-        <h4 className="font-display text-lg font-bold lowercase">{title}</h4>
-        <p className="mt-0.5 text-fog">{body}</p>
-      </div>
+      <h4 className="mt-3 font-display text-lg font-bold lowercase">{title}</h4>
+      <p className="mt-1 text-fog">{body}</p>
     </div>
   );
 }

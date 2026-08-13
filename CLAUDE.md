@@ -7,7 +7,10 @@ COMMISSION MODEL: buyer pays the listed price; kula takes fee_percent + flat
 (monthly Express payouts). Supabase = auth, Postgres w/ RLS, private
 `product-files` bucket + public `covers` bucket. Netlify hosting. Next.js 16.
 Optional keyed features (hidden without env): ANTHROPIC_API_KEY → AI listing
-suggestions; RESEND_API_KEY → sale-notification emails.
+suggestions; RESEND_API_KEY → sale-notification emails; MAILCHIMP_API_KEY +
+MAILCHIMP_AUDIENCE_ID → waitlist/consent signups mirror into a Mailchimp
+Audience (mailing_list table stays the source of truth; signups go through
+/api/mailing-list).
 
 ## Invariants — never violate
 
@@ -26,6 +29,16 @@ suggestions; RESEND_API_KEY → sale-notification emails.
   `profiles.partner`: auto-true when a rate is set; unmarking partner clears
   the override (see togglePartner in admin actions).
 - Reviews only via RLS (paid order required); orders/downloads unchanged.
+- Listings are $1.00 minimum (DB check, migration 006 — matches Terms §4.6).
+- Moderation (migration 007): `profiles.account_status` active|paused|deleted.
+  Paused/deleted = buying blocked (checkout gate) + listings/profile ghosted
+  via RLS read-path ONLY — product rows are never modified, prior buyers keep
+  purchases, and NOTHING is ever hard-deleted. 'deleted' also login-bans via
+  the auth admin API (see setAccountStatus). Only admins change the status
+  (DB guard trigger).
+- /terms, /privacy, /about copy is the owner's finalized text (fix-list
+  appendices), VERBATIM except documented factual corrections (domain;
+  privacy: Supabase not Replit as auth/infra provider). Don't rewrite it.
 - All secrets/config via env vars (see `.env.example`) — the app must remain
   portable to a new owner's accounts by swapping env values only.
 
@@ -37,8 +50,13 @@ suggestions; RESEND_API_KEY → sale-notification emails.
   rewrite 001 — it has already been run on live projects) and apply it in the
   Supabase SQL editor.
 - RLS is the real authorization layer; UI checks are convenience only.
+- Listings cannot become 'active' unless the seller's
+  `profiles.stripe_charges_enabled` is true (DB trigger, migration 005;
+  admins and server contexts exempt). Drafts are always allowed.
 - `profiles.role` changes are blocked by a DB trigger unless admin (or SQL
-  editor / service role, where `auth.uid()` is null).
+  editor / service role, where `auth.uid()` is null). Exception: users may
+  self-flip buyer↔seller — signup no longer asks (one unified flow); the
+  first post or Stripe onboard upgrades buyer→seller automatically.
 
 ## Commands
 

@@ -98,11 +98,15 @@ export default async function AdminDashboard() {
               save
             </button>
             <span className="text-fog">
-              a $20.00 listing currently costs the buyer{" "}
+              the fee comes out of the listing price — on a $20.00 sale the
+              seller nets{" "}
               {formatUsd(
-                2000 +
-                  Math.round((2000 * Number(s.fee_percent)) / 100) +
-                  s.fee_flat_cents
+                2000 -
+                  Math.min(
+                    2000,
+                    Math.round((2000 * Number(s.fee_percent)) / 100) +
+                      s.fee_flat_cents
+                  )
               )}
               .
             </span>

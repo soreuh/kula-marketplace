@@ -3,21 +3,23 @@ import { btnPrimary } from "@/components/ui";
 
 export const metadata = { title: "about — kula" };
 
+// Copy is verbatim from the owner's spec (fix list item 6 / Appendix C).
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-16">
       <h1 className="font-display text-4xl font-bold lowercase">about kula</h1>
-      <p className="mt-6 text-lg leading-relaxed text-fog">
-        kula — Sanskrit for community — is a peer-to-peer marketplace for yoga
-        teachers. Teachers spend years developing their material: the sequences,
-        class plans, workshops, and meditations that make their classes theirs.
-        kula is built on a simple idea — that work deserves to be compensated
-        when others use it. Teachers upload the plans they&apos;ve already
-        built; other teachers buy them to teach with, study, or adapt. One
-        payment, lifetime access, and the person who made it gets paid. One
-        more way of supporting each other, the way this practice has always
-        asked us to.
-      </p>
+      <div className="mt-6 flex flex-col gap-5 text-lg leading-relaxed text-fog">
+        <p>
+          kula is where yoga teachers share their work and find the work of
+          other teachers they trust.
+        </p>
+        <p>
+          class plans, sequences, workshops, guided meditations. the things
+          that take real time to create and that the wider teaching community
+          could genuinely use.
+        </p>
+        <p>a place to offer what you&apos;ve made and find what you need.</p>
+      </div>
       <div className="mt-8">
         <Link href="/explore" className={btnPrimary}>
           explore content <span aria-hidden>→</span>

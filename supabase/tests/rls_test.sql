@@ -29,6 +29,11 @@ do $$ begin
 end $$;
 \echo 'PASS trigger: profiles created with safe roles'
 
+-- 005: publishing requires a verified Stripe account — mark seller A as
+-- verified (superuser context, simulating the dashboard's Stripe sync).
+update public.profiles set stripe_charges_enabled = true
+where id = '00000000-0000-0000-0000-00000000000a';
+
 -- helper macro-ish: act as a given user
 -- (set_config survives set role; policies read auth.uid())
 

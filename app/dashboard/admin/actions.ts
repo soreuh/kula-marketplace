@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Admin server actions. They run with the ADMIN'S OWN session (not the
@@ -92,6 +93,55 @@ export async function setCommissionOverride(formData: FormData) {
 
   await supabase.from("profiles").update(patch).eq("id", userId);
   revalidatePath("/dashboard/admin");
+}
+
+/**
+ * User moderation — pause / activate / soft-delete.
+ * - paused:  buying blocked (checkout gate) + listings and public profile
+ *            ghosted (RLS). The user can still sign in and see their own
+ *            dashboard; prior buyers keep what they bought.
+ * - active:  restores normal reads. Product rows were never modified, so
+ *            listings come back exactly as they were — the Stripe publish
+ *            gate (migration 005) still applies; nothing is force-published.
+ * - deleted: same ghosting as paused, PLUS sign-in is banned at the auth
+ *            layer. Every row (profile, listings, orders, reviews) STAYS
+ *            in the database.
+ */
+export async function setAccountStatus(formData: FormData) {
+  const supabase = await requireAdmin();
+  const userId = String(formData.get("user_id"));
+  const status = String(formData.get("status"));
+  if (!["active", "paused", "deleted"].includes(status))
+    throw new Error("Bad status");
+
+  // Never moderate yourself — that's how the only admin gets locked out.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.id === userId) {
+    revalidatePath("/dashboard/admin");
+    return;
+  }
+
+  await supabase
+    .from("profiles")
+    .update({ account_status: status })
+    .eq("id", userId);
+
+  // 'deleted' also blocks sign-in; pause/activate lifts any ban. The auth
+  // ban needs the service key — best-effort: the RLS ghosting and the
+  // checkout gate hold even if this call fails.
+  try {
+    const admin = createAdminClient();
+    await admin.auth.admin.updateUserById(userId, {
+      ban_duration: status === "deleted" ? "876000h" : "none",
+    });
+  } catch {
+    /* noted above */
+  }
+
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/");
 }
 
 /**

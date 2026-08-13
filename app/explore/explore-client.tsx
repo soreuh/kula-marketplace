@@ -15,18 +15,23 @@ import {
 import type { Product } from "@/lib/types";
 import type { RatingMap } from "./page";
 
+type ListKey = "teach" | "styles" | "types" | "levels";
+
 type Filters = {
   teach: string[];
   styles: string[];
-  durations: number[];
+  /** index range into DURATIONS ([lo, hi]); the full range means "any" */
+  duration: [number, number];
   types: string[];
   levels: string[];
 };
 
+const FULL_RANGE: [number, number] = [0, DURATIONS.length - 1];
+
 const EMPTY_FILTERS: Filters = {
   teach: [],
   styles: [],
-  durations: [],
+  duration: FULL_RANGE,
   types: [],
   levels: [],
 };
@@ -42,7 +47,7 @@ export default function ExploreClient({
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [panelOpen, setPanelOpen] = useState(false); // mobile slide-in
 
-  function toggle<K extends keyof Filters>(key: K, value: Filters[K][number]) {
+  function toggle<K extends ListKey>(key: K, value: Filters[K][number]) {
     setFilters((prev) => {
       const list = prev[key] as (typeof value)[];
       return {
@@ -55,14 +60,21 @@ export default function ExploreClient({
   }
 
   const activeChips = useMemo(() => {
-    const chips: { key: keyof Filters; value: string | number; label: string }[] = [];
+    const chips: { key: ListKey | "duration"; value: string | number; label: string }[] = [];
     filters.teach.forEach((v) =>
       chips.push({ key: "teach", value: v, label: teachabilityLabel(v) ?? v })
     );
     filters.styles.forEach((v) => chips.push({ key: "styles", value: v, label: v }));
-    filters.durations.forEach((v) =>
-      chips.push({ key: "durations", value: v, label: durationLabel(v) ?? String(v) })
-    );
+    const [dLo, dHi] = filters.duration;
+    if (dLo > 0 || dHi < DURATIONS.length - 1) {
+      const lo = durationLabel(DURATIONS[dLo]);
+      const hi = durationLabel(DURATIONS[dHi]);
+      chips.push({
+        key: "duration",
+        value: 0,
+        label: dLo === dHi ? `${lo}` : `${lo} – ${hi}`,
+      });
+    }
     filters.types.forEach((v) => chips.push({ key: "types", value: v, label: v }));
     filters.levels.forEach((v) => chips.push({ key: "levels", value: v, label: v }));
     return chips;
@@ -82,11 +94,13 @@ export default function ExploreClient({
         return false;
       if (filters.styles.length && !filters.styles.includes(p.category ?? ""))
         return false;
-      if (
-        filters.durations.length &&
-        !filters.durations.includes(p.duration_minutes ?? -1)
-      )
-        return false;
+      const [dLo, dHi] = filters.duration;
+      if (dLo > 0 || dHi < DURATIONS.length - 1) {
+        const m = p.duration_minutes ?? -1;
+        if (m < DURATIONS[dLo]) return false;
+        // the top bucket (2 hr+) has no upper bound
+        if (dHi < DURATIONS.length - 1 && m > DURATIONS[dHi]) return false;
+      }
       if (filters.types.length && !filters.types.includes(p.content_type ?? ""))
         return false;
       if (filters.levels.length && !filters.levels.includes(p.level ?? ""))
@@ -118,14 +132,12 @@ export default function ExploreClient({
         ))}
       </FilterGroup>
       <FilterGroup title="duration">
-        {DURATIONS.map((d) => (
-          <Check
-            key={d}
-            label={durationLabel(d) ?? String(d)}
-            checked={filters.durations.includes(d)}
-            onChange={() => toggle("durations", d)}
-          />
-        ))}
+        <DurationSlider
+          value={filters.duration}
+          onChange={(range) =>
+            setFilters((prev) => ({ ...prev, duration: range }))
+          }
+        />
       </FilterGroup>
       <FilterGroup title="content type">
         {CONTENT_TYPES.map((t) => (
@@ -180,7 +192,11 @@ export default function ExploreClient({
           {activeChips.map((c) => (
             <button
               key={`${c.key}-${c.value}`}
-              onClick={() => toggle(c.key, c.value as never)}
+              onClick={() =>
+                c.key === "duration"
+                  ? setFilters((prev) => ({ ...prev, duration: FULL_RANGE }))
+                  : toggle(c.key, c.value as never)
+              }
               className="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-sm font-semibold text-sage-700 hover:bg-sage-200"
             >
               {c.label} <span aria-hidden>×</span>
@@ -246,6 +262,76 @@ export default function ExploreClient({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Dual-thumb slider over the DURATIONS buckets — two overlaid native range
+ * inputs, so it works with mouse, touch, and keyboard. Only the thumbs catch
+ * pointer events (see .dual-range in globals.css). Full range = filter off.
+ */
+function DurationSlider({
+  value,
+  onChange,
+}: {
+  value: [number, number];
+  onChange: (v: [number, number]) => void;
+}) {
+  const max = DURATIONS.length - 1;
+  const [lo, hi] = value;
+  const pct = (i: number) => (i / max) * 100;
+  return (
+    <div className="pt-1">
+      <div className="flex items-baseline justify-between">
+        <span className="font-semibold">
+          {durationLabel(DURATIONS[lo])}
+          {lo !== hi && ` – ${durationLabel(DURATIONS[hi])}`}
+        </span>
+        {(lo > 0 || hi < max) && (
+          <button
+            type="button"
+            onClick={() => onChange([0, max])}
+            className="text-xs lowercase text-fog underline hover:text-ink"
+          >
+            any
+          </button>
+        )}
+      </div>
+      <div className="relative mt-3 h-5">
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-ink/10" />
+        <div
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-sage-400"
+          style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }}
+        />
+        <input
+          type="range"
+          min={0}
+          max={max}
+          step={1}
+          value={lo}
+          aria-label="minimum duration"
+          onChange={(e) => onChange([Math.min(Number(e.target.value), hi), hi])}
+          className="dual-range absolute inset-0 w-full"
+          style={{ zIndex: lo === hi && lo > 0 ? 4 : 2 }}
+        />
+        <input
+          type="range"
+          min={0}
+          max={max}
+          step={1}
+          value={hi}
+          aria-label="maximum duration"
+          onChange={(e) => onChange([lo, Math.max(Number(e.target.value), lo)])}
+          className="dual-range absolute inset-0 w-full"
+          style={{ zIndex: 3 }}
+        />
+      </div>
+      <div className="mt-1.5 flex justify-between text-[11px] text-fog">
+        <span>15 min</span>
+        <span>1 hr</span>
+        <span>2 hr+</span>
       </div>
     </div>
   );

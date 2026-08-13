@@ -6,12 +6,16 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { inputCls } from "@/components/ui";
 
+/**
+ * ONE unified signup — no buyer/seller fork. Every account can both buy
+ * and sell; posting your first listing (or connecting Stripe) upgrades
+ * the profile behind the scenes.
+ */
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<"buyer" | "seller">("buyer");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -24,7 +28,7 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { role, display_name: displayName } },
+      options: { data: { role: "buyer", display_name: displayName } },
     });
 
     setBusy(false);
@@ -49,24 +53,11 @@ export default function SignupPage() {
           join the kula
         </h1>
         <p className="mt-1 text-sm text-fog">
-          one account. buy resources, or teach and sell your own.
+          one account for everything — buy resources you trust, and sell the
+          work you&apos;ve already created.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <RoleCard
-              active={role === "buyer"}
-              onClick={() => setRole("buyer")}
-              title="buy content"
-              sub="build your classes from resources you trust"
-            />
-            <RoleCard
-              active={role === "seller"}
-              onClick={() => setRole("seller")}
-              title="sell content"
-              sub="earn from the work you've already created"
-            />
-          </div>
           <input
             className={inputCls}
             placeholder="display name"
@@ -110,33 +101,5 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
-  );
-}
-
-function RoleCard({
-  active,
-  onClick,
-  title,
-  sub,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        "rounded-xl border p-4 text-left transition " +
-        (active
-          ? "border-sage-500 bg-sage-50 ring-2 ring-sage-200"
-          : "border-ink/10 bg-white hover:border-ink/30")
-      }
-    >
-      <span className="font-display font-semibold lowercase">{title}</span>
-      <span className="mt-1 block text-xs text-fog">{sub}</span>
-    </button>
   );
 }

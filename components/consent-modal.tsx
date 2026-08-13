@@ -31,10 +31,12 @@ export default function ConsentModal({
       .update({ marketing_consent: consent })
       .eq("id", userId);
     if (consent) {
-      // duplicate email → fine, they're already on the list
-      await supabase
-        .from("mailing_list")
-        .insert({ email: email.toLowerCase(), source: "consent" });
+      // DB + Mailchimp mirror (when keyed); duplicates are fine
+      await fetch("/api/mailing-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "consent" }),
+      }).catch(() => null);
     }
     setVisible(false);
   }

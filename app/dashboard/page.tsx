@@ -109,6 +109,7 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-5xl px-5 py-8">
         <DashboardClient
           userId={user.id}
+          role={prof.role}
           products={myProducts}
           sales={sales}
           ratings={ratings}
@@ -118,6 +119,8 @@ export default async function DashboardPage() {
           ipAgreed={!!prof.ip_agreement_accepted_at}
           aiEnabled={!!process.env.ANTHROPIC_API_KEY}
           feeRateLabel={feeRateLabel}
+          feePercent={Number(feePercent)}
+          feeFlatCents={feeFlat}
         />
       </div>
     </div>

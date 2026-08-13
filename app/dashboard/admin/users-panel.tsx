@@ -1,10 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { changeUserRole } from "./actions";
+import { changeUserRole, setAccountStatus } from "./actions";
 import type { Profile } from "@/lib/types";
 
-type RoleFilter = "all" | "buyer" | "seller" | "admin" | "partner";
+type RoleFilter =
+  | "all"
+  | "buyer"
+  | "seller"
+  | "admin"
+  | "partner"
+  | "paused"
+  | "deleted";
 type SortKey = "newest" | "oldest" | "name" | "email";
 
 /** People panel with search, filters, and sort. */
@@ -19,6 +26,8 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
       if (q && !`${u.display_name ?? ""} ${u.shop_name ?? ""} ${u.email}`.toLowerCase().includes(q))
         return false;
       if (filter === "partner") return u.partner;
+      if (filter === "paused") return u.account_status === "paused";
+      if (filter === "deleted") return u.account_status === "deleted";
       if (filter !== "all" && u.role !== filter) return false;
       return true;
     });
@@ -44,6 +53,8 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
     { key: "seller", label: "sellers" },
     { key: "admin", label: "admins" },
     { key: "partner", label: "partners" },
+    { key: "paused", label: "paused" },
+    { key: "deleted", label: "deleted" },
   ];
 
   return (
@@ -114,29 +125,88 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
                     partner
                   </span>
                 )}
+                {u.account_status === "paused" && (
+                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                    paused
+                  </span>
+                )}
+                {u.account_status === "deleted" && (
+                  <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                    deleted
+                  </span>
+                )}
               </div>
               <div className="truncate text-fog">
                 {u.email} · joined {new Date(u.created_at).toLocaleDateString()}
               </div>
             </div>
-            <form action={changeUserRole} className="flex items-center gap-2">
+            {u.account_status !== "deleted" && (
+              <form action={changeUserRole} className="flex items-center gap-2">
+                <input type="hidden" name="user_id" value={u.id} />
+                <select
+                  name="role"
+                  defaultValue={u.role}
+                  className="rounded-xl border border-ink/10 px-2.5 py-1.5"
+                >
+                  <option value="buyer">buyer</option>
+                  <option value="seller">seller</option>
+                  <option value="admin">admin</option>
+                </select>
+                <button className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30">
+                  set
+                </button>
+              </form>
+            )}
+            {/* moderation: pause ⇄ activate, and soft-delete.
+                activate only restores reads — it never force-publishes
+                (the stripe gate still decides what can go live). */}
+            <form action={setAccountStatus} className="flex items-center gap-1.5">
               <input type="hidden" name="user_id" value={u.id} />
-              <select
-                name="role"
-                defaultValue={u.role}
-                className="rounded-xl border border-ink/10 px-2.5 py-1.5"
-              >
-                <option value="buyer">buyer</option>
-                <option value="seller">seller</option>
-                <option value="admin">admin</option>
-              </select>
-              <button className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30">
-                set
-              </button>
+              {u.account_status === "active" ? (
+                <button
+                  name="status"
+                  value="paused"
+                  title="Pause: buying disabled, listings ghosted. Reversible."
+                  className="rounded-full border border-amber-300 px-3.5 py-1.5 lowercase text-amber-800 hover:bg-amber-50"
+                >
+                  pause
+                </button>
+              ) : (
+                <button
+                  name="status"
+                  value="active"
+                  title="Reactivate: restores buying + visibility (doesn't override Stripe publishing rules)"
+                  className="rounded-full border border-sage-300 px-3.5 py-1.5 lowercase text-sage-700 hover:bg-sage-50"
+                >
+                  activate
+                </button>
+              )}
+              {u.account_status !== "deleted" && (
+                <button
+                  name="status"
+                  value="deleted"
+                  onClick={(e) => {
+                    if (
+                      !confirm(
+                        `Delete ${u.display_name ?? u.email}? They can no longer sign in and everything of theirs is hidden — but all their data (listings, orders, history) stays stored. Reversible with "activate".`
+                      )
+                    )
+                      e.preventDefault();
+                  }}
+                  className="rounded-full border border-red-200 px-3.5 py-1.5 lowercase text-red-700 hover:bg-red-50"
+                >
+                  delete
+                </button>
+              )}
             </form>
           </li>
         ))}
       </ul>
+      <p className="mt-2 text-xs text-fog">
+        pause = buying off + listings ghosted (they can still log in) ·
+        delete = also blocks sign-in · either way every record stays stored,
+        and buyers keep what they already purchased. activate reverses both.
+      </p>
     </section>
   );
 }

@@ -24,6 +24,24 @@ export async function POST(request: Request) {
   if (!productId)
     return NextResponse.json({ error: "Missing productId" }, { status: 400 });
 
+  // Moderation gate: paused/deleted accounts can't buy. (Tolerant read —
+  // if migration 007 hasn't run yet the column is missing, the select
+  // errors, myStatus stays undefined, and buying proceeds as before.)
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("account_status")
+    .eq("id", user.id)
+    .maybeSingle();
+  const myStatus = (me as { account_status?: string } | null)?.account_status;
+  if (myStatus != null && myStatus !== "active")
+    return NextResponse.json(
+      {
+        error:
+          "Your account is paused — purchases are disabled. Contact kula if you think this is a mistake.",
+      },
+      { status: 403 }
+    );
+
   const { data: product } = await supabase
     .from("products")
     .select("*")
@@ -57,9 +75,19 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: seller } = await admin
     .from("profiles")
-    .select("stripe_account_id, commission_override")
+    .select("*")
     .eq("id", p.seller_id)
     .single();
+
+  // Belt + braces: RLS already ghosts paused/deleted sellers' listings,
+  // but never let money move toward a moderated account.
+  const sellerStatus = (seller as { account_status?: string } | null)
+    ?.account_status;
+  if (sellerStatus != null && sellerStatus !== "active")
+    return NextResponse.json(
+      { error: "Listing not available" },
+      { status: 404 }
+    );
 
   if (!seller?.stripe_account_id)
     return NextResponse.json(

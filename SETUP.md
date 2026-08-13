@@ -23,6 +23,13 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
       rates; set from the admin Sellers panel).
    4. `004_partner_flag.sql` — explicit partner status (auto-set when a rate
       is negotiated; removing it clears the deal).
+   5. `005_draft_until_stripe.sql` — sellers can prep listings before
+      connecting Stripe, but nothing goes live until they're verified.
+   6. `006_price_floor.sql` — $1.00 minimum listing price (matches the
+      Terms & Conditions).
+   7. `007_user_moderation.sql` — admin pause / activate / soft-delete for
+      accounts (paused users can't buy and their listings are hidden;
+      deleting also blocks sign-in; all data is always retained).
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 
@@ -51,9 +58,12 @@ From **Stripe → Developers → API keys** (test mode toggle ON):
 Leave `STRIPE_WEBHOOK_SECRET` for step 5 and `NEXT_PUBLIC_SITE_URL` as
 `http://localhost:3000`.
 
-Optional (both features stay hidden until keyed): `ANTHROPIC_API_KEY` turns on
+Optional (each feature stays hidden until keyed): `ANTHROPIC_API_KEY` turns on
 AI metadata suggestions in the upload dialog; `RESEND_API_KEY` turns on sale
-notification emails to sellers.
+notification emails to sellers; `MAILCHIMP_API_KEY` + `MAILCHIMP_AUDIENCE_ID`
+mirror every waitlist/consent signup into your Mailchimp Audience (they always
+land in your own database's `mailing_list` table too), so you can send
+newsletters from Mailchimp.
 
 ## 4. Run it
 

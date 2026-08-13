@@ -1,101 +1,190 @@
-export const metadata = { title: "terms of service — kula" };
+export const metadata = { title: "terms & conditions — kula" };
 
 /*
- * Template terms drafted to the product spec — have a lawyer (or a
- * lawyer-reviewed template service) look this over before real launch.
+ * Text is VERBATIM from the owner's finalized terms (fix list item 4 /
+ * Appendix A), with one factual correction: the domain (the appendix said
+ * "kula.com"; the platform lives at kula-marketplace.com).
  */
+
+function Section({
+  n,
+  title,
+  children,
+}: {
+  n: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h2 className="font-display text-xl font-bold lowercase">
+        {n}. {title}
+      </h2>
+      <p className="mt-2 text-fog">{children}</p>
+    </section>
+  );
+}
+
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-2xl px-5 py-16">
       <h1 className="font-display text-4xl font-bold lowercase">
-        terms of service
+        terms &amp; conditions
       </h1>
-      <p className="mt-2 text-sm text-fog">last updated: august 2026</p>
 
-      <div className="mt-8 flex flex-col gap-8 leading-relaxed text-ink/90">
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">1. what kula is</h2>
-          <p className="mt-2 text-fog">
-            kula is a marketplace where yoga teachers (&quot;sellers&quot;) offer
-            digital teaching materials for sale and other teachers
-            (&quot;buyers&quot;) purchase them. kula facilitates the transaction;
-            content is created and owned by sellers.
-          </p>
-        </section>
+      <div className="mt-8 flex flex-col gap-8 leading-relaxed">
+        <Section n="1" title="Acceptance of Terms">
+          By accessing or using the kula marketplace (kula-marketplace.com),
+          you agree to be bound by these terms and conditions. if you do not
+          agree, do not use the platform. kula reserves the right to update
+          these terms at any time. continued use following notice of changes
+          constitutes acceptance.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">2. seller obligations</h2>
-          <p className="mt-2 text-fog">
-            By listing content you confirm that it is your original work and
-            that you own or control all rights needed to sell it. Prohibited:
-            content you do not own, content copied from other teachers or
-            publications, and any unlawful, harmful, or misleading material.
-            Listings must be priced at $1.00 or more. kula charges a commission
-            of 30% of the sale price plus $0.25 per transaction; the remainder
-            is paid to you via Stripe on a monthly schedule once your balance
-            reaches $5.00. Payment disputes and chargebacks are deducted from
-            the seller&apos;s balance.
-          </p>
-        </section>
+        <Section n="2" title="The kula Marketplace">
+          kula is a peer-to-peer digital marketplace that enables yoga and
+          wellness teachers (sellers) to sell original content to other yoga
+          and wellness teachers (buyers). kula does not create, own, or
+          endorse any content listed on the platform. kula is a technology
+          platform, not a publisher or content creator.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">3. buyer rights (licensing)</h2>
-          <p className="mt-2 text-fog">
-            A purchase grants you a personal, non-transferable license to use
-            the content in your own teaching and study. It is a one-time
-            payment with lifetime access for you. You may not resell,
-            redistribute, share, sublicense, or republish purchased content, in
-            whole or in part, in any form.
-          </p>
-        </section>
+        <Section n="3" title="Account Registration">
+          To buy or sell on kula, you must create an account using accurate
+          information. you are responsible for maintaining the security of
+          your account. accounts are non-transferable. users must be 18 years
+          of age or older.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">4. refunds</h2>
-          <p className="mt-2 text-fog">
-            Products on kula are digital files delivered instantly. Once a file
-            has been downloaded, purchases are generally non-refundable. If a
-            file is corrupted, materially misdescribed, or you were charged in
-            error, contact us and we&apos;ll make it right.
-          </p>
-        </section>
+        <Section n="4.1" title="Original Content">
+          Sellers represent and warrant that all content uploaded to kula is
+          their original work, does not infringe any third-party intellectual
+          property rights, and complies with all applicable laws.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">5. copyright &amp; dmca takedowns</h2>
-          <p className="mt-2 text-fog">
-            If you believe content on kula infringes your copyright, email{" "}
-            <a href="mailto:discoverkula@gmail.com" className="underline">
-              discoverkula@gmail.com
-            </a>{" "}
-            with: your contact information, a description and link to the
-            infringing listing, a description of the original work, and a
-            statement made in good faith that the use is unauthorized. We will
-            review promptly, remove infringing content, and may suspend repeat
-            infringers&apos; accounts.
-          </p>
-        </section>
+        <Section n="4.2" title="Licence to kula">
+          By uploading content, sellers grant kula a non-exclusive,
+          royalty-free licence to host, display, and distribute the content to
+          buyers on the platform.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">6. accounts &amp; the platform</h2>
-          <p className="mt-2 text-fog">
-            You are responsible for your account and for the accuracy of what
-            you post. We may suspend listings or accounts that violate these
-            terms. Payments are processed by Stripe; kula never stores your
-            card details. The platform is provided &quot;as is&quot; without
-            warranties; kula&apos;s liability is limited to the amount you paid
-            through the platform in the previous 12 months.
-          </p>
-        </section>
+        <Section n="4.3" title="Intellectual Property Ownership">
+          Sellers retain full copyright and ownership of all content they
+          upload. kula does not claim ownership of seller content.
+        </Section>
 
-        <section>
-          <h2 className="font-display text-xl font-bold lowercase">7. contact</h2>
-          <p className="mt-2 text-fog">
-            Questions about these terms:{" "}
-            <a href="mailto:discoverkula@gmail.com" className="underline">
-              discoverkula@gmail.com
-            </a>
-            .
-          </p>
-        </section>
+        <Section n="4.4" title="Prohibited Content">
+          Sellers may not upload content that: infringes third-party
+          copyright, trademark, or other IP rights; contains third-party
+          audio, video, or images without appropriate licences; is misleading,
+          fraudulent, or misrepresented; violates any applicable law or
+          regulation; is hateful, discriminatory, or harmful.
+        </Section>
+
+        <Section n="4.5" title="Commission — 30% + $0.25">
+          kula retains a commission of 30% of each sale price, plus a $0.25
+          transaction fee per resource. the remaining amount is paid to the
+          seller via Stripe Connect on a monthly basis, subject to a minimum
+          payout threshold of $5.00.
+        </Section>
+
+        <Section n="4.6" title="Pricing">
+          Sellers set their own prices. all listings must be priced at a
+          minimum of $1.00. kula reserves the right to remove any listing
+          priced below this threshold.
+        </Section>
+
+        <Section n="4.7" title="Indemnification">
+          Sellers agree to indemnify, defend, and hold harmless kula and its
+          officers, directors, employees, and agents from and against any
+          claims, liabilities, damages, losses, or expenses (including legal
+          fees) arising from seller&apos;s content, breach of these terms, or
+          violation of any third-party rights.
+        </Section>
+
+        <Section n="5.1" title="Personal Use Licence">
+          Upon purchase, buyers receive a non-exclusive, non-transferable
+          licence to use the purchased content for personal teaching purposes
+          only. this licence permits: teaching the content in live or online
+          classes; minor adaptations for personal use.
+        </Section>
+
+        <Section n="5.2" title="Prohibited Buyer Actions">
+          Buyers may not: resell, redistribute, or sublicence purchased
+          content; share purchased files with others; reproduce content in
+          publications or other products; remove or alter copyright notices.
+        </Section>
+
+        <Section n="5.3" title="Digital Downloads">
+          All purchases are digital downloads. kula is not responsible for
+          compatibility issues with the buyer&apos;s device or software.
+        </Section>
+
+        <Section n="6" title="Refund Policy">
+          Due to the digital nature of all products, kula does not offer
+          refunds once a file has been downloaded. if a file is corrupted,
+          significantly misrepresented, or fails to download, buyers may
+          request a refund within 24 hours of purchase by contacting{" "}
+          <a href="mailto:discoverkula@gmail.com" className="underline">
+            discoverkula@gmail.com
+          </a>
+          . kula reviews all refund requests within 7 days and has sole
+          discretion in granting refunds.
+        </Section>
+
+        <Section n="7" title="Intellectual Property &amp; DMCA">
+          kula respects intellectual property rights. if you believe content
+          on kula infringes your copyright, submit a DMCA takedown notice to{" "}
+          <a href="mailto:discoverkula@gmail.com" className="underline">
+            discoverkula@gmail.com
+          </a>{" "}
+          including: identification of the infringing content; your contact
+          information; a statement of good faith belief; your signature. kula
+          will respond following a review period and remove infringing content
+          if the claim is valid.
+        </Section>
+
+        <Section n="8" title="Payments &amp; Taxes">
+          All payments are processed by Stripe. kula does not store payment
+          card information. sellers are responsible for reporting and paying
+          all taxes on their earnings. buyers are responsible for any
+          applicable sales tax in their jurisdiction. kula may collect and
+          remit taxes where required by law.
+        </Section>
+
+        <Section n="9" title="Content Moderation">
+          kula reviews all content submissions before publication. kula
+          reserves the right to reject, remove, or modify any listing at its
+          sole discretion. repeated violations may result in account
+          suspension or termination without notice.
+        </Section>
+
+        <Section n="10" title="Disclaimer of Warranties">
+          kula is provided &apos;as is&apos; without warranties of any kind,
+          express or implied. kula does not warrant that the platform will be
+          uninterrupted, error-free, or that content will meet any specific
+          standard of quality.
+        </Section>
+
+        <Section n="11" title="Limitation of Liability">
+          To the maximum extent permitted by law, kula&apos;s liability for
+          any claim arising from use of the platform is limited to the amount
+          paid by the user in the 12 months preceding the claim, or $100,
+          whichever is lower.
+        </Section>
+
+        <Section n="12" title="Governing Law">
+          These terms are governed by the laws of the State of Wisconsin,
+          United States. any disputes shall be resolved in the courts of
+          Wisconsin.
+        </Section>
+
+        <Section n="13" title="Contact">
+          For questions about these terms, contact:{" "}
+          <a href="mailto:discoverkula@gmail.com" className="underline">
+            discoverkula@gmail.com
+          </a>
+        </Section>
       </div>
     </div>
   );

@@ -21,6 +21,8 @@ export interface Profile {
   commission_override: number | null;
   /** Partner status; auto-set when a rate override exists. */
   partner: boolean;
+  /** Moderation: paused = buying blocked + listings ghosted; deleted = also login-banned. Data always retained. */
+  account_status: "active" | "paused" | "deleted";
 }
 
 /** Public-safe instructor info (the `instructors` view). */

@@ -24,6 +24,7 @@ type Ratings = Record<string, { avg: number; count: number }>;
 
 export default function DashboardClient({
   userId,
+  role,
   products,
   sales,
   ratings,
@@ -33,8 +34,11 @@ export default function DashboardClient({
   ipAgreed,
   aiEnabled,
   feeRateLabel,
+  feePercent,
+  feeFlatCents,
 }: {
   userId: string;
+  role: string;
   products: Product[];
   sales: SaleRow[];
   ratings: Ratings;
@@ -44,6 +48,8 @@ export default function DashboardClient({
   ipAgreed: boolean;
   aiEnabled: boolean;
   feeRateLabel: string;
+  feePercent: number;
+  feeFlatCents: number;
 }) {
   const [tab, setTab] = useState<"content" | "earnings">("content");
   const [showForm, setShowForm] = useState(false);
@@ -80,10 +86,13 @@ export default function DashboardClient({
       {tab === "content" ? (
         <ContentTab
           userId={userId}
+          role={role}
           products={products}
           chargesEnabled={chargesEnabled}
           ipAgreed={ipAgreed}
           aiEnabled={aiEnabled}
+          feePercent={feePercent}
+          feeFlatCents={feeFlatCents}
           showForm={showForm}
           setShowForm={setShowForm}
         />
@@ -156,7 +165,9 @@ function ConnectStripeCard({ started }: { started: boolean }) {
           </h3>
           <p className="mt-1 text-sm text-amber-800">
             identity verification and active payout capabilities are required.
-            onboarding is hosted securely by stripe.
+            onboarding is hosted securely by stripe. you can prepare listings
+            right now — they save as drafts and go live once stripe is
+            connected.
             {started && " your setup is partway done — resume below."}
           </p>
         </div>
@@ -181,43 +192,68 @@ function ConnectStripeCard({ started }: { started: boolean }) {
 
 function ContentTab({
   userId,
+  role,
   products,
   chargesEnabled,
   ipAgreed,
   aiEnabled,
+  feePercent,
+  feeFlatCents,
   showForm,
   setShowForm,
 }: {
   userId: string;
+  role: string;
   products: Product[];
   chargesEnabled: boolean;
   ipAgreed: boolean;
   aiEnabled: boolean;
+  feePercent: number;
+  feeFlatCents: number;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
 }) {
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "draft" | "suspended"
+  >("all");
+
+  const needle = q.trim().toLowerCase();
+  const visible = products.filter(
+    (p) =>
+      (statusFilter === "all" || p.status === statusFilter) &&
+      (!needle ||
+        `${p.title} ${p.theme ?? ""} ${p.category ?? ""} ${p.content_type ?? ""}`
+          .toLowerCase()
+          .includes(needle))
+  );
+  const hasSuspended = products.some((p) => p.status === "suspended");
+
   return (
     <div className="flex flex-col gap-4">
       {showForm ? (
         <UploadDialog
           userId={userId}
+          role={role}
           ipAgreed={ipAgreed}
           aiEnabled={aiEnabled}
+          canPublish={chargesEnabled}
+          feePercent={feePercent}
+          feeFlatCents={feeFlatCents}
           onClose={() => setShowForm(false)}
         />
       ) : (
         <div>
           <button
             onClick={() => setShowForm(true)}
-            disabled={!chargesEnabled}
-            title={!chargesEnabled ? "Connect Stripe first" : undefined}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:cursor-not-allowed disabled:opacity-40 sm:w-fit"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 sm:w-fit"
           >
             <span aria-hidden>+</span> post content to sell
           </button>
           {!chargesEnabled && (
             <p className="mt-1.5 text-xs text-fog">
-              connect stripe above to unlock posting.
+              you can prep listings now — they stay drafts until stripe is
+              connected.
             </p>
           )}
         </div>
@@ -238,24 +274,75 @@ function ContentTab({
           <p className="mt-1 text-fog">create your first listing to start earning.</p>
           <button
             onClick={() => setShowForm(true)}
-            disabled={!chargesEnabled}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600"
           >
             <span aria-hidden>+</span> post your first content
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {products.map((p) => (
-            <ProductRow key={p.id} product={p} />
-          ))}
-        </div>
+        <>
+          {/* search + status filter over your own listings */}
+          {products.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex min-w-[180px] flex-1 items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm focus-within:border-sage-400 sm:max-w-xs">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-fog" aria-hidden>
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4-4" />
+                </svg>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="search your listings…"
+                  className="w-full bg-transparent outline-none placeholder:text-fog"
+                />
+              </label>
+              {(
+                [
+                  ["all", "all"],
+                  ["active", "live"],
+                  ["draft", "drafts"],
+                  ...(hasSuspended ? [["suspended", "suspended"]] : []),
+                ] as [typeof statusFilter, string][]
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setStatusFilter(value)}
+                  className={
+                    "rounded-full px-3.5 py-1.5 text-sm lowercase transition " +
+                    (statusFilter === value
+                      ? "bg-sage-500 font-semibold text-white"
+                      : "border border-ink/10 bg-white text-fog hover:border-ink/30")
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {visible.map((p) => (
+              <ProductRow key={p.id} product={p} canPublish={chargesEnabled} />
+            ))}
+            {!visible.length && products.length > 0 && (
+              <p className="rounded-2xl border border-dashed border-ink/15 bg-white/60 p-8 text-center text-sm text-fog">
+                no listings match — clear the search or pick a different filter.
+              </p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function ProductRow({ product }: { product: Product }) {
+function ProductRow({
+  product,
+  canPublish,
+}: {
+  product: Product;
+  canPublish: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -311,8 +398,13 @@ function ProductRow({ product }: { product: Product }) {
       {product.status !== "suspended" && (
         <button
           onClick={toggleStatus}
-          disabled={busy}
-          className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30"
+          disabled={busy || (product.status === "draft" && !canPublish)}
+          title={
+            product.status === "draft" && !canPublish
+              ? "Connect Stripe to publish — your draft is safe"
+              : undefined
+          }
+          className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {product.status === "active" ? "unpublish" : "publish"}
         </button>
@@ -347,8 +439,13 @@ function EarningsTab({
 }) {
   const [notify, setNotify] = useState(saleNotifications);
   const [copied, setCopied] = useState(false);
+  const [perfQuery, setPerfQuery] = useState("");
 
   const paid = sales.filter((s) => s.status === "paid");
+  const perfNeedle = perfQuery.trim().toLowerCase();
+  const perfProducts = products.filter(
+    (p) => !perfNeedle || p.title.toLowerCase().includes(perfNeedle)
+  );
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const monthPaid = paid.filter(
@@ -427,7 +524,26 @@ function EarningsTab({
       </div>
 
       {/* published content performance */}
-      <div className="overflow-x-auto rounded-2xl border border-ink/5 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-xl font-bold lowercase">
+          listing performance
+        </h3>
+        {products.length > 1 && (
+          <label className="flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm focus-within:border-sage-400">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-fog" aria-hidden>
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4-4" />
+            </svg>
+            <input
+              value={perfQuery}
+              onChange={(e) => setPerfQuery(e.target.value)}
+              placeholder="filter listings…"
+              className="w-40 bg-transparent outline-none placeholder:text-fog"
+            />
+          </label>
+        )}
+      </div>
+      <div className="-mt-3 overflow-x-auto rounded-2xl border border-ink/5 bg-white shadow-sm">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-ink/5 text-left text-fog">
@@ -441,7 +557,7 @@ function EarningsTab({
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
+            {perfProducts.map((p) => {
               const pSales = paid.filter((s) => s.product_id === p.id);
               const gross = sum(pSales, "amount_cents");
               const net = sum(pSales, "seller_amount_cents");
@@ -478,6 +594,13 @@ function EarningsTab({
                 </tr>
               );
             })}
+            {!perfProducts.length && (
+              <tr>
+                <td colSpan={7} className="p-6 text-center text-fog">
+                  no listings match that search.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -595,13 +718,21 @@ type Suggestions = {
 
 function UploadDialog({
   userId,
+  role,
   ipAgreed,
   aiEnabled,
+  canPublish,
+  feePercent,
+  feeFlatCents,
   onClose,
 }: {
   userId: string;
+  role: string;
   ipAgreed: boolean;
   aiEnabled: boolean;
+  canPublish: boolean;
+  feePercent: number;
+  feeFlatCents: number;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -627,7 +758,7 @@ function UploadDialog({
   const [propsNeeded, setPropsNeeded] = useState("");
 
   const [ipChecked, setIpChecked] = useState(ipAgreed);
-  const [publish, setPublish] = useState(true);
+  const [publish, setPublish] = useState(canPublish); // drafts-only until Stripe
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -732,6 +863,18 @@ function UploadDialog({
     const supabase = createClient();
 
     try {
+      // 0) one account type: posting your first listing quietly upgrades a
+      //    buyer profile to seller (the DB role guard allows this exact
+      //    self-transition; product inserts require it).
+      if (role === "buyer") {
+        const { error: roleErr } = await supabase
+          .from("profiles")
+          .update({ role: "seller" })
+          .eq("id", userId);
+        if (roleErr)
+          throw new Error(`Could not enable selling: ${roleErr.message}`);
+      }
+
       // 1) main file → private bucket
       setProgress("uploading file…");
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -796,7 +939,7 @@ function UploadDialog({
         file_path: filePath,
         cover_path: coverPath,
         preview_path: previewPath,
-        status: publish ? "active" : "draft",
+        status: publish && canPublish ? "active" : "draft",
       });
       if (insErr) throw new Error(`Save failed: ${insErr.message}`);
 
@@ -948,6 +1091,11 @@ function UploadDialog({
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
+          <NetPreview
+            price={price}
+            feePercent={feePercent}
+            feeFlatCents={feeFlatCents}
+          />
         </label>
         <label className="text-fog">
           content type {req}
@@ -1093,23 +1241,63 @@ function UploadDialog({
         </span>
       </label>
 
-      <label className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={publish}
-          onChange={(e) => setPublish(e.target.checked)}
-          className="h-4 w-4 accent-[var(--color-sage-500)]"
-        />
-        publish immediately
-      </label>
+      {canPublish ? (
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={publish}
+            onChange={(e) => setPublish(e.target.checked)}
+            className="h-4 w-4 accent-[var(--color-sage-500)]"
+          />
+          publish immediately
+        </label>
+      ) : (
+        <p className="rounded-xl bg-sage-50 p-3 text-sm text-sage-700">
+          this saves as a <strong>draft</strong> — your listings go live the
+          moment stripe is connected (button at the top of the dashboard).
+        </p>
+      )}
 
       <button
         disabled={busy}
         className="self-start rounded-full bg-sage-500 px-6 py-2.5 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
       >
-        {busy ? (progress ?? "saving…") : publish ? "publish listing" : "save draft"}
+        {busy
+          ? (progress ?? "saving…")
+          : publish && canPublish
+            ? "publish listing"
+            : "save draft"}
       </button>
       {message && <p className="text-red-600">{message}</p>}
     </form>
+  );
+}
+
+/**
+ * Live "you'll net $X" line under the price field. Buyers always pay the
+ * sticker price; kula's commission comes out of it. Mirrors lib/fees.ts
+ * (feePercent already reflects this seller's negotiated rate, if any).
+ */
+function NetPreview({
+  price,
+  feePercent,
+  feeFlatCents,
+}: {
+  price: string;
+  feePercent: number;
+  feeFlatCents: number;
+}) {
+  const priceCents = Math.round(parseFloat(price) * 100);
+  if (!Number.isFinite(priceCents) || priceCents < 100) return null;
+  const fee = Math.min(
+    priceCents,
+    Math.round((priceCents * feePercent) / 100) + feeFlatCents
+  );
+  return (
+    <span className="mt-1.5 block rounded-lg bg-sage-50 px-2.5 py-1.5 text-xs text-sage-700">
+      buyers pay {formatUsd(priceCents)} — you&apos;ll net{" "}
+      <strong>{formatUsd(priceCents - fee)}</strong> per sale (after kula&apos;s{" "}
+      {feePercent}% + {formatUsd(feeFlatCents)})
+    </span>
   );
 }

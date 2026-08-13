@@ -51,7 +51,7 @@ export default async function RootLayout({
                 explore
               </Link>
               <Link
-                href={profile ? "/dashboard" : "/login"}
+                href={profile ? "/dashboard" : "/signup"}
                 className="hover:text-sage-600"
               >
                 sell
