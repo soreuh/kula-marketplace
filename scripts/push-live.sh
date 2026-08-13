@@ -48,14 +48,16 @@ for junk in pnpm-lock.yaml pnpm-workspace.yaml artifacts; do
 done
 
 # 4 — show exactly what would ship, then ask
+# (--no-pager everywhere: a big diffstat must never open `less` and
+#  sit waiting for a keypress — it looks like a frozen terminal)
 git fetch origin --quiet
 echo "✅ Repo, branch, and files all check out."
 echo
 echo "Last local commit:"
-git log --oneline -1
+git --no-pager log --oneline -1
 echo
 echo "Changes vs the live site (origin/main):"
-git diff --stat origin/main -- . || true
+git --no-pager diff --stat origin/main -- . || true
 count=$(git rev-list --count origin/main..HEAD)
 echo
 if [ "$count" -eq 0 ]; then
