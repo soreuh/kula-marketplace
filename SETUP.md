@@ -142,9 +142,13 @@ admin UI instead of SQL.)
 - Stripe: complete platform activation, swap `STRIPE_SECRET_KEY` to
   `sk_live_...`, create a live-mode webhook endpoint (new `whsec_...`).
 - Supabase: turn "Confirm email" back ON.
-- Add real Terms of Service / refund policy / seller agreement pages
-  (chargebacks hit the seller's balance under destination charges — disclose
-  that in the seller agreement).
+- The legal pages (/terms, /privacy) are the owner's finalized text — have a
+  lawyer review before launch. Disputes note: with destination charges,
+  chargebacks debit the PLATFORM's Stripe balance (disputed amount + Stripe's
+  dispute fee), not the seller's. The seller's share can be recovered by
+  reversing their transfer — easiest while funds are still in their balance,
+  i.e. before their monthly payout. Consider adding an explicit chargeback
+  clause to the Terms (they are currently silent on it).
 
 ## Troubleshooting
 
