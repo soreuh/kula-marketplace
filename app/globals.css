@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* ── kula design tokens (matched to kula-marketplace.com screenshots) ── */
+@theme {
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Nunito Sans Variable", "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-cream: #f6f6f2;   /* page background */
+  --color-mist: #eef0e9;    /* alternating section band */
+  --color-ink: #26281f;     /* near-black text */
+  --color-fog: #7d8078;     /* muted text */
+
+  --color-sage-50: #f3f6f2;
+  --color-sage-100: #e7eee6;
+  --color-sage-200: #d0dfcf;
+  --color-sage-300: #aac4ab;
+  --color-sage-400: #86a88c;
+  --color-sage-500: #6b8f72; /* primary buttons / accent */
+  --color-sage-600: #5b7f62;
+  --color-sage-700: #4b6a52;
+  --color-sage-800: #3d5643;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
