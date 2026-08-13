@@ -18,7 +18,10 @@ suggestions; RESEND_API_KEY → sale-notification emails.
 - The service-role client (`lib/supabase/admin.ts`) is server-only. Everything
   user-facing goes through RLS-enforced clients.
 - The commission comes from the `platform_settings` table, never hardcoded;
-  it is taken OUT of the listing price (never added on top).
+  it is taken OUT of the listing price (never added on top). Partner sellers
+  may have a per-seller `profiles.commission_override` percent (null =
+  default; flat fee always applies) — negotiated rates are PRIVATE: never
+  expose them in the public `instructors` view or any buyer-facing UI.
 - Reviews only via RLS (paid order required); orders/downloads unchanged.
 - All secrets/config via env vars (see `.env.example`) — the app must remain
   portable to a new owner's accounts by swapping env values only.
@@ -39,3 +42,5 @@ suggestions; RESEND_API_KEY → sale-notification emails.
 - `npm run dev` — local dev (plus `stripe listen --forward-to localhost:3000/api/stripe/webhook`)
 - `npm run build` — must pass before pushing
 - `npm run lint`
+- `bash scripts/push-live.sh` — the ONLY way to push main (verifies repo,
+  branch, and tree integrity, then confirms before deploying the live site)

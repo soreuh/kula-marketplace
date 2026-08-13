@@ -17,6 +17,8 @@ export interface Profile {
   marketing_consent: boolean | null;
   ip_agreement_accepted_at: string | null;
   stripe_charges_enabled: boolean;
+  /** Partner rate: custom commission percent; null = platform default. Private. */
+  commission_override: number | null;
 }
 
 /** Public-safe instructor info (the `instructors` view). */

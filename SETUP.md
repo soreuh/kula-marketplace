@@ -14,14 +14,15 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
 1. supabase.com → **New project** → name it `kula-marketplace`, pick a strong DB
    password (save it somewhere), region close to you → **Create**.
 2. When it finishes provisioning: left sidebar → **SQL Editor** → **New query**.
-3. Run BOTH migrations, in order (each: copy the ENTIRE file, paste, **Run**):
-   1. `supabase/migrations/001_init.sql` — tables, security policies, private
-      file bucket, triggers.
-   2. `supabase/migrations/002_product_v2.sql` — listing metadata, reviews,
-      mailing list, covers bucket, instructor profiles, the 30% + 25¢
-      commission defaults.
+3. Run EVERY file in `supabase/migrations/`, in numeric order (each: copy the
+   ENTIRE file, paste, **Run**):
+   1. `001_init.sql` — tables, security policies, private file bucket, triggers.
+   2. `002_product_v2.sql` — listing metadata, reviews, mailing list, covers
+      bucket, instructor profiles, the 30% + 25¢ commission defaults.
+   3. `003_partner_rates.sql` — per-seller negotiated commission (partner
+      rates; set from the admin People panel).
 
-   (Already ran 001 on an existing project? Just run 002 on top.)
+   (Existing project? Just run the ones you haven't run yet, in order.)
 
 ## 2. While testing: turn off email confirmation
 

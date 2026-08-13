@@ -226,6 +226,8 @@ export default async function ProductPage({
           <p className="mt-1 text-right text-sm text-fog">
             one-time payment. lifetime access.
           </p>
+          {/* Note: no fee breakdown here on purpose — commission is between
+              kula and the seller (and partner rates are private). */}
 
           <div className="mt-6">
             {p.status !== "active" && !isSeller ? (

@@ -65,3 +65,27 @@ export async function changeUserRole(formData: FormData) {
   await supabase.from("profiles").update({ role }).eq("id", userId);
   revalidatePath("/dashboard/admin");
 }
+
+/**
+ * Partner rates: set a seller's negotiated commission percent.
+ * Blank clears the override → the seller follows platform defaults again.
+ * The flat per-transaction fee is unaffected.
+ */
+export async function setCommissionOverride(formData: FormData) {
+  const supabase = await requireAdmin();
+  const userId = String(formData.get("user_id"));
+  const raw = String(formData.get("commission_override") ?? "").trim();
+
+  let value: number | null = null;
+  if (raw !== "") {
+    value = Number(raw);
+    if (!Number.isFinite(value) || value < 0 || value > 100)
+      throw new Error("Rate must be 0–100, or blank for the default");
+  }
+
+  await supabase
+    .from("profiles")
+    .update({ commission_override: value })
+    .eq("id", userId);
+  revalidatePath("/dashboard/admin");
+}

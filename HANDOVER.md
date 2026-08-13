@@ -67,9 +67,10 @@ Aleks transfers the repository (the code folder) to you:
    - Region: East US.
    - Wait ~2 minutes while it sets up.
 2. Left sidebar → **SQL Editor** → **New query**.
-3. Run BOTH migration files, in order (on GitHub: browse to `supabase` →
-   `migrations` → click a file → the **copy** icon copies the whole thing):
-   first `001_init.sql`, then — in a new query — `002_product_v2.sql`.
+3. Run EVERY migration file, in numeric order (on GitHub: browse to
+   `supabase` → `migrations` → click a file → the **copy** icon copies the
+   whole thing): `001_init.sql`, then `002_product_v2.sql`, then
+   `003_partner_rates.sql` — each in its own query.
 4. Each should say "Success". Together they are your entire database: user
    accounts, listings with all their metadata, orders, reviews, the mailing
    list, file storage, and all the security rules — including your 30% + 25¢

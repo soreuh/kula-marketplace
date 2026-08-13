@@ -3,7 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { formatUsd } from "@/lib/fees";
 import { StatTile, StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
-import { changeUserRole, setProductStatus, updateFeeSettings } from "./actions";
+import {
+  changeUserRole,
+  setCommissionOverride,
+  setProductStatus,
+  updateFeeSettings,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +108,14 @@ export default async function AdminDashboard() {
           </form>
         </section>
 
+        <SellersSection
+          users={(users as Profile[] | null) ?? []}
+          products={(products as Product[] | null) ?? []}
+          orders={allOrders}
+          defaultPercent={Number(s.fee_percent)}
+          flatCents={s.fee_flat_cents}
+        />
+
         <section>
           <h2 className="mb-3 font-display text-xl font-bold lowercase">
             listings
@@ -200,5 +213,126 @@ export default async function AdminDashboard() {
         </section>
       </div>
     </div>
+  );
+}
+
+/**
+ * Sellers panel: every seller, their payout status, and their commission
+ * rate. Everyone follows the platform default unless a per-seller override
+ * ("partner rate") is set here — blank the field to return them to default.
+ */
+function SellersSection({
+  users,
+  products,
+  orders,
+  defaultPercent,
+  flatCents,
+}: {
+  users: Profile[];
+  products: Product[];
+  orders: Order[];
+  defaultPercent: number;
+  flatCents: number;
+}) {
+  const sellers = users.filter((u) => u.role === "seller" || u.role === "admin");
+  const paid = orders.filter((o) => o.status === "paid");
+  const sellerByProduct = new Map(products.map((p) => [p.id, p.seller_id]));
+
+  return (
+    <section>
+      <h2 className="mb-1 font-display text-xl font-bold lowercase">sellers</h2>
+      <p className="mb-3 text-sm text-fog">
+        default rate: {defaultPercent}% + {formatUsd(flatCents)} per sale — set a
+        custom rate below to give a seller a discount; blank returns them to the
+        default.
+      </p>
+      <div className="overflow-x-auto rounded-2xl border border-ink/5 bg-white shadow-sm">
+        <table className="w-full min-w-[720px] text-sm">
+          <thead>
+            <tr className="border-b border-ink/5 text-left text-fog">
+              <th className="p-3.5 font-display font-semibold lowercase">seller</th>
+              <th className="p-3.5 font-display font-semibold lowercase">status</th>
+              <th className="p-3.5 font-display font-semibold lowercase">listings</th>
+              <th className="p-3.5 font-display font-semibold lowercase">paid sales</th>
+              <th className="p-3.5 font-display font-semibold lowercase">rate</th>
+              <th className="p-3.5 font-display font-semibold lowercase">set rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!sellers.length && (
+              <tr>
+                <td className="p-4 text-fog" colSpan={6}>
+                  no sellers yet.
+                </td>
+              </tr>
+            )}
+            {sellers.map((u) => {
+              const theirListings = products.filter((p) => p.seller_id === u.id);
+              const theirSales = paid.filter(
+                (o) => sellerByProduct.get(o.product_id) === u.id
+              );
+              return (
+                <tr key={u.id} className="border-b border-ink/5 last:border-0">
+                  <td className="max-w-[220px] p-3.5">
+                    <div className="truncate font-medium">
+                      {u.display_name ?? u.email}
+                    </div>
+                    <div className="truncate text-xs text-fog">{u.email}</div>
+                  </td>
+                  <td className="p-3.5">
+                    {u.stripe_charges_enabled ? (
+                      <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-semibold text-sage-700">
+                        active
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                        not active
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3.5 tabular-nums">{theirListings.length}</td>
+                  <td className="p-3.5 tabular-nums">{theirSales.length}</td>
+                  <td className="p-3.5">
+                    {u.commission_override !== null ? (
+                      <span className="rounded-full bg-sage-100 px-2.5 py-0.5 text-xs font-semibold text-sage-700">
+                        partner · {Number(u.commission_override)}%
+                      </span>
+                    ) : (
+                      <span className="text-fog">default · {defaultPercent}%</span>
+                    )}
+                  </td>
+                  <td className="p-3.5">
+                    <form
+                      action={setCommissionOverride}
+                      className="flex items-center gap-1.5"
+                    >
+                      <input type="hidden" name="user_id" value={u.id} />
+                      <input
+                        name="commission_override"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        defaultValue={u.commission_override ?? ""}
+                        placeholder="default"
+                        className="w-20 rounded-xl border border-ink/10 px-2 py-1.5"
+                      />
+                      <span className="text-fog">%</span>
+                      <button className="rounded-full border border-ink/10 px-3 py-1.5 lowercase hover:border-ink/30">
+                        set
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-1.5 text-xs text-fog">
+        status = stripe payouts ready (refreshes when the seller visits their
+        dashboard). rate changes apply to future sales only.
+      </p>
+    </section>
   );
 }

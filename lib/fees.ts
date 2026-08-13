@@ -7,15 +7,32 @@ import type { PlatformSettings } from "./types";
  * $6.75 to the seller.
  */
 
-/** Kula's commission in cents for a given listing price. */
-export function feeCents(priceCents: number, settings: PlatformSettings): number {
-  const pct = Math.round((priceCents * Number(settings.fee_percent)) / 100);
+/**
+ * Kula's commission in cents for a given listing price.
+ * `overridePercent` is a per-seller negotiated rate (partner deals) that
+ * replaces the platform percent; the flat fee always applies. NULL/undefined
+ * = platform default. Example at 15% + 25¢: $10.00 → $1.75 fee, $8.25 net.
+ */
+export function feeCents(
+  priceCents: number,
+  settings: PlatformSettings,
+  overridePercent?: number | null
+): number {
+  const percent =
+    overridePercent === null || overridePercent === undefined
+      ? Number(settings.fee_percent)
+      : Number(overridePercent);
+  const pct = Math.round((priceCents * percent) / 100);
   return Math.min(priceCents, pct + settings.fee_flat_cents);
 }
 
 /** What the seller actually receives. */
-export function sellerNetCents(priceCents: number, settings: PlatformSettings): number {
-  return priceCents - feeCents(priceCents, settings);
+export function sellerNetCents(
+  priceCents: number,
+  settings: PlatformSettings,
+  overridePercent?: number | null
+): number {
+  return priceCents - feeCents(priceCents, settings, overridePercent);
 }
 
 export function formatUsd(cents: number): string {

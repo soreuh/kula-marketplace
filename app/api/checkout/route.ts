@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: seller } = await admin
     .from("profiles")
-    .select("stripe_account_id")
+    .select("stripe_account_id, commission_override")
     .eq("id", p.seller_id)
     .single();
 
@@ -83,8 +83,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Platform not configured" }, { status: 500 });
   const s = settings as PlatformSettings;
 
-  const fee = feeCents(p.price_cents, s);
-  const net = sellerNetCents(p.price_cents, s);
+  // Partner sellers may have a negotiated rate; null = platform default.
+  const fee = feeCents(p.price_cents, s, seller.commission_override);
+  const net = sellerNetCents(p.price_cents, s, seller.commission_override);
 
   const meta = {
     product_id: p.id,

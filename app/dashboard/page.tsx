@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
   const prof = profile as Profile;
 
-  const [{ data: products }, { data: orders }, { data: reviews }] =
+  const [{ data: products }, { data: orders }, { data: reviews }, { data: settings }] =
     await Promise.all([
       supabase
         .from("products")
@@ -38,7 +38,14 @@ export default async function DashboardPage() {
         .in("status", ["paid", "refunded"])
         .order("created_at", { ascending: false }),
       supabase.from("reviews").select("product_id, rating"),
+      supabase.from("platform_settings").select("*").single(),
     ]);
+
+  // The seller's effective rate: their negotiated override, else the default.
+  const feePercent =
+    prof.commission_override ?? Number(settings?.fee_percent ?? 30);
+  const feeFlat = settings?.fee_flat_cents ?? 25;
+  const feeRateLabel = `${Number(feePercent)}% + $${(feeFlat / 100).toFixed(2)} per sale`;
 
   const myProducts = (products as Product[] | null) ?? [];
   const myIds = new Set(myProducts.map((p) => p.id));
@@ -110,6 +117,7 @@ export default async function DashboardPage() {
           saleNotifications={prof.sale_notifications}
           ipAgreed={!!prof.ip_agreement_accepted_at}
           aiEnabled={!!process.env.ANTHROPIC_API_KEY}
+          feeRateLabel={feeRateLabel}
         />
       </div>
     </div>

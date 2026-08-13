@@ -32,6 +32,7 @@ export default function DashboardClient({
   saleNotifications,
   ipAgreed,
   aiEnabled,
+  feeRateLabel,
 }: {
   userId: string;
   products: Product[];
@@ -42,13 +43,18 @@ export default function DashboardClient({
   saleNotifications: boolean;
   ipAgreed: boolean;
   aiEnabled: boolean;
+  feeRateLabel: string;
 }) {
   const [tab, setTab] = useState<"content" | "earnings">("content");
   const [showForm, setShowForm] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
-      {chargesEnabled ? <PayoutsActivePanel /> : <ConnectStripeCard started={stripeStarted} />}
+      {chargesEnabled ? (
+        <PayoutsActivePanel feeRateLabel={feeRateLabel} />
+      ) : (
+        <ConnectStripeCard started={stripeStarted} />
+      )}
 
       <div className="flex w-fit rounded-full bg-ink/5 p-1 font-display text-sm font-semibold lowercase">
         <button
@@ -100,7 +106,7 @@ export default function DashboardClient({
 
 /* ───────────────────────── stripe banners ───────────────────────── */
 
-function PayoutsActivePanel() {
+function PayoutsActivePanel({ feeRateLabel }: { feeRateLabel: string }) {
   return (
     <div className="rounded-2xl border border-sage-200 bg-sage-50 p-5">
       <div className="flex items-center gap-2.5">
@@ -113,7 +119,7 @@ function PayoutsActivePanel() {
       </div>
       <p className="mt-1 text-sm text-sage-700/80">
         stripe deposits your earnings to your bank monthly (around the 1st),
-        once your balance reaches $5.00.
+        once your balance reaches $5.00. your kula rate: {feeRateLabel}.
       </p>
     </div>
   );

@@ -13,6 +13,7 @@ sudo -u postgres psql -v ON_ERROR_STOP=1 -d kula_test \
   -f supabase/tests/stub_supabase.sql \
   -f supabase/migrations/001_init.sql \
   -f supabase/migrations/002_product_v2.sql \
+  -f supabase/migrations/003_partner_rates.sql \
   -f supabase/tests/rls_test.sql \
   -f supabase/tests/rls_test_002.sql
 ```
