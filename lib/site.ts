@@ -6,12 +6,19 @@
  * (or set NEXT_PUBLIC_CONTACT_EMAIL in env to override without a code
  * edit, e.g. at handover).
  *
+ * Aug 2026: the default moved from discoverkula@gmail.com to
+ * hello@kula-marketplace.com — the domain address created in the cutover,
+ * which FORWARDS to discoverkula@gmail.com via Porkbun. Same inbox, branded
+ * on the outside, and it's already the From-address for Resend + Mailchimp.
+ * That forward depends on keeping Porkbun's nameservers (see the cutover
+ * runbook) — if DNS ever moves, this address dies silently.
+ *
  * NOTE: the .md guides (SETUP/HANDOVER) mention the address in prose —
  * those need a manual find-replace if it ever changes. Third-party
  * dashboards (Stripe, Mailchimp, Resend) hold their own copies too.
  */
 export const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "discoverkula@gmail.com";
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@kula-marketplace.com";
 
 export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
 
