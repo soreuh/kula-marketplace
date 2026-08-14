@@ -85,6 +85,9 @@ export interface Review {
   rating: number;
   body: string | null;
   reviewer_name: string | null;
+  /** The seller's one public response (migration 010). */
+  reply: string | null;
+  replied_at: string | null;
   created_at: string;
 }
 

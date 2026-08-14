@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import BuyButton from "./buy-button";
 import ReviewForm from "./review-form";
+import ReviewReply from "./review-reply";
 import ViewPing from "./view-ping";
 
 export const dynamic = "force-dynamic";
@@ -204,6 +205,19 @@ export default async function ProductPage({
                     </div>
                     {r.body && (
                       <p className="mt-1.5 text-sm text-fog">{r.body}</p>
+                    )}
+                    {r.reply && (
+                      <div className="mt-2.5 rounded-xl bg-sage-50 p-3">
+                        <p className="text-xs font-semibold lowercase text-sage-700">
+                          response from the teacher
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-fog">
+                          {r.reply}
+                        </p>
+                      </div>
+                    )}
+                    {isSeller && (
+                      <ReviewReply reviewId={r.id} initial={r.reply} />
                     )}
                   </li>
                 ))}

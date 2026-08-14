@@ -7,6 +7,7 @@ import {
   Avatar,
   EmptyState,
   ProductCard,
+  Stars,
   VerifiedBadge,
   btnSmallOutline,
 } from "@/components/ui";
@@ -49,6 +50,17 @@ export default async function InstructorProfilePage({
   }
   for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
+  // the teacher's overall rating — every review across their live listings
+  const listingIds = new Set(listings.map((l) => l.id));
+  let overallSum = 0;
+  let overallCount = 0;
+  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
+    if (!listingIds.has(r.product_id)) continue;
+    overallSum += r.rating;
+    overallCount += 1;
+  }
+  const overall = overallCount ? overallSum / overallCount : null;
+
   return (
     <div>
       <section className="bg-mist/60 px-5 py-12">
@@ -59,6 +71,11 @@ export default async function InstructorProfilePage({
               <h1 className="font-display text-3xl font-bold">{name}</h1>
               {inst.stripe_charges_enabled && <VerifiedBadge />}
             </div>
+            {overall !== null && (
+              <div className="mt-1.5">
+                <Stars rating={overall} count={overallCount} />
+              </div>
+            )}
             <p className="mt-1 text-sm text-fog">
               {listings.length} published listing{listings.length === 1 ? "" : "s"}
               {inst.specialisations.length > 0 &&

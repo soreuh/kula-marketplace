@@ -46,6 +46,10 @@ owner before enabling in production).
   service-role client (see onboard route + dashboard Stripe sync), never the
   user's session, or the guard rejects them.
 - Reviews only via RLS (paid order required); orders/downloads unchanged.
+  Reviews are ONE-DIRECTIONAL by design (buyers→listings; sellers never
+  rate buyers). Sellers may write one public reply per review — column-
+  guarded (migration 010): seller touches ONLY reply/replied_at, buyer
+  never touches the reply, paused accounts can't reply.
 - Listings are $1.00 minimum (DB check, migration 006 — matches Terms §4.6).
 - Moderation (migration 007): `profiles.account_status` active|paused|deleted.
   Paused/deleted = buying blocked (checkout gate) + listings/profile ghosted

@@ -36,6 +36,8 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
    9. `009_product_options.sql` — the seller-facing choice lists (yoga
       styles, content types, levels) become admin-editable from the
       dashboard's "listing options" panel.
+   10. `010_review_replies.sql` — sellers can post one public response to
+       each review of their listings (never altering the review itself).
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 
