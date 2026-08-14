@@ -27,6 +27,8 @@ export interface Profile {
   avatar_path: string | null;
   /** Migration 021 — last page view, stamped by the layout (1/hour). */
   last_seen_at?: string | null;
+  /** Migration 022 — buyer pref: email me when content I own is updated. */
+  content_update_emails?: boolean | null;
 }
 
 /** Public-safe instructor info (the `instructors` view). */
@@ -49,6 +51,8 @@ export interface Product {
   category: string | null; // yoga style
   price_cents: number;
   file_path: string | null;
+  /** Migration 022 — sha256 of the sale file; gates buyer update emails. */
+  file_sha256?: string | null;
   status: ProductStatus;
   created_at: string;
   updated_at: string;
@@ -107,4 +111,8 @@ export interface PlatformSettings {
   launch_date?: string | null;
   /** Migration 020 — driver overrides for lib/growth-model.ts; null = Mid defaults. */
   growth_model?: Record<string, number> | null;
+  /** Migration 022 — platform kill switch for buyer file-update emails. */
+  notify_content_updates?: boolean | null;
+  /** Migration 022 — platform kill switch for seller sale emails. */
+  notify_sale_emails?: boolean | null;
 }

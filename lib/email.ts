@@ -43,3 +43,52 @@ export async function sendSaleEmail(opts: {
     // never let email failures affect the webhook
   }
 }
+
+/**
+ * "The file you own was updated" email to prior buyers — sent by
+ * /api/notify-update after a REAL content change (different sha256),
+ * behind the platform kill switch and a 1/product/24h rate limit.
+ * Same posture as sale emails: no key = silent no-op, failures are
+ * swallowed, and one bad address never blocks the rest.
+ */
+export async function sendContentUpdateEmails(opts: {
+  to: string[];
+  productTitle: string;
+  siteUrl: string;
+}): Promise<number> {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || opts.to.length === 0) return 0;
+
+  let sent = 0;
+  for (const to of opts.to) {
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM ?? "kula <onboarding@resend.dev>",
+          to,
+          subject: `updated: "${opts.productTitle}" has a new version 🌿`,
+          html: `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+              <h2 style="color:#4b6a52">your content got better</h2>
+              <p>The teacher behind <strong>${opts.productTitle}</strong> just
+              updated the file. Your purchase includes every update — the
+              latest version is waiting in your library.</p>
+              <p><a href="${opts.siteUrl}/library"
+                style="color:#4b6a52;font-weight:bold">open your library →</a></p>
+              <p style="color:#888;font-size:13px">You're receiving this because
+              you own this content on kula. Lifetime access means updates too.</p>
+            </div>`,
+        }),
+      });
+      if (res.ok) sent++;
+    } catch {
+      // keep going — one bad address must not block the rest
+    }
+  }
+  return sent;
+}

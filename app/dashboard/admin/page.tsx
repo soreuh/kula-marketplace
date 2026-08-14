@@ -5,6 +5,7 @@ import { StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
   addProductOption,
+  updateNotificationSettings,
   deleteProductOption,
   setCommissionOverride,
   setProductStatus,
@@ -138,6 +139,36 @@ export default async function AdminDashboard() {
             </span>
           </form>
         </section>
+
+        <AdminSection
+          title="notifications"
+          subtitle="platform-wide switches for every email the app sends. individual users keep their own toggles (sellers: sale emails in the earnings tab; buyers: update emails in their library) — these override everyone's."
+        >
+          <form action={updateNotificationSettings} className="flex flex-col gap-3 text-sm">
+            <label className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                name="notify_sale_emails"
+                defaultChecked={s.notify_sale_emails !== false}
+                className="h-4 w-4 accent-[var(--color-sage-500)]"
+              />
+              sale emails to sellers (&quot;you made a sale&quot;)
+            </label>
+            <label className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                name="notify_content_updates"
+                defaultChecked={s.notify_content_updates !== false}
+                className="h-4 w-4 accent-[var(--color-sage-500)]"
+              />
+              file-update emails to buyers (&quot;your content got better&quot;) —
+              max one per listing per day
+            </label>
+            <button className="w-fit rounded-full bg-sage-500 px-5 py-2 font-display font-semibold lowercase text-white hover:bg-sage-600">
+              save
+            </button>
+          </form>
+        </AdminSection>
 
         <OptionsSection options={(optionRows as OptionRow[] | null) ?? []} />
 

@@ -951,6 +951,19 @@ function UploadDialog({
     (Object.keys(suggestions) as (keyof Suggestions)[]).forEach(applySuggestion);
   }
 
+  /** SHA-256 (hex) of a file — how we tell a real content change from a
+   *  re-upload of the same file. Same hash → no swap, no buyer email. */
+  async function sha256Hex(f: File): Promise<string | null> {
+    try {
+      const buf = await crypto.subtle.digest("SHA-256", await f.arrayBuffer());
+      return [...new Uint8Array(buf)]
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    } catch {
+      return null; // no hash → treat as changed (conservative: email goes out)
+    }
+  }
+
   async function generatePreview(f: File): Promise<Blob | null> {
     try {
       const pdfjs = await import("pdfjs-dist");
@@ -1015,22 +1028,39 @@ function UploadDialog({
       //    On edit with no new file chosen, keep the existing one. When a new
       //    file IS uploaded it goes to a NEW path and the old object is left
       //    in storage on purpose — never delete something a buyer may hold.
+      //    The sha256 decides whether this is a REAL content change: same
+      //    hash as the current file → skip the swap entirely (no new object,
+      //    no buyer email — re-uploading your own file is a no-op).
       let filePath = editing?.file_path ?? null;
-      if (file) {
+      let fileHash: string | null | undefined = undefined; // undefined = untouched
+      let contentChanged = false;
+      let effectiveFile = file; // null = keep the current file (incl. same-hash skip)
+      if (file && isEdit) {
+        const h = await sha256Hex(file);
+        if (h && editing!.file_sha256 && h === editing!.file_sha256) {
+          effectiveFile = null; // identical content — no swap, no buyer email
+        } else {
+          fileHash = h;
+          contentChanged = true;
+        }
+      } else if (file) {
+        fileHash = await sha256Hex(file);
+      }
+      if (effectiveFile) {
         setProgress("uploading file…");
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const safeName = effectiveFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
         filePath = `${userId}/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("product-files")
-          .upload(filePath, file);
+          .upload(filePath, effectiveFile);
         if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
       }
 
       // 2) blurred preview (PDF only) → public covers bucket
       let previewPath: string | null = editing?.preview_path ?? null;
-      if (file && file.name.toLowerCase().endsWith(".pdf")) {
+      if (effectiveFile && effectiveFile.name.toLowerCase().endsWith(".pdf")) {
         setProgress("creating blurred preview…");
-        const blob = await generatePreview(file);
+        const blob = await generatePreview(effectiveFile);
         if (blob) {
           previewPath = `${userId}/preview-${crypto.randomUUID()}.jpg`;
           const { error } = await supabase.storage
@@ -1080,6 +1110,8 @@ function UploadDialog({
         file_path: filePath,
         cover_path: coverPath,
         preview_path: previewPath,
+        // undefined = leave the stored hash untouched (no new file)
+        ...(fileHash !== undefined ? { file_sha256: fileHash } : {}),
       };
 
       if (isEdit) {
@@ -1094,6 +1126,18 @@ function UploadDialog({
           .update(mustDemote ? { ...fields, status: "draft" } : fields)
           .eq("id", editing!.id);
         if (updErr) throw new Error(`Save failed: ${updErr.message}`);
+
+        // Real content change → tell prior owners (paid + free claimers).
+        // The route re-verifies ownership, honors the platform kill switch
+        // and each buyer's own preference, and rate-limits to 1/product/day
+        // — so this call is a suggestion, not an authority. Best-effort.
+        if (contentChanged) {
+          fetch("/api/notify-update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: editing!.id }),
+          }).catch(() => null);
+        }
         if (mustDemote)
           alert(
             "Saved — but because this listing now has a price and Stripe isn't connected yet, it's been moved back to draft. Connect Stripe and hit publish."
@@ -1169,7 +1213,8 @@ function UploadDialog({
             </p>
             <p className="mt-0.5 text-xs text-fog">
               click to replace it — everyone who owns this listing, now or
-              later, gets the new version. your old file is kept, never deleted.
+              later, gets the new version, and prior owners get an email that
+              an update is ready. re-uploading the identical file does nothing.
             </p>
           </>
         ) : (

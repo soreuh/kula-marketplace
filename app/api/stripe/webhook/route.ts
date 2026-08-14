@@ -79,7 +79,16 @@ export async function POST(request: Request) {
           .select("email, sale_notifications")
           .eq("id", product.seller_id)
           .single();
-        if (seller?.sale_notifications) {
+        // Platform switch (admin → notifications) AND the seller's own
+        // preference. Tolerant: un-migrated column reads undefined = ON.
+        const { data: notifSettings } = await admin
+          .from("platform_settings")
+          .select("*")
+          .single();
+        const platformOn =
+          (notifSettings as { notify_sale_emails?: boolean } | null)
+            ?.notify_sale_emails !== false;
+        if (platformOn && seller?.sale_notifications) {
           await sendSaleEmail({
             to: seller.email,
             productTitle: product.title,

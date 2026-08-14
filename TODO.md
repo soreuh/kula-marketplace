@@ -275,7 +275,25 @@ real launch.
 
 ## Tech — small
 
-- [ ] Seller notification preferences: `profiles.email_sale_notifications` + dashboard toggle + webhook check; then restore the "turn these off in your dashboard" sentence in lib/email.ts (removed 2026-08-14 because it was fiction)
+- [x] 2026-08-14 STALE ITEM CORRECTED: seller sale-notification prefs already
+  existed end-to-end (`profiles.sale_notifications` + earnings-tab toggle +
+  webhook check at webhook/route.ts:82) — this TODO was wrong about the check
+  being missing. The "turn off in dashboard" sentence in the sale email can be
+  restored any time; it stopped being fiction long ago.
+- [x] 2026-08-14 **Buyer update emails + notification stack (022)**: replacing
+  a listing's file now emails every prior OWNER (paid + free claimers — same
+  library access) that the new version is waiting. Change detection =
+  client-side SHA-256 vs `products.file_sha256`; identical file → NO swap, no
+  new storage object, no email (dropzone copy says so). Enforcement is all
+  server-side in /api/notify-update: seller-owns-listing via RLS, platform
+  kill switch, per-buyer `content_update_emails` opt-out, moderated accounts
+  skipped, 1 email/product/24h via the 018 rate-limit counters (client's
+  opinion is a suggestion, not authority; buyer emails assembled via service
+  role and never returned to the caller). Admin gets a collapsed
+  "notifications" section with platform switches for BOTH email types (sale
+  emails now also platform-switchable, checked in the webhook, tolerant
+  read); buyers get an "email me when content i own gets updated" toggle on
+  the library page mirroring the sellers' earnings-tab toggle.
 - [ ] Preview is page 1 ONLY, baked at upload (pdf.js → canvas → 7px blur burned
   into the pixels → JPEG in the public covers bucket; PPT/PPTX get none). If a
   teacher's page 1 is a title page, buyers learn nothing from it. Worth letting

@@ -1,3 +1,4 @@
+import UpdateEmailsToggle from "./update-emails-toggle";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ export default async function LibraryPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: orders }, ratings] = await Promise.all([
+  const [{ data: orders }, ratings, { data: myProfile }] = await Promise.all([
     supabase
       .from("orders")
       .select("*")
@@ -24,7 +25,12 @@ export default async function LibraryPage() {
       .eq("status", "paid")
       .order("created_at", { ascending: false }),
     fetchProductRatings(supabase),
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
   ]);
+  // tolerant: column absent (022 not run) → undefined → toggle shows ON
+  const updateEmailsOn =
+    (myProfile as { content_update_emails?: boolean } | null)
+      ?.content_update_emails !== false;
 
   const paid = (orders as Order[] | null) ?? [];
   const productIds = [...new Set(paid.map((o) => o.product_id))];
@@ -47,7 +53,15 @@ export default async function LibraryPage() {
           </h1>
           <p className="mt-1 text-fog">
             everything you&apos;ve purchased — yours forever, download any time.
+            when a teacher updates their file, your library always has the
+            latest version.
           </p>
+          <div className="mt-3">
+            <UpdateEmailsToggle
+              userId={user.id}
+              initial={updateEmailsOn}
+            />
+          </div>
         </div>
       </section>
 
