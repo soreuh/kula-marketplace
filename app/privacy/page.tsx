@@ -11,6 +11,8 @@ export const metadata = { title: "privacy policy — kula" };
  *   3. §4: "we use Replit for infrastructure and authentication" → Supabase
  *      (infrastructure & authentication), Stripe (payments), Netlify
  *      (hosting)
+ *   4. §7: cookie wording discloses Google Analytics (owner-approved —
+ *      required before NEXT_PUBLIC_GA_MEASUREMENT_ID goes live)
  * Section numbering (two sections numbered 2) is as in the source document.
  */
 
@@ -116,9 +118,10 @@ export default function PrivacyPage() {
         </Section>
 
         <Section n="7" title="Cookies">
-          We use a single session cookie to keep you signed in. we do not use
-          advertising or tracking cookies. you can disable cookies in your
-          browser settings, but this will prevent you from staying signed in.
+          We use a session cookie to keep you signed in, and Google Analytics
+          cookies to understand how the site is used. we do not use
+          advertising cookies. you can disable cookies in your browser
+          settings, but this will prevent you from staying signed in.
         </Section>
 
         <Section n="8" title="Children's Privacy">

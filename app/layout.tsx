@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Wordmark, LeafLogo } from "@/components/ui";
 import UserMenu from "@/components/user-menu";
 import ConsentModal from "@/components/consent-modal";
+import Analytics from "@/components/analytics";
 import type { Profile } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -41,6 +42,8 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col">
+        {/* GA4 — renders nothing without NEXT_PUBLIC_GA_MEASUREMENT_ID */}
+        <Analytics />
         <nav className="sticky top-0 z-20 border-b border-ink/5 bg-white/90 backdrop-blur">
           <div className="mx-auto flex h-16 max-w-6xl items-center gap-7 px-5">
             <Link href="/">

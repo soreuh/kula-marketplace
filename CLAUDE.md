@@ -10,7 +10,9 @@ Optional keyed features (hidden without env): ANTHROPIC_API_KEY → AI listing
 suggestions; RESEND_API_KEY → sale-notification emails; MAILCHIMP_API_KEY +
 MAILCHIMP_AUDIENCE_ID → waitlist/consent signups mirror into a Mailchimp
 Audience (mailing_list table stays the source of truth; signups go through
-/api/mailing-list).
+/api/mailing-list); NEXT_PUBLIC_GA_MEASUREMENT_ID → GA4 snippet
+(components/analytics.tsx; privacy §7 cookie wording must be updated by the
+owner before enabling in production).
 
 ## Invariants — never violate
 

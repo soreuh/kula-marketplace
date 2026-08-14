@@ -63,7 +63,9 @@ AI metadata suggestions in the upload dialog; `RESEND_API_KEY` turns on sale
 notification emails to sellers; `MAILCHIMP_API_KEY` + `MAILCHIMP_AUDIENCE_ID`
 mirror every waitlist/consent signup into your Mailchimp Audience (they always
 land in your own database's `mailing_list` table too), so you can send
-newsletters from Mailchimp.
+newsletters from Mailchimp; `NEXT_PUBLIC_GA_MEASUREMENT_ID` (the `G-...` id
+from your GA4 web data stream) turns on Google Analytics — update the privacy
+policy's cookie wording before enabling it in production.
 
 ## 4. Run it
 
