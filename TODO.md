@@ -78,11 +78,11 @@ real launch.
 
 - [ ] Push the pending commit (legal pass + copy honesty + docs) if not already live
 - [x] 2026-08-14 **Applied migrations 014 + 015** and deployed. Verified end-to-end with a real signup (`+tos`): `terms_accepted_at` == `created_at` (server-stamped by the trigger, not a client clock), `terms_version` = 2026-08-14, `marketing_consent` = true, and a `mailing_list` row with `source: account` ~3s later. Live /signup serves the consent line with working /terms + /privacy links, the checkbox blocks submit until ticked, and the contact landed in HER Mailchimp audience (tag `kula-account`, status Subscribed, source "API - kula mvp") — full loop confirmed, no hop unverified. Accounts created BEFORE this (izzy, the +buyer1/+pl/aleks.sorra test rows) correctly show NULL terms — they predate the checkbox and must never be backfilled; the test-data wipe removes them anyway.
-- [ ] `git rm --cached components/consent-modal.tsx` (moved to _to_delete/ — the bridge can't delete files) and delete `_to_delete/` when you're happy it's dead
+- [x] 2026-08-14 consent-modal deletion committed. NOTE for anyone auditing: `_to_delete/` is in .gitignore (line 39) and is NOT git-tracked — `git ls-files _to_delete` returns nothing. Delete the folder from Finder whenever; no git command needed.
 - [x] 2026-08-14 Build verified on the Mac (lint + tsc + next build all green) and pushed. NOTE for future AI sessions: `npm run build` CANNOT run over the Cowork device bridge (that VM has no network; node_modules is a macOS install so Next tries to fetch a linux-arm64 swc binary). Don't run `git` over the bridge either — it can't remove .git/index.lock and leaves the repo locked.
 - [ ] Delete the stray 87-byte `package-lock.json` in the parent "Yoga App" folder — it's outside the repo and makes every build print a turbopack.root warning
 - [ ] Bump `TERMS_VERSION` in lib/site.ts + the "last updated" lines on /terms and /privacy whenever the legal text changes in substance (e.g. after the lawyer pass) — old profile rows keep the old version, which is how you'd find who needs to re-consent
-- [ ] **Apply migrations 016 then 017** — run 016 as its OWN query and 017 as a SEPARATE one; Postgres refuses to use a newly added enum value in the same transaction that adds it, and the SQL editor wraps a pasted batch in one transaction
+- [x] 2026-08-14 **Applied migrations 016 + 017** (run as separate queries — the enum-in-transaction constraint). Proven live: archived status works, and an archived listing's review still counts toward the instructor rating.
 - [ ] Storage housekeeping: replaced files and archived listings' files are kept forever BY DESIGN. If storage cost ever matters, write a reviewed cleanup that only ever touches objects with zero paid orders — never a blanket sweep
 - [ ] Lawyer pass on /terms + /privacy — deltas are listed in each page's header comment; ask specifically about adding an arbitration/class-action clause (deliberately left out)
 - [ ] Test-data wipe: script or manual SQL to remove test users/listings/orders (keep platform_settings + product_options); delete "RLS Test Listing" + test accounts
@@ -93,6 +93,28 @@ real launch.
 - [ ] Mailchimp footer address: swap her home address for a PO box / virtual mailbox if she wants (CAN-SPAM requires *an* address; every campaign prints it)
 - [ ] Decide backup posture: Supabase free-tier backups vs paid PITR before real sales exist
 - [ ] Uptime monitor on the domain (UptimeRobot free or similar) pinging /, alerting discoverkula@gmail.com
+
+## Security — open items (from the 2026-08-14 audit review)
+
+- [ ] **`featured_products` leaks `file_path` to anon.** The view is granted to
+  `anon, authenticated` (013:121) and its select list includes `file_path`
+  (013:106). Views run with the owner's rights, so this bypasses RLS on
+  products. NOT a file-access hole — the `product-files` bucket is private
+  (001:210), storage RLS scopes sellers to their own folder, and downloads only
+  ever come from the signed-URL route after a paid-order check. But it does
+  publish every listing's original filename + seller UUID to anyone who queries
+  the view, and the homepage doesn't use the column at all. Fix = a migration
+  recreating the view without `file_path`. Low severity, gratuitous exposure.
+- [x] 2026-08-14 **FIXED — per-IP rate limit on /api/mailing-list (018).**
+  5/hour per IP via a Postgres-backed fixed-window counter (`rate_limits` table,
+  RLS enabled with NO policies, service-role-only `rate_limit_hit` RPC with
+  atomic upsert + opportunistic cleanup). Counter lives in the DB because
+  serverless memory resets per cold start. FAIL-OPEN on limiter errors — bulk
+  abuse is the target; a limiter hiccup must never block a real signup (also
+  means: until 018 is applied, the code deploys fine and just doesn't limit).
+  IP from `x-nf-client-connection-ip` (Netlify-set) with x-forwarded-for
+  first-hop fallback. Respects the standing no-captcha decision. Turnstile
+  remains the escalation if abuse appears DESPITE this.
 
 ## Tech — BUGS (found 2026-08-14 while auditing listing edit/pricing)
 
@@ -216,5 +238,6 @@ real launch.
 ## Parked / ideas (unprioritized — do not build without owner ask)
 
 - Notes-photos → branded-PDF generator (Anthropic API): owner loves it, community is AI-averse → ON HOLD by owner decision; monetizable ($1.99/plan) with backend toggle if ever revived
+- PWA install (manifest.json + 192/512 PNGs, ~20 min from the existing क path) — HELD OFF 2026-08-14: kula is a browse-and-buy-occasionally site, not a daily-open app, and the offline win is moot since buyers' PDFs land in their Files app anyway. Revisit only if a teacher actually asks for a home-screen app. iOS home-screen icon (app/apple-icon.png) already exists regardless.
 - Bundles / coupons / gifting — classic marketplace levers, zero validation yet
 - Seller analytics page (views→sales funnel per listing) — the data already exists in products.views + orders

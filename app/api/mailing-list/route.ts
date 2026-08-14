@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { mailchimpSubscribe } from "@/lib/mailchimp";
+import { clientIp, rateLimitOk } from "@/lib/rate-limit";
 
 /**
  * POST /api/mailing-list  { email, source: "waitlist" | "account" | "consent" }
@@ -18,6 +19,19 @@ import { mailchimpSubscribe } from "@/lib/mailchimp";
  *              so historical rows/tags still mean something.
  */
 export async function POST(request: Request) {
+  // Rate limit (migration 018): this endpoint is deliberately captcha-free
+  // (owner decision) and mirrors into the owner's Mailchimp audience, so an
+  // unthrottled loop could poison her list — and the spam complaints would
+  // land on the kula-marketplace.com sending reputation. 5/hour per IP is
+  // far above any human (waitlist + account signup + consent combined) and
+  // useless for bulk abuse. Fail-open: a limiter error never blocks signup.
+  const ip = clientIp(request);
+  if (!(await rateLimitOk(`mailing-list:${ip}`, 5, 3600)))
+    return NextResponse.json(
+      { error: "Too many signups from this connection — try again later." },
+      { status: 429 }
+    );
+
   const { email, source } = await request.json().catch(() => ({}));
   const clean = String(email ?? "")
     .trim()
