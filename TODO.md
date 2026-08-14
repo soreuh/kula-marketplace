@@ -178,6 +178,12 @@ real launch.
 ## Tech — small
 
 - [ ] Seller notification preferences: `profiles.email_sale_notifications` + dashboard toggle + webhook check; then restore the "turn these off in your dashboard" sentence in lib/email.ts (removed 2026-08-14 because it was fiction)
+- [ ] Preview is page 1 ONLY, baked at upload (pdf.js → canvas → 7px blur burned
+  into the pixels → JPEG in the public covers bucket; PPT/PPTX get none). If a
+  teacher's page 1 is a title page, buyers learn nothing from it. Worth letting
+  sellers PICK the preview page (or auto-pick page 2) if previews ever look like
+  a conversion lever. Note the blur is destructive before upload — don't
+  "improve" this by switching to a CSS-only blur over the real file.
 - [ ] SEO basics audit: per-page titles/descriptions, OG image for link sharing, sitemap.xml + robots.txt
 - [ ] Post-purchase review nudge (Resend email ~3 days after purchase: "how was it? leave a review") — feeds the rating flywheel the featured score runs on
 - [ ] Captcha (Turnstile) matters MORE now — a junk signup is no longer just a dead row, it's a junk Mailchimp contact eating audience quota and hurting deliverability. Build it if junk appears

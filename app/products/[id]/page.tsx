@@ -141,8 +141,12 @@ export default async function ProductPage({
             </div>
           )}
 
-          {/* blurred preview */}
-          {previewUrl && (
+          {/* Blurred preview — hidden once you own it. A teaser exists to sell
+              the file; showing a deliberately degraded page 1 to someone who
+              already has the real thing is noise. The SELLER still sees it
+              (isSeller isn't excluded) so they can check how their own preview
+              renders. */}
+          {previewUrl && !alreadyOwned && (
             <div className="mt-8">
               <h2 className="mb-3 font-display text-2xl font-bold lowercase">
                 preview
