@@ -47,6 +47,13 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
 (Otherwise every test signup waits on a confirmation link. Turn it back on
 before real users arrive.)
 
+Also set **Authentication → URL Configuration**: Site URL = your deployed
+address (e.g. `https://yogamp.netlify.app`), and add
+`http://localhost:3000/**` plus `https://YOUR-SITE/**` to Additional Redirect
+URLs. Password-reset links refuse to redirect anywhere not on this list.
+(Supabase itself sends the reset/confirmation emails — no Resend/DNS needed;
+its built-in sender is rate-limited to a few per hour, fine for testing.)
+
 ## 3. Environment variables
 
 ```bash

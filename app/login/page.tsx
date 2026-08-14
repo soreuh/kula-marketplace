@@ -50,6 +50,12 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <Link
+            href="/forgot-password"
+            className="self-end text-xs lowercase text-fog underline hover:text-ink"
+          >
+            forgot your password?
+          </Link>
           <button
             disabled={busy}
             className="mt-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"

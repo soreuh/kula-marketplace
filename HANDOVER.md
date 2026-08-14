@@ -170,7 +170,10 @@ Stripe is still in test mode, so play freely:
    events — test and live each have their own signing secret) and update
    `STRIPE_WEBHOOK_SECRET` with the live `whsec_...`. Redeploy.
 3. **Supabase** → Authentication → Sign In / Providers → Email → turn
-   **"Confirm email" ON** (real users should verify their addresses).
+   **"Confirm email" ON** (real users should verify their addresses). Also
+   check **Authentication → URL Configuration**: Site URL should be your
+   real domain, with `https://YOUR-DOMAIN/**` in Additional Redirect URLs —
+   password-reset emails refuse to link anywhere not on that list.
 4. Point your domain (e.g. kula-marketplace.com) at Netlify: **Domain
    management → Add a domain** and follow its DNS instructions, then update
    `NEXT_PUBLIC_SITE_URL` to `https://kula-marketplace.com` and redeploy.
