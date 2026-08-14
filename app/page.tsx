@@ -10,17 +10,28 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, { data: reviews }] = await Promise.all([
-    supabase
-      .from("products")
-      .select("*")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(3),
-    supabase.from("reviews").select("product_id, rating"),
-  ]);
+  const [{ data: products }, { data: freeProducts }, { data: reviews }] =
+    await Promise.all([
+      // featured = newest PAID listings (freebies get their own shelf below)
+      supabase
+        .from("products")
+        .select("*")
+        .eq("status", "active")
+        .gt("price_cents", 0)
+        .order("created_at", { ascending: false })
+        .limit(3),
+      supabase
+        .from("products")
+        .select("*")
+        .eq("status", "active")
+        .eq("price_cents", 0)
+        .order("created_at", { ascending: false })
+        .limit(3),
+      supabase.from("reviews").select("product_id, rating"),
+    ]);
 
   const featured = (products as Product[] | null) ?? [];
+  const freebies = (freeProducts as Product[] | null) ?? [];
   const ratings: Record<string, { avg: number; count: number }> = {};
   for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
     const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
@@ -68,40 +79,75 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── featured content ── */}
-      <section className="mx-auto max-w-6xl px-5 py-16">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-3xl font-bold lowercase">
-              featured content
-            </h2>
-            <p className="mt-1 text-fog">
-              handcrafted by instructors, ready to teach from.
-            </p>
+      {/* ── featured content (hidden while only freebies exist) ── */}
+      {(featured.length > 0 || freebies.length === 0) && (
+        <section className="mx-auto max-w-6xl px-5 py-16">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-bold lowercase">
+                featured content
+              </h2>
+              <p className="mt-1 text-fog">
+                handcrafted by instructors, ready to teach from.
+              </p>
+            </div>
+            <Link href="/explore" className={btnOutline + " !px-5 !py-2 text-sm"}>
+              browse all content <span aria-hidden>→</span>
+            </Link>
           </div>
-          <Link href="/explore" className={btnOutline + " !px-5 !py-2 text-sm"}>
-            browse all content <span aria-hidden>→</span>
-          </Link>
-        </div>
 
-        {!featured.length ? (
-          <EmptyState>
-            no listings yet — instructors, this stage is yours.
-          </EmptyState>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                priceLabel={priceLabel(p.price_cents)}
-                rating={ratings[p.id]?.avg ?? null}
-                reviewCount={ratings[p.id]?.count ?? 0}
-              />
-            ))}
+          {!featured.length ? (
+            <EmptyState>
+              no listings yet — instructors, this stage is yours.
+            </EmptyState>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  priceLabel={priceLabel(p.price_cents)}
+                  rating={ratings[p.id]?.avg ?? null}
+                  reviewCount={ratings[p.id]?.count ?? 0}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── start with something free (self-hiding until freebies exist) ── */}
+      {freebies.length > 0 && (
+        <section className="bg-sage-50/70 px-5 py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="font-display text-3xl font-bold lowercase">
+                  start with something free
+                </h2>
+                <p className="mt-1 text-fog">
+                  full resources, on the house — download one, teach from it,
+                  see how kula feels. no card needed, just an account.
+                </p>
+              </div>
+              <Link href="/explore" className={btnOutline + " !px-5 !py-2 text-sm"}>
+                see everything <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {freebies.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  priceLabel={priceLabel(p.price_cents)}
+                  rating={ratings[p.id]?.avg ?? null}
+                  reviewCount={ratings[p.id]?.count ?? 0}
+                />
+              ))}
+            </div>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ── how it works — one merged flow, no buyer/seller split ── */}
       <section className="bg-mist/60 px-5 py-16">
