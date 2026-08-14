@@ -247,7 +247,6 @@ function ContentTab({
           .includes(needle))
   );
   const hasSuspended = products.some((p) => p.status === "suspended");
-  const hasArchived = products.some((p) => p.status === "archived");
 
   return (
     <div className="flex flex-col gap-4">
@@ -307,12 +306,12 @@ function ContentTab({
         </div>
       ) : (
         <>
-          {/* Search + status filter over your own listings.
-              `hasArchived` is in the condition on purpose: "all" hides archived
-              rows, so without this a seller with a single listing could archive
-              it and have it vanish from the dashboard with no filter chip left
-              to bring it back. */}
-          {(products.length > 1 || hasArchived) && (
+          {/* Search + status filter — ALWAYS shown once you have any listing.
+              It used to appear only with 2+ listings, which meant the chips
+              moved around as the list grew and, worse, a seller with a single
+              listing could archive it and be left with no chip to find it
+              again. The zero-listings case is the empty state above. */}
+          {(
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex min-w-[180px] flex-1 items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-2 text-sm focus-within:border-sage-400 sm:max-w-xs">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 text-fog" aria-hidden>
@@ -331,8 +330,8 @@ function ContentTab({
                   ["all", "all"],
                   ["active", "live"],
                   ["draft", "drafts"],
+                  ["archived", "archived"],
                   ...(hasSuspended ? [["suspended", "suspended"]] : []),
-                  ...(hasArchived ? [["archived", "archived"]] : []),
                 ] as [typeof statusFilter, string][]
               ).map(([value, label]) => (
                 <button
@@ -358,6 +357,7 @@ function ContentTab({
                 product={p}
                 canPublish={chargesEnabled}
                 onEdit={setEditing}
+                onRestored={() => setStatusFilter("all")}
               />
             ))}
             {!visible.length && products.length > 0 && (
@@ -376,10 +376,12 @@ function ProductRow({
   product,
   canPublish,
   onEdit,
+  onRestored,
 }: {
   product: Product;
   canPublish: boolean;
   onEdit: (p: Product) => void;
+  onRestored: () => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -434,7 +436,14 @@ function ProductRow({
     router.refresh();
   }
 
-  /** Archived → draft. Republishing then goes through the normal gate. */
+  /**
+   * Archived → draft. Republishing then goes through the normal gate.
+   *
+   * onRestored() moves the status filter off "archived" first: the row is
+   * about to stop matching that filter, and without it the seller is left
+   * staring at an empty "no listings match" panel wondering where their
+   * listing went until they reload the page.
+   */
   async function restore() {
     setBusy(true);
     const supabase = createClient();
@@ -444,6 +453,7 @@ function ProductRow({
       .eq("id", product.id);
     setBusy(false);
     if (error) return setErr(error.message);
+    onRestored();
     router.refresh();
   }
 
