@@ -6,7 +6,7 @@ import "@fontsource/poppins/700.css";
 import "@fontsource-variable/nunito-sans";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
-import { Wordmark, LeafLogo } from "@/components/ui";
+import { Wordmark, KulaMark } from "@/components/ui";
 import UserMenu from "@/components/user-menu";
 import Analytics from "@/components/analytics";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
@@ -123,7 +123,7 @@ export default async function RootLayout({
         <footer className="mt-16 border-t border-ink/5 bg-cream">
           <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-10 text-sm text-fog sm:flex-row">
             <span className="flex items-center gap-2">
-              <LeafLogo size={28} />
+              <KulaMark size={28} />
               <span className="font-display font-bold lowercase text-ink">kula</span>
             </span>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:mx-auto">

@@ -6,25 +6,31 @@ import { teachabilityLabel } from "@/lib/categories";
 
 /* Shared presentational pieces — server-safe (no hooks). */
 
-export function LeafLogo({ size = 34 }: { size?: number }) {
+/**
+ * The kula mark — क, the Devanagari letter "ka": the first letter of कुल
+ * (kula), Sanskrit for family / community / clan. Chosen over the usual ॐ
+ * because it IS the brand name rather than generic wellness iconography.
+ *
+ * The glyph is a traced OUTLINE (Noto Sans Devanagari 600, converted to a
+ * path), not live text — so it renders identically everywhere and needs no
+ * Devanagari font on the visitor's machine. Don't "simplify" this by
+ * swapping in a <text> element; most systems would fall back to tofu.
+ * The matching favicon is app/icon.svg, inverted for contrast at 16px.
+ */
+export function KulaMark({ size = 34 }: { size?: number }) {
   return (
     <span
       className="inline-flex items-center justify-center rounded-xl bg-sage-100"
       style={{ width: size, height: size }}
     >
       <svg
-        width={size * 0.55}
-        height={size * 0.55}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--color-sage-600)"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        width={size * 0.72}
+        height={size * 0.72}
+        viewBox="0 0 64 64"
+        fill="var(--color-sage-700)"
         aria-hidden
       >
-        <path d="M20 4c-8 0-14 4-15 12 4 1 8 1 11-2s4-7 4-10z" />
-        <path d="M5 16c3-4 7-7 11-8" />
+        <path d="M52 21.53H36.15V29.36Q36.99 28.74 38.11 28.3Q39.61 27.66 41.58 27.66Q45.28 27.66 47.4 29.85Q49.52 32.03 49.52 35.8Q49.52 38.25 48.62 40.6Q47.72 42.95 45.62 45.5L40.64 42.66Q42.1 41.06 42.96 39.43Q43.82 37.8 43.82 35.9Q43.82 34.1 42.98 33.2Q42.15 32.3 40.64 32.3Q39.18 32.3 37.96 33.16Q36.84 34 36.15 35.17V47.17H30.46V40.18Q30.02 40.48 29.58 40.72Q28.32 41.46 26.83 41.85Q25.35 42.24 23.64 42.24Q20.86 42.24 18.66 41.24Q16.45 40.24 15.17 38.3Q13.9 36.38 13.9 33.56Q13.9 29.46 16.63 27.22Q19.36 24.98 24.22 24.98Q25.5 24.98 26.66 25.1Q27.83 25.22 28.9 25.48L28.42 30.14Q27.64 29.96 26.71 29.86Q25.78 29.76 24.82 29.76Q22.32 29.76 20.98 30.78Q19.64 31.8 19.64 33.7Q19.64 35.6 20.86 36.56Q22.08 37.5 23.98 37.5Q26.28 37.5 28.12 36.24Q29.54 35.26 30.46 34.1V21.53H12V16.85H52Z" />
       </svg>
     </span>
   );
@@ -33,7 +39,7 @@ export function LeafLogo({ size = 34 }: { size?: number }) {
 export function Wordmark() {
   return (
     <span className="flex items-center gap-2.5">
-      <LeafLogo />
+      <KulaMark />
       <span className="font-display text-xl font-bold lowercase">kula</span>
     </span>
   );

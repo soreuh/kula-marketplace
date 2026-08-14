@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getStripe } from "@/lib/stripe";
-import { LeafLogo, btnOutline } from "@/components/ui";
+import { KulaMark, btnOutline } from "@/components/ui";
 import AutoDownload from "./auto-download";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function PurchaseSuccessPage({
             </svg>
           </span>
         ) : (
-          <LeafLogo size={64} />
+          <KulaMark size={64} />
         )}
       </div>
       {paid && productId ? (
