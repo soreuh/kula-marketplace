@@ -860,6 +860,17 @@ function UploadDialog({
   onClose: () => void;
 }) {
   const isEdit = !!editing;
+  /** Original (sanitized) filename of the current sale file, recovered from
+   *  the storage path `{sellerId}/{uuid}-{name}` — shown in the edit
+   *  dropzone so sellers can confirm WHICH file they're about to replace.
+   *  Slice past the 36-char uuid + hyphen; falls back to null on any
+   *  unexpected path shape (e.g. legacy uploads). */
+  const currentFileName = (() => {
+    const path = editing?.file_path;
+    if (!path) return null;
+    const tail = path.split("/").pop() ?? "";
+    return tail.length > 37 ? tail.slice(37) : tail || null;
+  })();
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -880,7 +891,13 @@ function UploadDialog({
   );
   const [level, setLevel] = useState<string>(editing?.level ?? "");
   const [theme, setTheme] = useState(editing?.theme ?? "");
-  const [teachability, setTeachability] = useState<string>(editing?.teachability ?? "");
+  // Defaults to "ready" on NEW listings (owner request, Aug 2026): the
+  // teachability cards don't read as a required field the way inputs and
+  // selects do, and an empty selection kept tripping people at submit.
+  // "ready" is also the honest majority case. Edit mode keeps the real value.
+  const [teachability, setTeachability] = useState<string>(
+    editing?.teachability ?? "ready"
+  );
   // optional
   const [anatomyFocus, setAnatomyFocus] = useState(editing?.anatomy_focus ?? "");
   const [usageNotes, setUsageNotes] = useState(editing?.usage_notes ?? "");
@@ -1210,6 +1227,11 @@ function UploadDialog({
           <>
             <p className="font-display font-semibold lowercase">
               keeping your current file
+              {currentFileName && (
+                <span className="ml-1.5 font-sans text-sm font-normal normal-case text-sage-700">
+                  ({currentFileName})
+                </span>
+              )}
             </p>
             <p className="mt-0.5 text-xs text-fog">
               click to replace it — everyone who owns this listing, now or
