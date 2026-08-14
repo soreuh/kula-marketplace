@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatUsd } from "@/lib/fees";
+import { priceLabel } from "@/lib/fees";
 import type { Instructor, Product } from "@/lib/types";
 import {
   Avatar,
@@ -128,7 +128,7 @@ export default async function InstructorProfilePage({
               <ProductCard
                 key={p.id}
                 product={p}
-                priceLabel={formatUsd(p.price_cents)}
+                priceLabel={priceLabel(p.price_cents)}
                 rating={ratings[p.id]?.avg ?? null}
                 reviewCount={ratings[p.id]?.count ?? 0}
               />

@@ -4,8 +4,13 @@ export const metadata = { title: "terms & conditions — kula" };
 
 /*
  * Text is VERBATIM from the owner's finalized terms (fix list item 4 /
- * Appendix A), with one factual correction: the domain (the appendix said
- * "kula.com"; the platform lives at kula-marketplace.com).
+ * Appendix A), with two owner-directed changes:
+ *   1. the domain (the appendix said "kula.com"; the platform lives at
+ *      kula-marketplace.com)
+ *   2. §4.6 amended for the free-listings feature: "all listings must be
+ *      priced at a minimum of $1.00" → paid listings min $1.00, free
+ *      resources allowed (per Aleks, Aug 2026 — for the owner's lawyer
+ *      pass before launch)
  */
 
 function Section({
@@ -91,9 +96,10 @@ export default function TermsPage() {
         </Section>
 
         <Section n="4.6" title="Pricing">
-          Sellers set their own prices. all listings must be priced at a
-          minimum of $1.00. kula reserves the right to remove any listing
-          priced below this threshold.
+          Sellers set their own prices. paid listings must be priced at a
+          minimum of $1.00, and sellers may also offer resources free of
+          charge. kula reserves the right to remove any paid listing priced
+          below this threshold.
         </Section>
 
         <Section n="4.7" title="Indemnification">

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { formatUsd, timeAgo } from "@/lib/fees";
+import { formatUsd, priceLabel, timeAgo } from "@/lib/fees";
 import { DURATIONS, TEACHABILITY } from "@/lib/categories";
 import { CoverArt, StatTile, StatusChip, Stars, inputCls } from "@/components/ui";
 import type { ProductOptions } from "@/lib/options";
@@ -398,17 +398,20 @@ function ProductRow({
         </Link>
         <div className="mt-1 flex items-center gap-2">
           <StatusChip status={product.status} />
-          <span className="text-fog">{formatUsd(product.price_cents)}</span>
+          <span className="text-fog">{priceLabel(product.price_cents)}</span>
           <span className="text-fog">· {product.views} views</span>
         </div>
       </div>
       {product.status !== "suspended" && (
         <button
           onClick={toggleStatus}
-          disabled={busy || (product.status === "draft" && !canPublish)}
+          disabled={
+            busy ||
+            (product.status === "draft" && !canPublish && product.price_cents > 0)
+          }
           title={
-            product.status === "draft" && !canPublish
-              ? "Connect Stripe to publish — your draft is safe"
+            product.status === "draft" && !canPublish && product.price_cents > 0
+              ? "Connect Stripe to publish paid listings — free ones publish now"
               : undefined
           }
           className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
@@ -767,7 +770,8 @@ function UploadDialog({
   const [propsNeeded, setPropsNeeded] = useState("");
 
   const [ipChecked, setIpChecked] = useState(ipAgreed);
-  const [publish, setPublish] = useState(canPublish); // drafts-only until Stripe
+  const [isFree, setIsFree] = useState(false); // $0 marketing freebie
+  const [publish, setPublish] = useState(canPublish); // drafts-only until Stripe (free exempt)
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -856,11 +860,11 @@ function UploadDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const priceCents = Math.round(parseFloat(price) * 100);
+    const priceCents = isFree ? 0 : Math.round(parseFloat(price) * 100);
     if (!file) return setMessage("Add the file you're selling.");
-    if (!Number.isFinite(priceCents) || priceCents < 100)
+    if (!isFree && (!Number.isFinite(priceCents) || priceCents < 100))
       return setMessage(
-        "Price must be at least $1.00 (below that, fees would eat the entire sale)."
+        "Price must be at least $1.00 (below that, fees would eat the entire sale) — or tick the free-listing box."
       );
     if (!category || !contentType || !duration || !level || !teachability || !theme.trim())
       return setMessage("Fill in every required field (marked •).");
@@ -948,7 +952,7 @@ function UploadDialog({
         file_path: filePath,
         cover_path: coverPath,
         preview_path: previewPath,
-        status: publish && canPublish ? "active" : "draft",
+        status: publish && (canPublish || isFree) ? "active" : "draft",
       });
       if (insErr) throw new Error(`Save failed: ${insErr.message}`);
 
@@ -1088,24 +1092,45 @@ function UploadDialog({
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
-        <label className="text-fog">
-          your price (USD, min $1.00) {req}
-          <input
-            className={inputCls + " mt-1"}
-            required
-            type="number"
-            min="1"
-            step="0.01"
-            placeholder="15.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-          <NetPreview
-            price={price}
-            feePercent={feePercent}
-            feeFlatCents={feeFlatCents}
-          />
-        </label>
+        <div className="text-fog">
+          {!isFree ? (
+            <label className="block">
+              your price (USD, min $1.00) {req}
+              <input
+                className={inputCls + " mt-1"}
+                required
+                type="number"
+                min="1"
+                step="0.01"
+                placeholder="15.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+              <NetPreview
+                price={price}
+                feePercent={feePercent}
+                feeFlatCents={feeFlatCents}
+              />
+            </label>
+          ) : (
+            <p className="rounded-lg bg-sage-50 px-2.5 py-1.5 text-xs text-sage-700">
+              this listing will be <strong>free</strong> — buyers add it to
+              their library instantly, and it can publish even before stripe
+              is connected.
+            </p>
+          )}
+          <label className="mt-2 flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isFree}
+              onChange={(e) => setIsFree(e.target.checked)}
+              className="h-4 w-4 rounded accent-[var(--color-sage-500)]"
+            />
+            <span className="text-xs">
+              free listing — a taste of your teaching, on the house
+            </span>
+          </label>
+        </div>
         <label className="text-fog">
           content type {req}
           <select
@@ -1250,7 +1275,7 @@ function UploadDialog({
         </span>
       </label>
 
-      {canPublish ? (
+      {canPublish || isFree ? (
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -1262,8 +1287,9 @@ function UploadDialog({
         </label>
       ) : (
         <p className="rounded-xl bg-sage-50 p-3 text-sm text-sage-700">
-          this saves as a <strong>draft</strong> — your listings go live the
+          this saves as a <strong>draft</strong> — paid listings go live the
           moment stripe is connected (button at the top of the dashboard).
+          free listings can publish right away.
         </p>
       )}
 
@@ -1273,7 +1299,7 @@ function UploadDialog({
       >
         {busy
           ? (progress ?? "saving…")
-          : publish && canPublish
+          : publish && (canPublish || isFree)
             ? "publish listing"
             : "save draft"}
       </button>

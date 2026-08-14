@@ -24,8 +24,10 @@ owner before enabling in production).
 
 ## Invariants — never violate
 
-- Orders are written ONLY by `app/api/stripe/webhook/route.ts` (service role),
-  after signature verification. Client code never confirms payments.
+- Orders are written ONLY by two server routes: `app/api/stripe/webhook/`
+  (signature-verified, all PAID-money orders) and `app/api/claim-free/`
+  ($0 rows for active free listings only). Client code never writes orders
+  or confirms payments.
 - `product-files` bucket stays private. File access only via
   `app/api/download/[productId]/route.ts` (paid-order check → signed URL).
 - The service-role client (`lib/supabase/admin.ts`) is server-only. Everything
@@ -50,7 +52,11 @@ owner before enabling in production).
   rate buyers). Sellers may write one public reply per review — column-
   guarded (migration 010): seller touches ONLY reply/replied_at, buyer
   never touches the reply, paused accounts can't reply.
-- Listings are $1.00 minimum (DB check, migration 006 — matches Terms §4.6).
+- Listing prices are $0 (free) or ≥$1.00 — nothing between (DB check,
+  migrations 006+011). Free listings publish WITHOUT Stripe (no money moves);
+  paid listings keep the draft-until-Stripe gate, including free→paid flips.
+  Terms §4.6 was amended to match (paid min $1, free allowed) — the delta
+  from her verbatim text is documented in the terms page header comment.
 - Moderation (migration 007): `profiles.account_status` active|paused|deleted.
   Paused/deleted = buying blocked (checkout gate) + listings/profile ghosted
   via RLS read-path ONLY — product rows are never modified, prior buyers keep

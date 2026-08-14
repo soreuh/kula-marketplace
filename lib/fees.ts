@@ -35,6 +35,11 @@ export function sellerNetCents(
   return priceCents - feeCents(priceCents, settings, overridePercent);
 }
 
+/** Card/price label: free listings say "free", everything else is dollars. */
+export function priceLabel(cents: number): string {
+  return cents === 0 ? "free" : formatUsd(cents);
+}
+
 export function formatUsd(cents: number): string {
   return (cents / 100).toLocaleString("en-US", {
     style: "currency",

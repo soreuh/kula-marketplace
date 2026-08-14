@@ -52,6 +52,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Listing not available" }, { status: 404 });
   const p = product as Product;
 
+  // free listings never touch Stripe — they go through /api/claim-free
+  if (p.price_cents === 0)
+    return NextResponse.json(
+      { error: "This listing is free — use the add-to-library button" },
+      { status: 400 }
+    );
+
   if (p.seller_id === user.id)
     return NextResponse.json(
       { error: "You can't buy your own listing" },

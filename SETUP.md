@@ -38,6 +38,9 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
       dashboard's "listing options" panel.
    10. `010_review_replies.sql` — sellers can post one public response to
        each review of their listings (never altering the review itself).
+   11. `011_free_listings.sql` — sellers can list FREE content ($0), which
+       publishes even before Stripe is connected (paid listings keep the
+       $1 minimum and the Stripe gate).
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 

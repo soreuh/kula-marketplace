@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ProductCard, EmptyState } from "@/components/ui";
-import { formatUsd } from "@/lib/fees";
+import { priceLabel } from "@/lib/fees";
 import {
   DURATIONS,
   TEACHABILITY,
@@ -254,7 +254,7 @@ export default function ExploreClient({
                 <ProductCard
                   key={p.id}
                   product={p}
-                  priceLabel={formatUsd(p.price_cents)}
+                  priceLabel={priceLabel(p.price_cents)}
                   rating={ratings[p.id]?.avg ?? null}
                   reviewCount={ratings[p.id]?.count ?? 0}
                 />

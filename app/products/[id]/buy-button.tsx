@@ -7,10 +7,12 @@ export default function BuyButton({
   productId,
   loggedIn,
   totalLabel,
+  free = false,
 }: {
   productId: string;
   loggedIn: boolean;
   totalLabel: string;
+  free?: boolean;
 }) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
@@ -24,6 +26,22 @@ export default function BuyButton({
     }
     setBusy(true);
     setError(null);
+    if (free) {
+      // $0 listing: record the claim, no Stripe involved
+      const res = await fetch("/api/claim-free", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+      const json = await res.json();
+      setBusy(false);
+      if (!res.ok) {
+        setError(json.error ?? "Something went wrong");
+        return;
+      }
+      router.refresh(); // the price card flips to the download state
+      return;
+    }
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -61,7 +79,13 @@ export default function BuyButton({
         disabled={busy || !agreed}
         className="mt-4 w-full rounded-full bg-sage-500 px-6 py-3.5 font-display font-semibold lowercase text-white transition hover:bg-sage-600 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {busy ? "redirecting…" : `buy for ${totalLabel}`}
+        {busy
+          ? free
+            ? "adding…"
+            : "redirecting…"
+          : free
+            ? "add to your library — free"
+            : `buy for ${totalLabel}`}
       </button>
       {error && (
         <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-sm text-red-700">

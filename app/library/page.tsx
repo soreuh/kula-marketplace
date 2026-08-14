@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatUsd } from "@/lib/fees";
+import { priceLabel } from "@/lib/fees";
 import { ProductCard, btnPrimary } from "@/components/ui";
 import type { Order, Product } from "@/lib/types";
 
@@ -78,7 +78,7 @@ export default async function LibraryPage() {
                   {p ? (
                     <ProductCard
                       product={p}
-                      priceLabel={formatUsd(o.amount_cents)}
+                      priceLabel={priceLabel(o.amount_cents)}
                       rating={ratings[p.id]?.avg ?? null}
                       reviewCount={ratings[p.id]?.count ?? 0}
                     />

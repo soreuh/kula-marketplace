@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatUsd } from "@/lib/fees";
+import { formatUsd, priceLabel } from "@/lib/fees";
 import { durationLabel } from "@/lib/categories";
 import { coverUrl } from "@/lib/covers";
 import type { Instructor, Product, Review } from "@/lib/types";
@@ -234,11 +234,13 @@ export default async function ProductPage({
           <div className="flex items-baseline justify-between">
             <span className="lowercase text-fog">price</span>
             <span className="font-display text-4xl font-bold">
-              {formatUsd(p.price_cents)}
+              {priceLabel(p.price_cents)}
             </span>
           </div>
           <p className="mt-1 text-right text-sm text-fog">
-            one-time payment. lifetime access.
+            {p.price_cents === 0
+              ? "a gift from the teacher. lifetime access."
+              : "one-time payment. lifetime access."}
           </p>
           {/* Note: no fee breakdown here on purpose — commission is between
               kula and the seller (and partner rates are private). */}
@@ -277,6 +279,7 @@ export default async function ProductPage({
                 productId={p.id}
                 loggedIn={!!user}
                 totalLabel={formatUsd(p.price_cents)}
+                free={p.price_cents === 0}
               />
             )}
           </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatUsd } from "@/lib/fees";
+import { priceLabel } from "@/lib/fees";
 import type { Product } from "@/lib/types";
 import { ProductCard, btnPrimary, btnOutline, EmptyState } from "@/components/ui";
 import WaitlistForm from "@/components/waitlist-form";
@@ -94,7 +94,7 @@ export default async function HomePage() {
               <ProductCard
                 key={p.id}
                 product={p}
-                priceLabel={formatUsd(p.price_cents)}
+                priceLabel={priceLabel(p.price_cents)}
                 rating={ratings[p.id]?.avg ?? null}
                 reviewCount={ratings[p.id]?.count ?? 0}
               />

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatUsd } from "@/lib/fees";
+import { formatUsd, priceLabel } from "@/lib/fees";
 import { StatTile, StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
@@ -145,7 +145,7 @@ export default async function AdminDashboard() {
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {p.title}
                 </span>
-                <span className="text-fog">{formatUsd(p.price_cents)}</span>
+                <span className="text-fog">{priceLabel(p.price_cents)}</span>
                 <form action={setProductStatus}>
                   <input type="hidden" name="product_id" value={p.id} />
                   <input
