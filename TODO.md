@@ -96,15 +96,19 @@ real launch.
 
 ## Security — open items (from the 2026-08-14 audit review)
 
-- [ ] **`featured_products` leaks `file_path` to anon.** The view is granted to
-  `anon, authenticated` (013:121) and its select list includes `file_path`
-  (013:106). Views run with the owner's rights, so this bypasses RLS on
-  products. NOT a file-access hole — the `product-files` bucket is private
-  (001:210), storage RLS scopes sellers to their own folder, and downloads only
-  ever come from the signed-URL route after a paid-order check. But it does
-  publish every listing's original filename + seller UUID to anyone who queries
-  the view, and the homepage doesn't use the column at all. Fix = a migration
-  recreating the view without `file_path`. Low severity, gratuitous exposure.
+- [x] 2026-08-14 **`featured_products` file_path — trimmed (019), and the claim
+  CORRECTED on closer look:** the view was never the leak. Anon can already read
+  file_path through the products TABLE — every public page selects * and RLS
+  grants ROW access to active listings (row-level, not column-level). The view
+  added zero incremental exposure; 019 removes the column anyway as least-
+  privilege hygiene (nothing rendered it; downloads only mint signed URLs
+  server-side, bucket private). Scoring unchanged from 013.
+- [ ] PARKED — the real fix if original-filename privacy ever matters:
+  column-level privileges on `products.file_path` (or a public listing view
+  without it). Breaks every `select("*")` in the app (explore, homepage,
+  product, profile, library), so it's a deliberate explicit-column refactor,
+  not a hotfix. File names are `{seller_uuid}/{random_uuid}-{sanitized_name}`,
+  path knowledge grants no access — low value, do only if it becomes real.
 - [x] 2026-08-14 **FIXED — per-IP rate limit on /api/mailing-list (018).**
   5/hour per IP via a Postgres-backed fixed-window counter (`rate_limits` table,
   RLS enabled with NO policies, service-role-only `rate_limit_hit` RPC with
@@ -114,7 +118,9 @@ real launch.
   means: until 018 is applied, the code deploys fine and just doesn't limit).
   IP from `x-nf-client-connection-ip` (Netlify-set) with x-forwarded-for
   first-hop fallback. Respects the standing no-captcha decision. Turnstile
-  remains the escalation if abuse appears DESPITE this.
+  remains the escalation if abuse appears DESPITE this. VERIFIED LIVE from the
+  browser console: hits 1–5 → 200, hits 6–7 → 429 (duplicate-email trick, so
+  the test added nothing to Mailchimp).
 
 ## Tech — BUGS (found 2026-08-14 while auditing listing edit/pricing)
 
