@@ -69,6 +69,18 @@ export default async function RootLayout({
               )}
             </div>
 
+            {/* Mobile mini-nav: the full text nav is sm+ only, and this
+                audience is heavily mobile - explore and faq are the two
+                links a first-time phone visitor actually needs. */}
+            <div className="flex items-center gap-5 font-display text-[15px] font-medium lowercase sm:hidden">
+              <Link href="/explore" className="hover:text-sage-600">
+                explore
+              </Link>
+              <Link href="/faq" className="hover:text-sage-600">
+                faq
+              </Link>
+            </div>
+
             <div className="ml-auto flex items-center gap-3">
               {user && profile ? (
                 <>
