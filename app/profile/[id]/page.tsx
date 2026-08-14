@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import InstructorRating from "@/components/instructor-rating";
 import { priceLabel } from "@/lib/fees";
 import type { Instructor, Product } from "@/lib/types";
 import {
   Avatar,
   EmptyState,
   ProductCard,
-  Stars,
   VerifiedBadge,
   btnSmallOutline,
 } from "@/components/ui";
@@ -23,13 +23,8 @@ export default async function InstructorProfilePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [
-    { data: instructor },
-    { data: products },
-    { data: auth },
-    { data: reviews },
-    { data: instructorRating },
-  ] = await Promise.all([
+  const [{ data: instructor }, { data: products }, { data: auth }, { data: reviews }] =
+    await Promise.all([
       supabase.from("instructors").select("*").eq("id", id).maybeSingle(),
       supabase
         .from("products")
@@ -39,16 +34,6 @@ export default async function InstructorProfilePage({
         .order("created_at", { ascending: false }),
       supabase.auth.getUser(),
       supabase.from("reviews").select("product_id, rating"),
-      // Overall rating comes from the DB view (migration 017), NOT from the
-      // active-listings-only set below. A review is earned by a real buyer
-      // on a real purchase and belongs to the TEACHER — unpublishing or
-      // archiving a listing must never quietly shrink their reputation.
-      // (The view aggregates across every status except 'suspended'.)
-      supabase
-        .from("instructor_ratings")
-        .select("avg_rating, review_count")
-        .eq("instructor_id", id)
-        .maybeSingle(),
     ]);
 
   if (!instructor) notFound();
@@ -65,15 +50,11 @@ export default async function InstructorProfilePage({
   }
   for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
-  // The teacher's overall rating — every review they have ever earned,
-  // including on listings now unpublished or archived (migration 017).
-  // Falls back to null if 017 hasn't been applied yet, so the page still
-  // renders on an un-migrated database instead of erroring.
-  const agg = instructorRating as
-    | { avg_rating: number | string | null; review_count: number | null }
-    | null;
-  const overallCount = agg?.review_count ?? 0;
-  const overall = overallCount ? Number(agg?.avg_rating) : null;
+  // The overall rating is rendered by <InstructorRating/>, which owns the
+  // instructor_ratings lookup (migration 017) — every review the teacher has
+  // ever earned, including on listings now unpublished or archived. Deliberately
+  // NOT re-derived from `listings` below: that set is active-only, and deriving
+  // it there is precisely the bug 017 fixed.
 
   return (
     <div>
@@ -85,11 +66,7 @@ export default async function InstructorProfilePage({
               <h1 className="font-display text-3xl font-bold">{name}</h1>
               {inst.stripe_charges_enabled && <VerifiedBadge />}
             </div>
-            {overall !== null && (
-              <div className="mt-1.5">
-                <Stars rating={overall} count={overallCount} />
-              </div>
-            )}
+            <InstructorRating instructorId={id} className="mt-1.5 inline-block" />
             <p className="mt-1 text-sm text-fog">
               {listings.length} published listing{listings.length === 1 ? "" : "s"}
               {inst.specialisations.length > 0 &&

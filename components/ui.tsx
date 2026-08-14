@@ -284,7 +284,16 @@ export function Avatar({
 }
 
 /** Seller mini-profile card shown on listing detail pages. */
-export function InstructorCard({ instructor }: { instructor: Instructor }) {
+export function InstructorCard({
+  instructor,
+  rating,
+}: {
+  instructor: Instructor;
+  /** Optional aggregate-rating slot — pass <InstructorRating instructorId/>.
+   *  A slot rather than a fetch so this file stays server-safe AND importable
+   *  by client components (dashboard-client pulls Stars/CoverArt from here). */
+  rating?: React.ReactNode;
+}) {
   const name = instructor.shop_name || instructor.display_name || "kula instructor";
   return (
     <Link
@@ -297,6 +306,7 @@ export function InstructorCard({ instructor }: { instructor: Instructor }) {
           <span className="font-display font-bold">{name}</span>
           {instructor.stripe_charges_enabled && <VerifiedBadge />}
         </div>
+        {rating && <div className="mt-1.5">{rating}</div>}
         {instructor.specialisations.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {instructor.specialisations.slice(0, 4).map((s) => (

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import InstructorRating from "@/components/instructor-rating";
 import { formatUsd, priceLabel } from "@/lib/fees";
 import { durationLabel } from "@/lib/categories";
 import { coverUrl } from "@/lib/covers";
@@ -173,7 +174,10 @@ export default async function ProductPage({
               <h2 className="mb-3 font-display text-2xl font-bold lowercase">
                 about the instructor
               </h2>
-              <InstructorCard instructor={instructor as Instructor} />
+              <InstructorCard
+                instructor={instructor as Instructor}
+                rating={<InstructorRating instructorId={(instructor as Instructor).id} />}
+              />
             </div>
           )}
 
