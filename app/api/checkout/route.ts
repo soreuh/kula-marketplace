@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireUser, requireActiveAccount } from "@/lib/api-guards";
 import { getStripe, siteUrl } from "@/lib/stripe";
 import { feeCents, sellerNetCents } from "@/lib/fees";
 import type { PlatformSettings, Product } from "@/lib/types";
@@ -13,34 +13,18 @@ import type { PlatformSettings, Product } from "@/lib/types";
  * The webhook — never the client — marks the order paid.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Please log in first" }, { status: 401 });
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
   const { productId } = await request.json().catch(() => ({}));
   if (!productId)
     return NextResponse.json({ error: "Missing productId" }, { status: 400 });
 
-  // Moderation gate: paused/deleted accounts can't buy. (Tolerant read —
-  // if migration 007 hasn't run yet the column is missing, the select
-  // errors, myStatus stays undefined, and buying proceeds as before.)
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("account_status")
-    .eq("id", user.id)
-    .maybeSingle();
-  const myStatus = (me as { account_status?: string } | null)?.account_status;
-  if (myStatus != null && myStatus !== "active")
-    return NextResponse.json(
-      {
-        error:
-          "Your account is paused — purchases are disabled. Contact kula if you think this is a mistake.",
-      },
-      { status: 403 }
-    );
+  // Moderation gate: paused/deleted accounts can't buy (tolerant read —
+  // fails open if migration 007 hasn't run; see lib/api-guards.ts).
+  const paused = await requireActiveAccount(supabase, user.id);
+  if (paused) return paused;
 
   const { data: product } = await supabase
     .from("products")

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-guards";
 import { DURATIONS } from "@/lib/categories";
 import { getProductOptions } from "@/lib/options";
 
@@ -20,12 +20,8 @@ export async function POST(request: Request) {
   if (!key)
     return NextResponse.json({ error: "AI suggestions not configured" }, { status: 501 });
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Please log in first" }, { status: 401 });
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
 
   const { description } = await request.json().catch(() => ({}));
   if (!description || String(description).trim().length < 20)

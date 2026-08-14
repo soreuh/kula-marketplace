@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireUser, requireActiveAccount } from "@/lib/api-guards";
 
 /**
  * POST /api/claim-free  { productId }
@@ -14,29 +14,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * webhook, and it only ever writes zero-amount rows for active $0 listings.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Please log in first" }, { status: 401 });
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
   const { productId } = await request.json().catch(() => ({}));
   if (!productId)
     return NextResponse.json({ error: "Missing productId" }, { status: 400 });
 
-  // moderation gate — mirrors checkout (tolerant if 007 hasn't run)
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("account_status")
-    .eq("id", user.id)
-    .maybeSingle();
-  const myStatus = (me as { account_status?: string } | null)?.account_status;
-  if (myStatus != null && myStatus !== "active")
-    return NextResponse.json(
-      { error: "Your account is paused — contact kula if you think this is a mistake." },
-      { status: 403 }
-    );
+  // moderation gate — same helper as checkout (tolerant if 007 hasn't run)
+  const paused = await requireActiveAccount(supabase, user.id);
+  if (paused) return paused;
 
   // fetched with the USER's client — RLS ghosting/visibility applies
   const { data: product } = await supabase
