@@ -15,7 +15,18 @@ import type { RatingMap } from "./page";
 
 type ListKey = "teach" | "styles" | "types" | "levels";
 
+/** Boolean quick-filters — separate from the list filters because they toggle
+ *  a flag rather than adding to a multi-select list. */
+type FlagKey = "freeOnly" | "featuredOnly";
+
 type Filters = {
+  /** $0 listings only. */
+  freeOnly: boolean;
+  /** Admin-starred picks only (products.featured_at).
+   *  NOT the `featured_products` view — that scores EVERY active listing and
+   *  the homepage just takes the top slice, so filtering on it would return
+   *  the whole catalogue. The ★ picks are the curated set worth a filter. */
+  featuredOnly: boolean;
   teach: string[];
   styles: string[];
   /** index range into DURATIONS ([lo, hi]); the full range means "any" */
@@ -27,6 +38,8 @@ type Filters = {
 const FULL_RANGE: [number, number] = [0, DURATIONS.length - 1];
 
 const EMPTY_FILTERS: Filters = {
+  freeOnly: false,
+  featuredOnly: false,
   teach: [],
   styles: [],
   duration: FULL_RANGE,
@@ -47,6 +60,23 @@ export default function ExploreClient({
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [panelOpen, setPanelOpen] = useState(false); // mobile slide-in
 
+  // Both quick-filters are gated on there being something for them to match.
+  // A filter that can only ever return an empty grid reads as broken, so each
+  // appears the moment the catalogue can satisfy it: the first ★ set in admin,
+  // or the first $0 listing published.
+  const hasFeatured = useMemo(
+    () => products.some((p) => !!p.featured_at),
+    [products]
+  );
+  const hasFree = useMemo(
+    () => products.some((p) => p.price_cents === 0),
+    [products]
+  );
+
+  function toggleFlag(key: FlagKey) {
+    setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   function toggle<K extends ListKey>(key: K, value: Filters[K][number]) {
     setFilters((prev) => {
       const list = prev[key] as (typeof value)[];
@@ -60,7 +90,15 @@ export default function ExploreClient({
   }
 
   const activeChips = useMemo(() => {
-    const chips: { key: ListKey | "duration"; value: string | number; label: string }[] = [];
+    const chips: {
+      key: ListKey | "duration" | FlagKey;
+      value: string | number;
+      label: string;
+    }[] = [];
+    if (filters.freeOnly)
+      chips.push({ key: "freeOnly", value: 0, label: "free only" });
+    if (filters.featuredOnly)
+      chips.push({ key: "featuredOnly", value: 0, label: "featured only" });
     filters.teach.forEach((v) =>
       chips.push({ key: "teach", value: v, label: teachabilityLabel(v) ?? v })
     );
@@ -83,6 +121,8 @@ export default function ExploreClient({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return products.filter((p) => {
+      if (filters.freeOnly && p.price_cents !== 0) return false;
+      if (filters.featuredOnly && !p.featured_at) return false;
       if (
         q &&
         !`${p.title} ${p.description ?? ""} ${p.category ?? ""} ${p.theme ?? ""} ${p.content_type ?? ""}`
@@ -111,6 +151,24 @@ export default function ExploreClient({
 
   const filterBody = (
     <>
+      {(hasFree || hasFeatured) && (
+        <FilterGroup title="show me">
+          {hasFree && (
+            <Check
+              label="free only"
+              checked={filters.freeOnly}
+              onChange={() => toggleFlag("freeOnly")}
+            />
+          )}
+          {hasFeatured && (
+            <Check
+              label="featured only"
+              checked={filters.featuredOnly}
+              onChange={() => toggleFlag("featuredOnly")}
+            />
+          )}
+        </FilterGroup>
+      )}
       <FilterGroup title="teachability">
         {TEACHABILITY.map((t) => (
           <Check
@@ -195,7 +253,9 @@ export default function ExploreClient({
               onClick={() =>
                 c.key === "duration"
                   ? setFilters((prev) => ({ ...prev, duration: FULL_RANGE }))
-                  : toggle(c.key, c.value as never)
+                  : c.key === "freeOnly" || c.key === "featuredOnly"
+                    ? toggleFlag(c.key)
+                    : toggle(c.key, c.value as never)
               }
               className="inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1 text-sm font-semibold text-sage-700 hover:bg-sage-200"
             >
