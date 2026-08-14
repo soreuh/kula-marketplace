@@ -120,7 +120,7 @@ export default async function DashboardPage() {
           chargesEnabled={chargesEnabled}
           saleNotifications={prof.sale_notifications}
           ipAgreed={!!prof.ip_agreement_accepted_at}
-          aiEnabled={!!process.env.ANTHROPIC_API_KEY}
+          aiEnabled={!!process.env.KULA_ANTHROPIC_API_KEY}
           feeRateLabel={feeRateLabel}
           feePercent={Number(feePercent)}
           feeFlatCents={feeFlat}

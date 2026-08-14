@@ -4,15 +4,18 @@ import { STYLES, CONTENT_TYPES, LEVELS, DURATIONS } from "@/lib/categories";
 
 /**
  * AI-powered listing metadata suggestions.
- * Feature-flagged: without ANTHROPIC_API_KEY this returns { enabled: false }
- * and the upload dialog hides the button. Costs pennies per call when on.
+ * Feature-flagged on KULA_ANTHROPIC_API_KEY — deliberately NOT the generic
+ * ANTHROPIC_API_KEY name, because hosting platforms (Netlify AI Gateway)
+ * auto-inject that one into every site's runtime, which force-enabled this
+ * feature against the owner's wishes. The KULA_ prefix means the feature
+ * only exists when the owner explicitly sets it.
  */
 export async function GET() {
-  return NextResponse.json({ enabled: !!process.env.ANTHROPIC_API_KEY });
+  return NextResponse.json({ enabled: !!process.env.KULA_ANTHROPIC_API_KEY });
 }
 
 export async function POST(request: Request) {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.KULA_ANTHROPIC_API_KEY;
   if (!key)
     return NextResponse.json({ error: "AI suggestions not configured" }, { status: 501 });
 

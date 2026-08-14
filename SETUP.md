@@ -61,8 +61,10 @@ From **Stripe → Developers → API keys** (test mode toggle ON):
 Leave `STRIPE_WEBHOOK_SECRET` for step 5 and `NEXT_PUBLIC_SITE_URL` as
 `http://localhost:3000`.
 
-Optional (each feature stays hidden until keyed): `ANTHROPIC_API_KEY` turns on
-AI metadata suggestions in the upload dialog; `RESEND_API_KEY` turns on sale
+Optional (each feature stays hidden until keyed): `KULA_ANTHROPIC_API_KEY`
+turns on AI metadata suggestions in the upload dialog (prefixed KULA_ because
+hosts like Netlify auto-inject a generic `ANTHROPIC_API_KEY` into every site,
+which must NOT enable the feature); `RESEND_API_KEY` turns on sale
 notification emails to sellers; `MAILCHIMP_API_KEY` + `MAILCHIMP_AUDIENCE_ID`
 mirror every waitlist/consent signup into your Mailchimp Audience (they always
 land in your own database's `mailing_list` table too), so you can send

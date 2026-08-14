@@ -7,12 +7,15 @@ COMMISSION MODEL: buyer pays the listed price; kula takes fee_percent + flat
 (monthly Express payouts). Supabase = auth, Postgres w/ RLS, private
 `product-files` bucket + public `covers` bucket. Netlify hosting. Next.js 16.
 PRODUCT STANCE: the owner's market (yoga teachers) is broadly AI-averse —
-buyer-visible AI features are deliberately OFF (ANTHROPIC_API_KEY unset) and
-a designed notes-photos→branded-PDF feature is ON HOLD by owner decision.
-Don't propose or surface AI features without the owner asking.
+buyer-visible AI features are deliberately OFF and a designed
+notes-photos→branded-PDF feature is ON HOLD by owner decision. Don't propose
+or surface AI features without the owner asking. The AI-suggest flag reads
+KULA_ANTHROPIC_API_KEY (NOT the generic ANTHROPIC_API_KEY name — Netlify's
+AI Gateway auto-injects that into every site's runtime and once force-enabled
+the feature; never gate anything on generic provider env names).
 
-Optional keyed features (hidden without env): ANTHROPIC_API_KEY → AI listing
-suggestions; RESEND_API_KEY → sale-notification emails; MAILCHIMP_API_KEY +
+Optional keyed features (hidden without env): KULA_ANTHROPIC_API_KEY → AI
+listing suggestions; RESEND_API_KEY → sale-notification emails; MAILCHIMP_API_KEY +
 MAILCHIMP_AUDIENCE_ID → waitlist/consent signups mirror into a Mailchimp
 Audience (mailing_list table stays the source of truth; signups go through
 /api/mailing-list); NEXT_PUBLIC_GA_MEASUREMENT_ID → GA4 snippet

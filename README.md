@@ -58,7 +58,7 @@ $6.75 to the seller.)
   It verifies repo/branch/tree integrity, shows the diff, and asks first.
 
 Optional features stay dark until keyed (see `.env.example`):
-`ANTHROPIC_API_KEY` (AI listing suggestions), `RESEND_API_KEY`
+`KULA_ANTHROPIC_API_KEY` (AI listing suggestions), `RESEND_API_KEY`
 (sale-notification emails), `MAILCHIMP_API_KEY` + `MAILCHIMP_AUDIENCE_ID`
 (waitlist/consent signups mirror into a Mailchimp Audience).
 
@@ -76,7 +76,7 @@ app/api/checkout                   Checkout Session (commission via application_
 app/api/stripe/onboard             Connect Express onboarding (monthly payouts) + role upgrade
 app/api/stripe/webhook             THE writer of paid orders (+ sale emails if RESEND_API_KEY)
 app/api/download/[productId]       paid-order check → signed URL
-app/api/ai/suggest                 listing metadata suggestions (needs ANTHROPIC_API_KEY)
+app/api/ai/suggest                 listing metadata suggestions (needs KULA_ANTHROPIC_API_KEY)
 app/api/mailing-list               waitlist/consent signups → DB (+ Mailchimp mirror when keyed)
 scripts/push-live.sh               guarded deploy to main
 ```
