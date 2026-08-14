@@ -1,5 +1,9 @@
 # Kula Marketplace — notes for AI coding sessions
 
+TODO.md is the RUNNING PROJECT LIST (state snapshot, done log, open items —
+tech AND marketing). Read it at session start; check items off with a date
+when completed — never delete entries; add new work there as it's agreed.
+
 Peer-to-peer marketplace (yoga teaching resources). Roles overlap: any user
 can self-upgrade buyer→seller; admin transitions are admin-only.
 COMMISSION MODEL: buyer pays the listed price; kula takes fee_percent + flat
