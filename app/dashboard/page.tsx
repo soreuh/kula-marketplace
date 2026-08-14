@@ -86,7 +86,10 @@ export default async function DashboardPage() {
       chargesEnabled = false;
     }
     if (chargesEnabled !== prof.stripe_charges_enabled) {
-      await supabase
+      // stripe_charges_enabled is a guarded column (migration 008): it may
+      // only be set by the trusted server, never by the user's own session.
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      await createAdminClient()
         .from("profiles")
         .update({ stripe_charges_enabled: chargesEnabled })
         .eq("id", user.id);

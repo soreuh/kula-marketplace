@@ -30,6 +30,13 @@ owner before enabling in production).
   expose them in the public `instructors` view or any buyer-facing UI.
   `profiles.partner`: auto-true when a rate is set; unmarking partner clears
   the override (see togglePartner in admin actions).
+- Money-critical profile columns (commission_override, partner,
+  stripe_charges_enabled, stripe_account_id) are guarded (migration 008):
+  a user CANNOT change them on their own row — only admins, or the
+  service-role/SQL context. RLS grants row access, not column access, so
+  these need the trigger. Server writes to these columns MUST use the
+  service-role client (see onboard route + dashboard Stripe sync), never the
+  user's session, or the guard rejects them.
 - Reviews only via RLS (paid order required); orders/downloads unchanged.
 - Listings are $1.00 minimum (DB check, migration 006 — matches Terms §4.6).
 - Moderation (migration 007): `profiles.account_status` active|paused|deleted.

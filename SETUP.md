@@ -30,6 +30,9 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
    7. `007_user_moderation.sql` — admin pause / activate / soft-delete for
       accounts (paused users can't buy and their listings are hidden;
       deleting also blocks sign-in; all data is always retained).
+   8. `008_profile_column_guard.sql` — locks money-critical profile columns
+      (commission rate, Stripe status) so only admins/the server can change
+      them, never a user editing their own row.
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 

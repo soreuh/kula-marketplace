@@ -43,8 +43,12 @@ do $$ begin
 end $$;
 \echo 'PASS 005: unverified seller cannot publish a draft'
 
--- Stripe completes (dashboard sync sets the flag) → publishing works
+-- Stripe completes (dashboard sync sets the flag) → publishing works.
+-- Clear the JWT claim so this runs as the real service/SQL context
+-- (auth.uid() null) that the dashboard sync uses — migration 008 guards
+-- stripe_charges_enabled against user-session writes.
 reset role;
+select set_config('request.jwt.claim.sub', '', false);
 update public.profiles set stripe_charges_enabled = true
 where id = '00000000-0000-0000-0000-00000000000e';
 
