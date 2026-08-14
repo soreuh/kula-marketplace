@@ -23,6 +23,7 @@ sudo -u postgres psql -v ON_ERROR_STOP=1 -d kula_test \
   -f supabase/migrations/010_review_replies.sql \
   -f supabase/migrations/011_free_listings.sql \
   -f supabase/migrations/012_profile_avatars.sql \
+  -f supabase/migrations/013_featured_curation.sql \
   -f supabase/tests/rls_test.sql \
   -f supabase/tests/rls_test_002.sql \
   -f supabase/tests/rls_test_005.sql \
@@ -32,10 +33,11 @@ sudo -u postgres psql -v ON_ERROR_STOP=1 -d kula_test \
   -f supabase/tests/rls_test_009.sql \
   -f supabase/tests/rls_test_010.sql \
   -f supabase/tests/rls_test_011.sql \
-  -f supabase/tests/rls_test_012.sql
+  -f supabase/tests/rls_test_012.sql \
+  -f supabase/tests/rls_test_013.sql
 ```
 
-Expected output ends with: `=== ALL 012 RLS SMOKE TESTS PASSED ===`
+Expected output ends with: `=== ALL 013 RLS SMOKE TESTS PASSED ===`
 
 Re-run after ANY change to the migration/policies. If you add a migration file
 (002_...), add it to the command between 001 and the tests.

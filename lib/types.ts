@@ -65,6 +65,8 @@ export interface Product {
   cover_path: string | null;
   preview_path: string | null;
   views: number;
+  /** Admin curation: non-null = featured on the homepage (migration 013). */
+  featured_at: string | null;
 }
 
 export interface Order {

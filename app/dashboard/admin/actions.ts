@@ -45,6 +45,24 @@ export async function updateFeeSettings(formData: FormData) {
   revalidatePath("/");
 }
 
+/**
+ * Featured curation (migration 013): admins star listings onto the
+ * homepage. featured_at doubles as pick order (newest pick first);
+ * unstarring returns the slot to the scored auto-fill.
+ */
+export async function toggleFeatured(formData: FormData) {
+  const supabase = await requireAdmin();
+  const productId = String(formData.get("product_id"));
+  const makeFeatured = String(formData.get("make_featured")) === "true";
+
+  await supabase
+    .from("products")
+    .update({ featured_at: makeFeatured ? new Date().toISOString() : null })
+    .eq("id", productId);
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/");
+}
+
 export async function setProductStatus(formData: FormData) {
   const supabase = await requireAdmin();
   const productId = String(formData.get("product_id"));

@@ -80,6 +80,11 @@ owner before enabling in production).
   rewrite 001 — it has already been run on live projects) and apply it in the
   Supabase SQL editor.
 - RLS is the real authorization layer; UI checks are convenience only.
+- Homepage "featured" = the `featured_products` view (migration 013): admin
+  picks (products.featured_at, ADMIN-ONLY via guard trigger) first, then a
+  scored auto-fill (bayesian rating 50 / conversion 30 / 14-day-half-life
+  recency 20 — weights live in the view). The view exposes only the blended
+  score, never raw sales counts, and respects moderation ghosting.
 - Listing options (styles/content types/levels) live in `product_options`
   (migration 009), admin-curated from the dashboard; lib/categories.ts
   arrays are FALLBACK only (missing/empty table). Durations + teachability

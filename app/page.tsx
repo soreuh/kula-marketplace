@@ -12,13 +12,16 @@ export default async function HomePage() {
 
   const [{ data: products }, { data: freeProducts }, { data: reviews }] =
     await Promise.all([
-      // featured = newest PAID listings (freebies get their own shelf below)
+      // featured shelf: admin picks first (featured_at, newest pick first),
+      // then the transparent score fills remaining slots — see the
+      // featured_products view (migration 013). Paid only; freebies get
+      // their own shelf below.
       supabase
-        .from("products")
+        .from("featured_products")
         .select("*")
-        .eq("status", "active")
         .gt("price_cents", 0)
-        .order("created_at", { ascending: false })
+        .order("featured_at", { ascending: false, nullsFirst: false })
+        .order("featured_score", { ascending: false })
         .limit(3),
       supabase
         .from("products")

@@ -43,6 +43,9 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
        $1 minimum and the Stripe gate).
    12. `012_profile_avatars.sql` — profile pictures (uploaded from the
        edit-profile menu; stored in the public covers bucket).
+   13. `013_featured_curation.sql` — the homepage featured shelf: admin
+       hand-picks (★ button on the admin listings panel) outrank a
+       transparent quality score that fills the remaining slots.
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 

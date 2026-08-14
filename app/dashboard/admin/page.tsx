@@ -8,6 +8,7 @@ import {
   deleteProductOption,
   setCommissionOverride,
   setProductStatus,
+  toggleFeatured,
   togglePartner,
   updateFeeSettings,
 } from "./actions";
@@ -146,6 +147,29 @@ export default async function AdminDashboard() {
                   {p.title}
                 </span>
                 <span className="text-fog">{priceLabel(p.price_cents)}</span>
+                <form action={toggleFeatured}>
+                  <input type="hidden" name="product_id" value={p.id} />
+                  <input
+                    type="hidden"
+                    name="make_featured"
+                    value={p.featured_at ? "false" : "true"}
+                  />
+                  <button
+                    title={
+                      p.featured_at
+                        ? "remove from the homepage featured shelf"
+                        : "feature on the homepage (your picks outrank the auto-fill)"
+                    }
+                    className={
+                      "rounded-full px-3.5 py-1.5 lowercase transition " +
+                      (p.featured_at
+                        ? "bg-sage-500 font-semibold text-white hover:bg-sage-600"
+                        : "border border-ink/10 text-fog hover:border-ink/30")
+                    }
+                  >
+                    {p.featured_at ? "★ featured" : "☆ feature"}
+                  </button>
+                </form>
                 <form action={setProductStatus}>
                   <input type="hidden" name="product_id" value={p.id} />
                   <input
