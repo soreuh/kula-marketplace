@@ -129,7 +129,9 @@ real launch.
   Nested collapsed editor exposes all 13 xlsx drivers + launch date
   (`growth_model` jsonb; reset button returns to Mid; "custom drivers" badge
   when overridden; fee % always read live from platform settings, never
-  duplicated in the drivers).
+  duplicated in the drivers). Amber dot marks any higher-is-better row running
+  below the mid path (cost rows exempt — under-model costs are good news).
+  All verified live 2026-08-14 incl. migrations 020+021.
 
 ## Hygiene sweep (2026-08-14, from the code-quality audit — all 4 applied + verified)
 
