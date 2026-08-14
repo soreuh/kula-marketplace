@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireUser } from "@/lib/api-guards";
+import { requireActiveAccount, requireUser } from "@/lib/api-guards";
 import { rateLimitOk } from "@/lib/rate-limit";
 import { sendContentUpdateEmails } from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
@@ -24,6 +24,15 @@ export async function POST(request: Request) {
   const auth = await requireUser();
   if (auth.error) return auth.error;
   const { supabase, user } = auth;
+
+  // Moderated sellers keep dashboard access, but kula never sends email on
+  // their behalf — same gate as buying, different wording.
+  const gate = await requireActiveAccount(
+    supabase,
+    user.id,
+    "Your account is paused — notifications are disabled. Contact kula if you think this is a mistake."
+  );
+  if (gate) return gate;
 
   const { productId } = await request.json().catch(() => ({}));
   if (!productId)

@@ -181,7 +181,43 @@ real launch.
   blocked with the unified message before Stripe is touched · logged-out buy
   redirects to login.
 
+## Shipped 2026-08-14 (late session)
+
+- [x] UX polish, verified live: edit dropzone shows the current file's original
+  name (recovered from the storage path, sanitized form) so sellers can confirm
+  what they're replacing · teachability defaults to "ready to teach" on new
+  listings (the cards didn't read as required and tripped sellers at submit;
+  edit keeps the real value) · faq link moved to FOOTER ONLY per the owner
+  (removed from desktop + mobile headers); mobile mini-nav keeps explore.
+
+- [x] **/faq page** - buying (6) / selling (8) / trust (3) in the site's voice,
+  every answer matched to VERIFIED mechanics (refund answer mirrors terms §6
+  exactly - the file comment enforces keeping them in sync). FAQPage JSON-LD
+  for search. Linked: desktop nav (next to sell), footer, and a new MOBILE
+  mini-nav (explore · faq) - the full nav was sm+ only, so phone visitors
+  previously had NO nav links at all. "Who's behind kula" deliberately left
+  out for now per Aleks. Verified live on desktop + phone.
+
 ## Security — open items (from the 2026-08-14 audit review)
+
+- [x] 2026-08-14 **Second security sweep (post-hygiene/admin-redesign code) — 5
+  patches, all verified by tsc/lint/build:** (1) email HTML injection: listing
+  titles (seller-typed free text) were interpolated raw into the sale + content-
+  update email HTML — a title like `<a href=evil>` became a live link in mail
+  kula sends; now entity-escaped via `esc()` in lib/email.ts (subjects stay raw
+  — headers, not HTML). (2) /api/notify-update never checked the CALLER's
+  account_status — a paused seller could still mass-email prior buyers through
+  kula's domain; now gated (requireActiveAccount grew an optional message param).
+  (3) /api/ai/suggest had no rate limit — every call is a paid Anthropic request,
+  so a loop could burn the owner's API credit; now 20/hour per user via the 018
+  limiter (fail-open, like all of them). (4) /api/stripe/onboard: paused accounts
+  could still create Stripe Express accounts + onboarding links; now gated.
+  (5) FAQ JSON-LD script: `<` escaped to `\u003c` in the stringify so no future
+  answer text can close the script tag (static content today — pure hardening).
+  Checked and CLEAN: webhook signature/idempotency (upsert on session id),
+  storage RLS folder-scoping + sanitized upload names, download route
+  paid-order gate, mailing-list validation+limit, admin step-up auth, no
+  secrets in tracked files, no dangerous redirects/innerHTML elsewhere.
 
 - [x] 2026-08-14 **`featured_products` file_path — trimmed (019), and the claim
   CORRECTED on closer look:** the view was never the leak. Anon can already read
@@ -323,6 +359,7 @@ real launch.
   sellers PICK the preview page (or auto-pick page 2) if previews ever look like
   a conversion lever. Note the blur is destructive before upload — don't
   "improve" this by switching to a CSS-only blur over the real file.
+- [ ] Admin polish: period pill buttons render a bit scrunched (spotted 2026-08-14 after the 4th tile landed) — spacing/wrap pass on the tiles row when convenient
 - [ ] SEO basics audit: per-page titles/descriptions, OG image for link sharing, sitemap.xml + robots.txt
 - [ ] Post-purchase review nudge (Resend email ~3 days after purchase: "how was it? leave a review") — feeds the rating flywheel the featured score runs on
 - [ ] Captcha (Turnstile) matters MORE now — a junk signup is no longer just a dead row, it's a junk Mailchimp contact eating audience quota and hurting deliverability. Build it if junk appears
@@ -334,6 +371,21 @@ real launch.
 - [ ] Dispute/chargeback auto-reversal block in the webhook if chargebacks ever become real (manual via dashboard until then)
 
 ## Tech — large
+
+- [ ] **Account-deletion (right-to-erasure) runbook** — designed 2026-08-14, build
+  the admin action only when the first real request arrives (rare; lawyer should
+  bless the scrub list first). KEY INSIGHT: no schema decoupling needed — orders'
+  restrict FKs make hard-delete structurally impossible, and buyers' access
+  survives BECAUSE the rows survive. Compliant deletion = 007 soft-delete (already
+  built: ghosting, login ban, buyer access preserved) + a PII SCRUB pass via
+  service role: profile email→tombstone / names→"former member" / bio,
+  specialisations, avatar (file too), last_seen nulled · auth.users email scrubbed
+  via admin API (row can't be deleted — same FK chain) · reviews.reviewer_name
+  neutralized (lawyer call: erase review text or keep anonymized rating) ·
+  mailing_list row deleted · **their contact deleted from her MAILCHIMP** (PII at
+  a third party — the easy one to forget) · Stripe KYC/tax data is Stripe's own
+  controllership, requests go to them. Matches privacy §5's promise exactly:
+  skeleton rows retained for legal records, the human removed within 30 days.
 
 - [ ] Stripe Accounts v2 migration (onboard route, webhook, dashboard sync → /v2/core/accounts) — before serious scale or if Stripe announces v1 sunset; until then the v1 flag carries it
 - [ ] Full handover of HIS accounts (Supabase/Netlify/GitHub/GA) to her — HANDOVER.md is the playbook; env-var swap is the entire code-side migration
@@ -364,5 +416,11 @@ real launch.
   months — the क favicon went live 2026-08-14, so the CMC clock started then.
   Free interim hack: Google account on hello@ with the क tile as its photo
   (Gmail-only, unofficial, often works).
+- Brand kit v1 lives at ../kula-brand-kit.zip (2026-08-14): 62 files — क marks
+  (SVG masters + PNGs), lockups, avatars, OG banner, IG post/story templates,
+  palette card + css, app icons, and a styled START-HERE.html guide. All
+  generated from production ingredients (traced क path, globals.css palette,
+  Poppins outlines). Regenerable/extendable on ask — v1.1 candidates: YouTube/
+  LinkedIn banner sizes, her name/title, alternate taglines.
 - Bundles / coupons / gifting — classic marketplace levers, zero validation yet
 - Seller analytics page (views→sales funnel per listing) — the data already exists in products.views + orders

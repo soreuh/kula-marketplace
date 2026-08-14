@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/api-guards";
+import { requireActiveAccount, requireUser } from "@/lib/api-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe, siteUrl } from "@/lib/stripe";
 
@@ -14,6 +14,15 @@ export async function POST() {
   const auth = await requireUser();
   if (auth.error) return auth.error;
   const { supabase, user } = auth;
+
+  // Paused/deleted accounts keep dashboard access but can't start moving
+  // money — no new Stripe accounts, no onboarding links.
+  const gate = await requireActiveAccount(
+    supabase,
+    user.id,
+    "Your account is paused — selling is disabled. Contact kula if you think this is a mistake."
+  );
+  if (gate) return gate;
 
   const { data: profile } = await supabase
     .from("profiles")

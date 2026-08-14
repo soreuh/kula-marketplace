@@ -51,7 +51,8 @@ export async function requireUser(): Promise<UserResult> {
  */
 export async function requireActiveAccount(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  message = "Your account is paused — purchases are disabled. Contact kula if you think this is a mistake."
 ): Promise<NextResponse | null> {
   const { data: me } = await supabase
     .from("profiles")
@@ -60,12 +61,6 @@ export async function requireActiveAccount(
     .maybeSingle();
   const status = (me as { account_status?: string } | null)?.account_status;
   if (status != null && status !== "active")
-    return NextResponse.json(
-      {
-        error:
-          "Your account is paused — purchases are disabled. Contact kula if you think this is a mistake.",
-      },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: message }, { status: 403 });
   return null;
 }

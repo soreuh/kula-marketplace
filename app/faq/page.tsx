@@ -280,7 +280,10 @@ export default function FaqPage() {
     <div className="mx-auto max-w-2xl px-5 py-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        // `<` escaped so no future answer text can close the script tag
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <h1 className="font-display text-4xl font-bold lowercase">
         questions, answered

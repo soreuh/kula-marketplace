@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-guards";
+import { rateLimitOk } from "@/lib/rate-limit";
 import { DURATIONS } from "@/lib/categories";
 import { getProductOptions } from "@/lib/options";
 
@@ -22,6 +23,15 @@ export async function POST(request: Request) {
 
   const auth = await requireUser();
   if (auth.error) return auth.error;
+
+  // Every call is a paid Anthropic request — cap per user so a stuck
+  // client (or a hostile one) can't burn the owner's API credit. 20/hour
+  // is generous for a form assist; fail-open like every 018 limiter.
+  if (!(await rateLimitOk(`ai-suggest:${auth.user.id}`, 20, 3600)))
+    return NextResponse.json(
+      { error: "That's a lot of suggestions — try again in a bit." },
+      { status: 429 }
+    );
 
   const { description } = await request.json().catch(() => ({}));
   if (!description || String(description).trim().length < 20)
