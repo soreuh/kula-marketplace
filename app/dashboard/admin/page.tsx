@@ -29,7 +29,12 @@ type OptionRow = { id: string; kind: string; label: string; sort: number };
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ notice?: string }>;
+}) {
+  const { notice } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -74,6 +79,12 @@ export default async function AdminDashboard() {
       </section>
 
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-5 py-8">
+        {notice === "password" && (
+          <p className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+            password incorrect — nothing was changed. expand the section again
+            and re-enter it.
+          </p>
+        )}
         <PeriodTiles
           orders={allOrders.map((o) => ({
             amount_cents: o.amount_cents,

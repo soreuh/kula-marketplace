@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createBareClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -41,8 +42,9 @@ async function requireStepUp(
     data: { user },
   } = await supabase.auth.getUser();
   const password = String(formData.get("confirm_password") ?? "");
-  if (!user?.email || !password)
-    throw new Error("Re-enter your password to confirm this change");
+  // Wrong/missing password is a NORMAL flow (typos), not an exception —
+  // redirect back with a banner instead of throwing into the error page.
+  if (!user?.email || !password) redirect("/dashboard/admin?notice=password");
   const bare = createBareClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -52,7 +54,7 @@ async function requireStepUp(
     email: user.email,
     password,
   });
-  if (pwErr) throw new Error("Password incorrect — nothing changed");
+  if (pwErr) redirect("/dashboard/admin?notice=password");
 }
 
 export async function updateFeeSettings(formData: FormData) {
