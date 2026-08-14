@@ -34,8 +34,7 @@ export async function sendSaleEmail(opts: {
             <p>Your net: <strong style="color:#4b6a52">${usd(opts.netCents)}</strong>
             <span style="color:#888">(kula fee ${usd(opts.feeCents)})</span></p>
             <p style="color:#888;font-size:13px">Payouts go to your bank monthly via
-            Stripe once your balance reaches $5.00. You can turn these emails off in
-            your dashboard.</p>
+            Stripe.</p>
           </div>`,
       }),
     });

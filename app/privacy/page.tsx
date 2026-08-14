@@ -15,6 +15,23 @@ export const metadata = { title: "privacy policy — kula" };
  *      (hosting)
  *   4. §7: cookie wording discloses Google Analytics (owner-approved —
  *      required before NEXT_PUBLIC_GA_MEASUREMENT_ID goes live)
+ * Protective-language pass (per Aleks, Aug 2026 — NOT legal advice; a
+ * licensed attorney must still review before launch):
+ *   5. §3: "sale notification emails (if you opt in)" promised an opt-in
+ *      control that does not exist yet → "transactional emails". Restore
+ *      opt-in wording when the notification-preferences feature ships.
+ *   6. §4: provider list completed — Resend, Mailchimp, Google Analytics
+ *      were added to the stack after the appendix was written.
+ *   7. §5 retention REWRITTEN — the appendix promised deletion of
+ *      personal information within 30 days of account deletion, but the
+ *      built system deliberately retains all data on account closure
+ *      (moderation is ghosting, never hard-delete; buyers keep purchases).
+ *      Policy now states the truth: public removal immediately,
+ *      transaction records retained, deletion-on-request honored within
+ *      30 days except legally required records.
+ *   8. NEW §7.1 security safeguards + no-absolute-guarantee.
+ *   9. §8: aligned with the terms' 18+ requirement.
+ *   Last-updated date bumped (material changes).
  * Section numbering (two sections numbered 2) is as in the source document.
  */
 
@@ -43,7 +60,7 @@ export default function PrivacyPage() {
       <h1 className="font-display text-4xl font-bold lowercase">
         privacy policy
       </h1>
-      <p className="mt-2 text-sm text-fog">last updated: June 2, 2025</p>
+      <p className="mt-2 text-sm text-fog">last updated: August 14, 2026</p>
 
       <div className="mt-8 flex flex-col gap-8 leading-relaxed text-fog">
         <Section n="1" title="Who We Are">
@@ -76,8 +93,8 @@ export default function PrivacyPage() {
           To create and manage your account and profile; to facilitate
           purchases and deliver digital content to buyers; to display your
           public instructor profile to potential buyers; to calculate and
-          display seller earnings; to send sale notification emails (if you
-          opt in); to send platform updates to waitlist subscribers (if you
+          display seller earnings; to send transactional emails such as sale
+          notifications; to send platform updates to waitlist subscribers (if you
           signed up); to detect fraud and keep the platform secure; to comply
           with legal obligations.
         </Section>
@@ -87,9 +104,11 @@ export default function PrivacyPage() {
           these circumstances — Public profile: your instructor name, bio,
           specializations, and published listings are visible to all visitors.
           Service providers: we use Supabase for infrastructure and
-          authentication, Stripe for payment processing, and Netlify for
-          hosting, and may use email services to deliver notifications. these
-          providers access data only as necessary to deliver services to us.
+          authentication, Stripe for payment processing, Netlify for hosting,
+          Resend to deliver transactional email, Mailchimp to manage our
+          mailing list, and Google Analytics to understand how the site is
+          used. these providers access data only as necessary to deliver
+          services to us.
           Legal requirements: if required by law, court order, or to protect
           the rights and safety of kula and its users. Business transfers: in
           the event of a merger or acquisition, your data may transfer as part
@@ -98,10 +117,14 @@ export default function PrivacyPage() {
 
         <Section n="5" title="Data Retention">
           We retain your account information for as long as your account is
-          active. if you delete your account, we will delete your personal
-          information within 30 days, except where retention is required by
-          law or for legitimate business purposes (e.g., records of completed
-          transactions).
+          active. if you close your account, your profile and listings are
+          removed from public view. records of completed transactions
+          (purchases, sales, payouts) are retained as required for tax,
+          accounting, fraud-prevention, and legal purposes — and buyers keep
+          access to content they have purchased. you may request deletion of
+          your remaining personal information by emailing us; we honor
+          verified requests within 30 days, except where retention is
+          required by law.
         </Section>
 
         <Section n="6" title="Your Rights">
@@ -123,11 +146,21 @@ export default function PrivacyPage() {
           settings, but this will prevent you from staying signed in.
         </Section>
 
+        <Section n="7.1" title="Security">
+          We protect your information with industry-standard safeguards,
+          including encrypted connections and access controls, and we never
+          store full payment card details — Stripe handles those. no method
+          of transmission or storage is completely secure, so we cannot
+          guarantee absolute security. keep your password private; you are
+          responsible for activity under your account.
+        </Section>
+
         <Section n="8" title="Children's Privacy">
-          kula is not directed to children under 13. we do not knowingly
-          collect personal information from children. if you believe we have
-          inadvertently collected such information, please contact us
-          immediately.
+          kula accounts are for adults — you must be 18 or older to register
+          (see our terms). the platform is not directed to children under 13,
+          and we do not knowingly collect personal information from children.
+          if you believe we have inadvertently collected such information,
+          please contact us immediately.
         </Section>
 
         <Section n="9" title="Changes to This Policy">

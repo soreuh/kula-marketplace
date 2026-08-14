@@ -4,13 +4,30 @@ export const metadata = { title: "terms & conditions — kula" };
 
 /*
  * Text is VERBATIM from the owner's finalized terms (fix list item 4 /
- * Appendix A), with two owner-directed changes:
+ * Appendix A), with owner-directed changes — all queued for the owner's
+ * lawyer pass before launch:
  *   1. the domain (the appendix said "kula.com"; the platform lives at
  *      kula-marketplace.com)
  *   2. §4.6 amended for the free-listings feature: "all listings must be
  *      priced at a minimum of $1.00" → paid listings min $1.00, free
- *      resources allowed (per Aleks, Aug 2026 — for the owner's lawyer
- *      pass before launch)
+ *      resources allowed (per Aleks, Aug 2026)
+ * Protective-language pass (per Aleks, Aug 2026 — NOT legal advice; a
+ * licensed attorney must still review before launch):
+ *   3. §4.5: dropped "subject to a minimum payout threshold of $5.00" —
+ *      no such mechanic exists in the built payout system (monthly Stripe
+ *      payouts, no threshold); the terms must not promise one.
+ *   4. NEW §5.4 assumption of risk / not-medical-advice — yoga content is
+ *      physical; this vertical needs an injury disclaimer.
+ *   5. §6: added chargeback language (contact us first; abusive disputes
+ *      → suspension; refunded/disputed sales may reverse the seller share
+ *      — matches how Stripe destination-charge reversals actually work).
+ *   6. §9: "kula reviews all content submissions before publication" was
+ *      FALSE (publication is instant; moderation is post-hoc) and created
+ *      an assumed duty to pre-screen. Rewritten: may review before or
+ *      after, no obligation to pre-screen.
+ *   7. §10: added the right to modify/discontinue features.
+ *   8. NEW §12.1 miscellaneous: severability, entire agreement, no
+ *      waiver, assignment on sale of the business, survival.
  */
 
 function Section({
@@ -91,8 +108,7 @@ export default function TermsPage() {
         <Section n="4.5" title="Commission — 30% + $0.25">
           kula retains a commission of 30% of each sale price, plus a $0.25
           transaction fee per resource. the remaining amount is paid to the
-          seller via Stripe Connect on a monthly basis, subject to a minimum
-          payout threshold of $5.00.
+          seller via Stripe Connect on a monthly payout schedule.
         </Section>
 
         <Section n="4.6" title="Pricing">
@@ -128,6 +144,19 @@ export default function TermsPage() {
           compatibility issues with the buyer&apos;s device or software.
         </Section>
 
+        <Section n="5.4" title="Physical Practice &amp; Assumption of Risk">
+          Content on kula is educational material for qualified teachers —
+          it is not medical, health, or professional advice. yoga and other
+          physical practice carries an inherent risk of injury. users are
+          responsible for their own health, for consulting a physician where
+          appropriate, and for exercising their own professional judgment
+          before practicing or teaching any purchased content. to the maximum
+          extent permitted by law, neither kula nor sellers are liable for
+          injuries or health outcomes arising from the practice or teaching
+          of content obtained through the platform, including injuries
+          sustained by a user&apos;s students.
+        </Section>
+
         <Section n="6" title="Refund Policy">
           Due to the digital nature of all products, kula does not offer
           refunds once a file has been downloaded. if a file is corrupted,
@@ -137,7 +166,12 @@ export default function TermsPage() {
             {CONTACT_EMAIL}
           </a>
           . kula reviews all refund requests within 7 days and has sole
-          discretion in granting refunds.
+          discretion in granting refunds. buyers agree to contact kula to
+          resolve any billing issue before initiating a chargeback with their
+          card issuer; disputes initiated without first contacting kula, or
+          found to be fraudulent, may result in account suspension. where a
+          sale is refunded or reversed through a chargeback, the seller&apos;s
+          share of that sale may be reversed as well.
         </Section>
 
         <Section n="7" title="Intellectual Property &amp; DMCA">
@@ -161,17 +195,19 @@ export default function TermsPage() {
         </Section>
 
         <Section n="9" title="Content Moderation">
-          kula reviews all content submissions before publication. kula
-          reserves the right to reject, remove, or modify any listing at its
-          sole discretion. repeated violations may result in account
-          suspension or termination without notice.
+          kula may review content before or after publication, but has no
+          obligation to pre-screen every submission. kula reserves the right
+          to reject, remove, or hide any listing, and to pause or deactivate
+          any account, at its sole discretion. repeated violations may result
+          in account suspension or termination without notice.
         </Section>
 
         <Section n="10" title="Disclaimer of Warranties">
           kula is provided &apos;as is&apos; without warranties of any kind,
           express or implied. kula does not warrant that the platform will be
           uninterrupted, error-free, or that content will meet any specific
-          standard of quality.
+          standard of quality. kula may modify, suspend, or discontinue any
+          feature of the platform at any time.
         </Section>
 
         <Section n="11" title="Limitation of Liability">
@@ -185,6 +221,16 @@ export default function TermsPage() {
           These terms are governed by the laws of the State of Wisconsin,
           United States. any disputes shall be resolved in the courts of
           Wisconsin.
+        </Section>
+
+        <Section n="12.1" title="Miscellaneous">
+          If any provision of these terms is found unenforceable, the
+          remaining provisions stay in full effect. these terms are the
+          entire agreement between you and kula regarding the platform.
+          kula&apos;s failure to enforce a provision is not a waiver of it.
+          kula may assign these terms in connection with a merger,
+          acquisition, or sale of the business; you may not assign them.
+          sections 4.7, 5, 10, and 11 survive account closure or termination.
         </Section>
 
         <Section n="13" title="Contact">

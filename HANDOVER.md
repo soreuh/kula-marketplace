@@ -43,6 +43,13 @@ your logins, your dashboards, your money. Nothing stays attached to Aleks.
    where real identity matters — it's a money account.
 3. You don't need to "activate" (go live) yet — everything below works in
    **test mode** first.
+4. One quirk of newer Stripe accounts: before the FIRST seller can connect,
+   enable "**Accounts v1 support**" at
+   dashboard.stripe.com/settings/features/feat_accounts_v1_support (the app
+   uses Stripe's classic account-creation API; without the flag, the connect
+   button errors with "not connected to your platform"). Also complete the
+   Connect **platform profile** questionnaire when the dashboard asks —
+   marketplace, digital products, platform responsible for losses.
 
 ---
 

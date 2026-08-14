@@ -131,8 +131,8 @@ function PayoutsActivePanel({ feeRateLabel }: { feeRateLabel: string }) {
         </h3>
       </div>
       <p className="mt-1 text-sm text-sage-700/80">
-        stripe deposits your earnings to your bank monthly (around the 1st),
-        once your balance reaches $5.00. your kula rate: {feeRateLabel}.
+        stripe deposits your earnings to your bank monthly (around the 1st).
+        your kula rate: {feeRateLabel}.
       </p>
     </div>
   );
