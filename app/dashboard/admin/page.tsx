@@ -90,56 +90,6 @@ export default async function AdminDashboard() {
           users={allUsers}
         />
 
-        <section className="rounded-2xl border border-ink/5 bg-white px-6 py-4 shadow-sm">
-          <form
-            action={updateFeeSettings}
-            className="flex flex-wrap items-end gap-4 text-sm"
-          >
-            <h2 className="mr-2 self-center font-display text-xl font-bold lowercase">
-              platform fee
-            </h2>
-            <label className="text-fog">
-              percent
-              <input
-                name="fee_percent"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                defaultValue={Number(s.fee_percent)}
-                className={inputCls}
-              />
-            </label>
-            <label className="text-fog">
-              flat (¢)
-              <input
-                name="fee_flat_cents"
-                type="number"
-                step="1"
-                min="0"
-                defaultValue={s.fee_flat_cents}
-                className={inputCls}
-              />
-            </label>
-            <button className="rounded-full bg-sage-500 px-6 py-2.5 font-display font-semibold lowercase text-white hover:bg-sage-600">
-              save
-            </button>
-            <span className="text-fog">
-              the fee comes out of the listing price — on a $20.00 sale the
-              seller nets{" "}
-              {formatUsd(
-                2000 -
-                  Math.min(
-                    2000,
-                    Math.round((2000 * Number(s.fee_percent)) / 100) +
-                      s.fee_flat_cents
-                  )
-              )}
-              .
-            </span>
-          </form>
-        </section>
-
         <AdminSection
           title="notifications"
           subtitle="platform-wide switches for every email the app sends. individual users keep their own toggles (sellers: sale emails in the earnings tab; buyers: update emails in their library) — these override everyone's."
@@ -275,6 +225,67 @@ export default async function AdminDashboard() {
             ))}
           </ul>
         </AdminSection>
+
+        <AdminSection
+          title="platform fee"
+          subtitle="reprices every future sale on the marketplace — changing it asks for your password again."
+        >
+          <form
+            action={updateFeeSettings}
+            className="flex flex-wrap items-end gap-4 text-sm"
+          >
+            <label className="text-fog">
+              percent
+              <input
+                name="fee_percent"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                defaultValue={Number(s.fee_percent)}
+                className={inputCls}
+              />
+            </label>
+            <label className="text-fog">
+              flat (¢)
+              <input
+                name="fee_flat_cents"
+                type="number"
+                step="1"
+                min="0"
+                defaultValue={s.fee_flat_cents}
+                className={inputCls}
+              />
+            </label>
+            <label className="text-fog">
+              your password
+              <input
+                name="confirm_password"
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder="re-enter to confirm"
+                className={inputCls + " w-44"}
+              />
+            </label>
+            <button className="rounded-full bg-sage-500 px-6 py-2.5 font-display font-semibold lowercase text-white hover:bg-sage-600">
+              save
+            </button>
+            <span className="text-fog">
+              the fee comes out of the listing price — on a $20.00 sale the
+              seller nets{" "}
+              {formatUsd(
+                2000 -
+                  Math.min(
+                    2000,
+                    Math.round((2000 * Number(s.fee_percent)) / 100) +
+                      s.fee_flat_cents
+                  )
+              )}
+              .
+            </span>
+          </form>
+        </AdminSection>
       </div>
     </div>
   );
@@ -400,6 +411,15 @@ function SellersSection({
                         className="w-20 rounded-xl border border-ink/10 px-2 py-1.5"
                       />
                       <span className="text-fog">%</span>
+                      <input
+                        name="confirm_password"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                        placeholder="password"
+                        title="rate changes require your password"
+                        className="w-28 rounded-xl border border-ink/10 px-2 py-1.5"
+                      />
                       <button className="rounded-full border border-ink/10 px-3 py-1.5 lowercase hover:border-ink/30">
                         set
                       </button>
@@ -702,7 +722,7 @@ function GrowthSection({
           these mirror the editable cells in kula-growth-model.xlsx. changing
           them recomputes the whole comparison — the spreadsheet stays the
           reference; &quot;reset&quot; returns everything to its mid column.
-          the kula fee itself always comes from the platform fee setting above.
+          the kula fee itself always comes from the platform fee setting (bottom of this page).
         </p>
         <form action={updateGrowthModel} className="mt-3">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

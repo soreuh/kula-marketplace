@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createBareClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -24,8 +25,41 @@ async function requireAdmin() {
   return supabase;
 }
 
+/**
+ * Step-up auth for money-critical changes (platform fee, partner rates):
+ * an open admin tab isn't authority enough — the action requires re-typing
+ * the admin's password. Verified server-side against Supabase auth with a
+ * throwaway, non-persisting client (live session cookies untouched); wrong
+ * password = nothing written. Supabase's own auth rate limits make
+ * brute-forcing these forms expensive.
+ */
+async function requireStepUp(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>,
+  formData: FormData
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const password = String(formData.get("confirm_password") ?? "");
+  if (!user?.email || !password)
+    throw new Error("Re-enter your password to confirm this change");
+  const bare = createBareClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+  const { error: pwErr } = await bare.auth.signInWithPassword({
+    email: user.email,
+    password,
+  });
+  if (pwErr) throw new Error("Password incorrect — nothing changed");
+}
+
 export async function updateFeeSettings(formData: FormData) {
   const supabase = await requireAdmin();
+
+  await requireStepUp(supabase, formData);
+
   const feePercent = Number(formData.get("fee_percent"));
   const feeFlat = Number(formData.get("fee_flat_cents"));
   if (!Number.isFinite(feePercent) || feePercent < 0 || feePercent > 100)
@@ -92,6 +126,12 @@ export async function changeUserRole(formData: FormData) {
  */
 export async function setCommissionOverride(formData: FormData) {
   const supabase = await requireAdmin();
+  // Same step-up as the platform fee: a per-seller override to 0% is
+  // economically identical to zeroing the platform fee for that seller.
+  // (togglePartner stays ungated on purpose: unmarking CLEARS an override —
+  // restoring the platform default — so it can only ever raise kula's take,
+  // never leak fee revenue.)
+  await requireStepUp(supabase, formData);
   const userId = String(formData.get("user_id"));
   const raw = String(formData.get("commission_override") ?? "").trim();
 

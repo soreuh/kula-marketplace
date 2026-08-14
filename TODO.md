@@ -96,6 +96,17 @@ real launch.
 
 ## Admin portal redesign (2026-08-14 — built, pending migration 020 + owner verify)
 
+- [x] 2026-08-14 **Platform fee: step-up auth + demoted placement.** Changing
+  the fee now requires re-typing the admin password, verified SERVER-side via
+  signInWithPassword on a throwaway non-persisting client (wrong password =
+  nothing written; Supabase's auth rate limits throttle brute force — a JS
+  prompt would have been theater). Section is now a collapsed AdminSection at
+  the very bottom of the admin page. Gap closed same day: `setCommissionOverride` now
+  runs the same step-up (shared `requireStepUp` helper; password field in each
+  set-rate row). `togglePartner` stays UNGATED on purpose — unmarking clears an
+  override back to the platform default, which can only RAISE kula's take, so
+  it isn't a fee-leak vector.
+
 - [x] **last_seen_at stickiness tracking (021)**: `profiles.last_seen_at`,
   stamped by the middleware on page views and throttled by a 1-hour COOKIE so
   steady-state cost is zero extra queries (NOT stamped in the layout — server
@@ -293,7 +304,12 @@ real launch.
   "notifications" section with platform switches for BOTH email types (sale
   emails now also platform-switchable, checked in the webhook, tolerant
   read); buyers get an "email me when content i own gets updated" toggle on
-  the library page mirroring the sellers' earnings-tab toggle.
+  the library page mirroring the sellers' earnings-tab toggle. VERIFIED
+  END-TO-END 2026-08-14: dialog edit with a different file → "your content got
+  better" email in the buyer's inbox; console probe returned sent:2; the 429
+  daily cap demonstrably enforces. (First test attempt burned the daily token
+  before any email was observed — if debugging "no email" ever again, check
+  `rate_limits` for a content-update row FIRST.)
 - [ ] Preview is page 1 ONLY, baked at upload (pdf.js → canvas → 7px blur burned
   into the pixels → JPEG in the public covers bucket; PPT/PPTX get none). If a
   teacher's page 1 is a title page, buyers learn nothing from it. Worth letting
@@ -333,5 +349,13 @@ real launch.
 
 - Notes-photos → branded-PDF generator (Anthropic API): owner loves it, community is AI-averse → ON HOLD by owner decision; monetizable ($1.99/plan) with backend toggle if ever revived
 - PWA install (manifest.json + 192/512 PNGs, ~20 min from the existing क path) — HELD OFF 2026-08-14: kula is a browse-and-buy-occasionally site, not a daily-open app, and the offline win is moot since buyers' PDFs land in their Files app anyway. Revisit only if a teacher actually asks for a home-screen app. iOS home-screen icon (app/apple-icon.png) already exists regardless.
+- BIMI sender logo in Gmail (the avatar circle next to emails): parked until
+  ~Aug 2027 — Gmail needs DMARC at enforcement (ours is p=none; careful, the
+  Porkbun hello@ forward is in the delivery path and strict DMARC breaks
+  forwarding) plus a certificate: VMC = registered trademark + ~$1k+/yr, CMC =
+  no trademark but the logo must have been publicly on the domain for 12+
+  months — the क favicon went live 2026-08-14, so the CMC clock started then.
+  Free interim hack: Google account on hello@ with the क tile as its photo
+  (Gmail-only, unofficial, often works).
 - Bundles / coupons / gifting — classic marketplace levers, zero validation yet
 - Seller analytics page (views→sales funnel per listing) — the data already exists in products.views + orders
