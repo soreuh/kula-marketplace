@@ -96,6 +96,36 @@ export async function setCommissionOverride(formData: FormData) {
 }
 
 /**
+ * Listing options — the style / content-type / level lists sellers choose
+ * from (product_options table, migration 009). Add and delete only; deleting
+ * an option never touches existing listings, which keep their stored label.
+ */
+export async function addProductOption(formData: FormData) {
+  const supabase = await requireAdmin();
+  const kind = String(formData.get("kind"));
+  const label = String(formData.get("label") ?? "").trim();
+  if (!["style", "content_type", "level"].includes(kind))
+    throw new Error("Bad kind");
+  if (!label || label.length > 40)
+    throw new Error("Label must be 1–40 characters");
+
+  // duplicates (unique kind+label) just no-op — nothing to report
+  await supabase.from("product_options").insert({ kind, label });
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/explore");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteProductOption(formData: FormData) {
+  const supabase = await requireAdmin();
+  const id = String(formData.get("id"));
+  await supabase.from("product_options").delete().eq("id", id);
+  revalidatePath("/dashboard/admin");
+  revalidatePath("/explore");
+  revalidatePath("/dashboard");
+}
+
+/**
  * User moderation — pause / activate / soft-delete.
  * - paused:  buying blocked (checkout gate) + listings and public profile
  *            ghosted (RLS). The user can still sign in and see their own

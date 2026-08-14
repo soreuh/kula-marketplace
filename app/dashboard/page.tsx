@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getProductOptions } from "@/lib/options";
 import { getStripe } from "@/lib/stripe";
 import type { Order, Product, Profile, Review } from "@/lib/types";
 import DashboardClient, { type SaleRow } from "./dashboard-client";
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
   const prof = profile as Profile;
 
-  const [{ data: products }, { data: orders }, { data: reviews }, { data: settings }] =
+  const [{ data: products }, { data: orders }, { data: reviews }, { data: settings }, options] =
     await Promise.all([
       supabase
         .from("products")
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
         .order("created_at", { ascending: false }),
       supabase.from("reviews").select("product_id, rating"),
       supabase.from("platform_settings").select("*").single(),
+      getProductOptions(),
     ]);
 
   // The seller's effective rate: their negotiated override, else the default.
@@ -124,6 +126,7 @@ export default async function DashboardPage() {
           feeRateLabel={feeRateLabel}
           feePercent={Number(feePercent)}
           feeFlatCents={feeFlat}
+          options={options}
         />
       </div>
     </div>

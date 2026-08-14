@@ -67,6 +67,11 @@ owner before enabling in production).
   rewrite 001 — it has already been run on live projects) and apply it in the
   Supabase SQL editor.
 - RLS is the real authorization layer; UI checks are convenience only.
+- Listing options (styles/content types/levels) live in `product_options`
+  (migration 009), admin-curated from the dashboard; lib/categories.ts
+  arrays are FALLBACK only (missing/empty table). Durations + teachability
+  stay hardcoded on purpose (slider math / DB check constraint). Server
+  components fetch via lib/options.ts and pass down as props.
 - Listings cannot become 'active' unless the seller's
   `profiles.stripe_charges_enabled` is true (DB trigger, migration 005;
   admins and server contexts exempt). Drafts are always allowed.

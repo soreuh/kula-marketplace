@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { STYLES, CONTENT_TYPES, LEVELS, DURATIONS } from "@/lib/categories";
+import { DURATIONS } from "@/lib/categories";
+import { getProductOptions } from "@/lib/options";
 
 /**
  * AI-powered listing metadata suggestions.
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
       { status: 400 }
     );
 
+  const options = await getProductOptions(); // admin-curated lists
+
   const prompt = `You label yoga-teaching content listings for a marketplace. Based on the seller's description below, suggest listing metadata.
 
 Description:
@@ -40,9 +43,9 @@ Description:
 
 Reply with ONLY a JSON object (no prose, no markdown fences) with these keys:
 - "title": a compelling listing title, max 60 chars
-- "category": one of ${JSON.stringify(STYLES)}
-- "content_type": one of ${JSON.stringify(CONTENT_TYPES)}
-- "level": one of ${JSON.stringify(LEVELS)}
+- "category": one of ${JSON.stringify(options.styles)}
+- "content_type": one of ${JSON.stringify(options.contentTypes)}
+- "level": one of ${JSON.stringify(options.levels)}
 - "duration_minutes": one of ${JSON.stringify(DURATIONS)}
 - "teachability": "ready" | "adapt" | "inspiration"
 - "theme": short phrase (e.g. "hip openers & letting go")

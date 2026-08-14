@@ -4,12 +4,16 @@ import { formatUsd } from "@/lib/fees";
 import { StatTile, StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
+  addProductOption,
+  deleteProductOption,
   setCommissionOverride,
   setProductStatus,
   togglePartner,
   updateFeeSettings,
 } from "./actions";
 import UsersPanel from "./users-panel";
+
+type OptionRow = { id: string; kind: string; label: string; sort: number };
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +31,13 @@ export default async function AdminDashboard() {
     .single();
   if (me?.role !== "admin") redirect("/dashboard");
 
-  const [{ data: settings }, { data: orders }, { data: products }, { data: users }] =
+  const [{ data: settings }, { data: orders }, { data: products }, { data: users }, { data: optionRows }] =
     await Promise.all([
       supabase.from("platform_settings").select("*").single(),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("product_options").select("*").order("sort").order("label"),
     ]);
 
   const s = settings as PlatformSettings;
@@ -112,6 +117,8 @@ export default async function AdminDashboard() {
             </span>
           </form>
         </section>
+
+        <OptionsSection options={(optionRows as OptionRow[] | null) ?? []} />
 
         <SellersSection
           users={(users as Profile[] | null) ?? []}
@@ -330,6 +337,82 @@ function SellersSection({
         status = stripe payouts ready (refreshes when the seller visits their
         dashboard). rate changes apply to future sales only.
       </p>
+    </section>
+  );
+}
+
+/* ───────────────────── listing options (styles/types/levels) ───────────────────── */
+
+const OPTION_KINDS: { kind: string; title: string }[] = [
+  { kind: "style", title: "yoga styles" },
+  { kind: "content_type", title: "content types" },
+  { kind: "level", title: "levels" },
+];
+
+function OptionsSection({ options }: { options: OptionRow[] }) {
+  return (
+    <section className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
+      <h2 className="font-display text-xl font-bold lowercase">
+        listing options
+      </h2>
+      <p className="mt-1 text-sm text-fog">
+        the choices sellers pick from when posting content. removing one only
+        affects future listings — existing listings keep their label.
+        durations and the teachability scale are fixed parts of the product
+        design.
+      </p>
+
+      {!options.length ? (
+        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          run migration <code>009_product_options.sql</code> in the Supabase
+          SQL editor to enable editing — until then the built-in lists apply.
+        </p>
+      ) : (
+        <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {OPTION_KINDS.map(({ kind, title }) => (
+            <div key={kind}>
+              <h3 className="font-display text-sm font-semibold lowercase text-sage-700">
+                {title}
+              </h3>
+              <ul className="mt-2.5 flex flex-col gap-1.5">
+                {options
+                  .filter((o) => o.kind === kind)
+                  .map((o) => (
+                    <li
+                      key={o.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-ink/5 bg-cream px-3 py-1.5 text-sm"
+                    >
+                      <span className="truncate">{o.label}</span>
+                      <form action={deleteProductOption}>
+                        <input type="hidden" name="id" value={o.id} />
+                        <button
+                          title={`remove "${o.label}" from future listings`}
+                          className="rounded-full px-1.5 text-fog hover:bg-red-50 hover:text-red-700"
+                          aria-label={`delete ${o.label}`}
+                        >
+                          ×
+                        </button>
+                      </form>
+                    </li>
+                  ))}
+              </ul>
+              <form action={addProductOption} className="mt-2.5 flex gap-1.5">
+                <input type="hidden" name="kind" value={kind} />
+                <input
+                  name="label"
+                  required
+                  maxLength={40}
+                  placeholder="add new…"
+                  className="min-w-0 flex-1 rounded-xl border border-ink/10 bg-white px-3 py-1.5 text-sm focus:border-sage-400 focus:outline-none"
+                />
+                <button className="rounded-full bg-sage-500 px-3.5 py-1.5 text-sm font-semibold lowercase text-white hover:bg-sage-600">
+                  add
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

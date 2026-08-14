@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd, timeAgo } from "@/lib/fees";
-import { STYLES, CONTENT_TYPES, LEVELS, DURATIONS, TEACHABILITY } from "@/lib/categories";
+import { DURATIONS, TEACHABILITY } from "@/lib/categories";
 import { CoverArt, StatTile, StatusChip, Stars, inputCls } from "@/components/ui";
+import type { ProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
 
 export type SaleRow = {
@@ -36,6 +37,7 @@ export default function DashboardClient({
   feeRateLabel,
   feePercent,
   feeFlatCents,
+  options,
 }: {
   userId: string;
   role: string;
@@ -50,6 +52,7 @@ export default function DashboardClient({
   feeRateLabel: string;
   feePercent: number;
   feeFlatCents: number;
+  options: ProductOptions; // admin-curated style/type/level lists
 }) {
   const [tab, setTab] = useState<"content" | "earnings">("content");
   const [showForm, setShowForm] = useState(false);
@@ -93,6 +96,7 @@ export default function DashboardClient({
           aiEnabled={aiEnabled}
           feePercent={feePercent}
           feeFlatCents={feeFlatCents}
+          options={options}
           showForm={showForm}
           setShowForm={setShowForm}
         />
@@ -199,6 +203,7 @@ function ContentTab({
   aiEnabled,
   feePercent,
   feeFlatCents,
+  options,
   showForm,
   setShowForm,
 }: {
@@ -210,6 +215,7 @@ function ContentTab({
   aiEnabled: boolean;
   feePercent: number;
   feeFlatCents: number;
+  options: ProductOptions;
   showForm: boolean;
   setShowForm: (v: boolean) => void;
 }) {
@@ -240,6 +246,7 @@ function ContentTab({
           canPublish={chargesEnabled}
           feePercent={feePercent}
           feeFlatCents={feeFlatCents}
+          options={options}
           onClose={() => setShowForm(false)}
         />
       ) : (
@@ -724,6 +731,7 @@ function UploadDialog({
   canPublish,
   feePercent,
   feeFlatCents,
+  options,
   onClose,
 }: {
   userId: string;
@@ -733,6 +741,7 @@ function UploadDialog({
   canPublish: boolean;
   feePercent: number;
   feeFlatCents: number;
+  options: ProductOptions;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -1106,7 +1115,7 @@ function UploadDialog({
             onChange={(e) => setContentType(e.target.value)}
           >
             <option value="">choose…</option>
-            {CONTENT_TYPES.map((t) => (
+            {options.contentTypes.map((t) => (
               <option key={t}>{t}</option>
             ))}
           </select>
@@ -1120,7 +1129,7 @@ function UploadDialog({
             onChange={(e) => setCategory(e.target.value)}
           >
             <option value="">choose…</option>
-            {STYLES.map((s) => (
+            {options.styles.map((s) => (
               <option key={s}>{s}</option>
             ))}
           </select>
@@ -1150,7 +1159,7 @@ function UploadDialog({
             onChange={(e) => setLevel(e.target.value)}
           >
             <option value="">choose…</option>
-            {LEVELS.map((l) => (
+            {options.levels.map((l) => (
               <option key={l}>{l}</option>
             ))}
           </select>

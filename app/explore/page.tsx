@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
 import ExploreClient from "./explore-client";
 
@@ -9,13 +10,14 @@ export type RatingMap = Record<string, { avg: number; count: number }>;
 export default async function ExplorePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, { data: reviews }] = await Promise.all([
+  const [{ data: products }, { data: reviews }, options] = await Promise.all([
     supabase
       .from("products")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false }),
     supabase.from("reviews").select("product_id, rating"),
+    getProductOptions(),
   ]);
 
   const ratings: RatingMap = {};
@@ -43,6 +45,7 @@ export default async function ExplorePage() {
       <ExploreClient
         products={(products as Product[] | null) ?? []}
         ratings={ratings}
+        options={options}
       />
     </div>
   );

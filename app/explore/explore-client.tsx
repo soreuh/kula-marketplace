@@ -4,14 +4,12 @@ import { useMemo, useState } from "react";
 import { ProductCard, EmptyState } from "@/components/ui";
 import { formatUsd } from "@/lib/fees";
 import {
-  STYLES,
-  CONTENT_TYPES,
-  LEVELS,
   DURATIONS,
   TEACHABILITY,
   durationLabel,
   teachabilityLabel,
 } from "@/lib/categories";
+import type { ProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
 import type { RatingMap } from "./page";
 
@@ -39,9 +37,11 @@ const EMPTY_FILTERS: Filters = {
 export default function ExploreClient({
   products,
   ratings,
+  options,
 }: {
   products: Product[];
   ratings: RatingMap;
+  options: ProductOptions; // admin-curated lists (styles/types/levels)
 }) {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -122,7 +122,7 @@ export default function ExploreClient({
         ))}
       </FilterGroup>
       <FilterGroup title="yoga style">
-        {STYLES.map((s) => (
+        {options.styles.map((s) => (
           <Check
             key={s}
             label={s}
@@ -140,7 +140,7 @@ export default function ExploreClient({
         />
       </FilterGroup>
       <FilterGroup title="content type">
-        {CONTENT_TYPES.map((t) => (
+        {options.contentTypes.map((t) => (
           <Check
             key={t}
             label={t}
@@ -150,7 +150,7 @@ export default function ExploreClient({
         ))}
       </FilterGroup>
       <FilterGroup title="level">
-        {LEVELS.map((l) => (
+        {options.levels.map((l) => (
           <Check
             key={l}
             label={l}

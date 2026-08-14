@@ -33,6 +33,9 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
    8. `008_profile_column_guard.sql` — locks money-critical profile columns
       (commission rate, Stripe status) so only admins/the server can change
       them, never a user editing their own row.
+   9. `009_product_options.sql` — the seller-facing choice lists (yoga
+      styles, content types, levels) become admin-editable from the
+      dashboard's "listing options" panel.
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 
