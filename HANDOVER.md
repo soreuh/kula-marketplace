@@ -186,7 +186,11 @@ Stripe is still in test mode, so play freely:
    the domain on a property you already own, editing the data stream's URL
    in GA Admin works too — but a new URL under a new owner means a fresh
    tag.) Analytics stays completely off until that variable exists.
-6. The legal pages (/terms, /privacy, /about) already carry your finalized
+6. The site's public contact email (footer, terms, privacy) is set in ONE
+   place: add `NEXT_PUBLIC_CONTACT_EMAIL` in Netlify's environment variables
+   with your address and redeploy — every page updates at once. (Without
+   that variable it uses the default written in `lib/site.ts`.)
+7. The legal pages (/terms, /privacy, /about) already carry your finalized
    text — have a lawyer look them over before real sales. One thing they
    don't yet cover: chargebacks. Card disputes debit KULA's Stripe balance
    (not the seller's) plus a dispute fee; the seller's share can be pulled

@@ -73,6 +73,10 @@ From **Stripe → Developers → API keys** (test mode toggle ON):
 Leave `STRIPE_WEBHOOK_SECRET` for step 5 and `NEXT_PUBLIC_SITE_URL` as
 `http://localhost:3000`.
 
+The public contact email (footer, terms, privacy) is centralized in
+`lib/site.ts` — change it there once, or override with
+`NEXT_PUBLIC_CONTACT_EMAIL` in env without any code edit.
+
 Optional (each feature stays hidden until keyed): `KULA_ANTHROPIC_API_KEY`
 turns on AI metadata suggestions in the upload dialog (prefixed KULA_ because
 hosts like Netlify auto-inject a generic `ANTHROPIC_API_KEY` into every site,
