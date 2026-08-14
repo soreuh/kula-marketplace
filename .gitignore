@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — SECRETS, never commit. The template is the one exception:
+# it holds no values and the setup/handover guides tell people to copy it.
 .env*
+!.env.example
+
+# device-bridge trash bin (files moved here instead of deleted) — never ship
+_to_delete/
 
 # vercel
 .vercel
