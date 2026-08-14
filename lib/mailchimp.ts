@@ -45,12 +45,14 @@ export async function mailchimpSubscribe(
         },
         body: JSON.stringify({
           email_address: email,
-          // "pending" = Mailchimp double opt-in: the address only joins the
-          // Audience after clicking the confirmation email. This is the
-          // protection against list poisoning (anyone can POST any email to
-          // /api/mailing-list) — do not change to "subscribed".
-          // Our own mailing_list table still records the raw signup.
-          status: "pending",
+          // "subscribed" = instant join, NO confirmation email — owner
+          // decision (confirmations were landing in spam pre-domain-auth,
+          // and the owner wants a welcome email instead, set up as a
+          // Mailchimp automation). Trade-off accepted for now: anyone can
+          // subscribe any address (no double opt-in, no captcha). If junk
+          // signups ever appear, a ready-to-go Turnstile captcha block
+          // exists — ask the AI session or see git history.
+          status: "subscribed",
           tags: [`kula-${source}`],
         }),
       }

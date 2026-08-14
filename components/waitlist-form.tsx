@@ -30,7 +30,7 @@ export default function WaitlistForm() {
     return (
       <p className="rounded-xl bg-sage-50 p-4 text-center text-sm font-semibold text-sage-700">
         {state === "done"
-          ? "you're on the list 🌿 we'll be in touch."
+          ? "you're subscribed 🌿 we'll be in touch."
           : "you're already on the list 🌿"}
       </p>
     );
