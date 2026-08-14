@@ -59,9 +59,6 @@ export default async function RootLayout({
               >
                 sell
               </Link>
-              <Link href="/faq" className="hover:text-sage-600">
-                faq
-              </Link>
               {profile && (
                 <Link href="/library" className="hover:text-sage-600">
                   library
@@ -70,14 +67,12 @@ export default async function RootLayout({
             </div>
 
             {/* Mobile mini-nav: the full text nav is sm+ only, and this
-                audience is heavily mobile - explore and faq are the two
-                links a first-time phone visitor actually needs. */}
+                audience is heavily mobile - explore is the one link a
+                first-time phone visitor needs. (faq lives in the footer -
+                owner's call, Aug 2026.) */}
             <div className="flex items-center gap-5 font-display text-[15px] font-medium lowercase sm:hidden">
               <Link href="/explore" className="hover:text-sage-600">
                 explore
-              </Link>
-              <Link href="/faq" className="hover:text-sage-600">
-                faq
               </Link>
             </div>
 
