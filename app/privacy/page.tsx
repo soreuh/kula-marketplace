@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
+
 export const metadata = { title: "privacy policy — kula" };
 
 /*
@@ -108,11 +110,8 @@ export default function PrivacyPage() {
           information; request deletion of your data; opt out of marketing
           communications; data portability. to exercise any of these rights,
           email us at{" "}
-          <a
-            href="mailto:discoverkula@gmail.com"
-            className="underline text-ink"
-          >
-            discoverkula@gmail.com
+          <a href={CONTACT_MAILTO} className="underline text-ink">
+            {CONTACT_EMAIL}
           </a>
           .
         </Section>
@@ -139,11 +138,8 @@ export default function PrivacyPage() {
 
         <Section n="10" title="Contact">
           Questions about this privacy policy? contact us at{" "}
-          <a
-            href="mailto:discoverkula@gmail.com"
-            className="underline text-ink"
-          >
-            discoverkula@gmail.com
+          <a href={CONTACT_MAILTO} className="underline text-ink">
+            {CONTACT_EMAIL}
           </a>
           .
         </Section>

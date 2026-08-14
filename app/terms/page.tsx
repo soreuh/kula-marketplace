@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
+
 export const metadata = { title: "terms & conditions — kula" };
 
 /*
@@ -125,8 +127,8 @@ export default function TermsPage() {
           refunds once a file has been downloaded. if a file is corrupted,
           significantly misrepresented, or fails to download, buyers may
           request a refund within 24 hours of purchase by contacting{" "}
-          <a href="mailto:discoverkula@gmail.com" className="underline">
-            discoverkula@gmail.com
+          <a href={CONTACT_MAILTO} className="underline">
+            {CONTACT_EMAIL}
           </a>
           . kula reviews all refund requests within 7 days and has sole
           discretion in granting refunds.
@@ -135,8 +137,8 @@ export default function TermsPage() {
         <Section n="7" title="Intellectual Property &amp; DMCA">
           kula respects intellectual property rights. if you believe content
           on kula infringes your copyright, submit a DMCA takedown notice to{" "}
-          <a href="mailto:discoverkula@gmail.com" className="underline">
-            discoverkula@gmail.com
+          <a href={CONTACT_MAILTO} className="underline">
+            {CONTACT_EMAIL}
           </a>{" "}
           including: identification of the infringing content; your contact
           information; a statement of good faith belief; your signature. kula
@@ -181,8 +183,8 @@ export default function TermsPage() {
 
         <Section n="13" title="Contact">
           For questions about these terms, contact:{" "}
-          <a href="mailto:discoverkula@gmail.com" className="underline">
-            discoverkula@gmail.com
+          <a href={CONTACT_MAILTO} className="underline">
+            {CONTACT_EMAIL}
           </a>
         </Section>
       </div>

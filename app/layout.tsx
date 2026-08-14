@@ -10,6 +10,7 @@ import { Wordmark, LeafLogo } from "@/components/ui";
 import UserMenu from "@/components/user-menu";
 import ConsentModal from "@/components/consent-modal";
 import Analytics from "@/components/analytics";
+import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 import type { Profile } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -143,8 +144,8 @@ export default async function RootLayout({
               <Link href="/terms" className="lowercase hover:text-ink">
                 terms &amp; conditions
               </Link>
-              <a href="mailto:discoverkula@gmail.com" className="hover:text-ink">
-                discoverkula@gmail.com
+              <a href={CONTACT_MAILTO} className="hover:text-ink">
+                {CONTACT_EMAIL}
               </a>
             </div>
             <span className="sm:ml-auto">© 2026 kula</span>

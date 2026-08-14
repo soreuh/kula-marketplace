@@ -62,6 +62,9 @@ owner before enabling in production).
   privacy: Supabase not Replit as auth/infra provider). Don't rewrite it.
 - All secrets/config via env vars (see `.env.example`) — the app must remain
   portable to a new owner's accounts by swapping env values only.
+- The public contact email lives ONLY in lib/site.ts (CONTACT_EMAIL,
+  env-overridable via NEXT_PUBLIC_CONTACT_EMAIL). Never hardcode the address
+  in components/pages — import it.
 
 ## Gotchas
 
