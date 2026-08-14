@@ -31,6 +31,15 @@ export const metadata = { title: "privacy policy — kula" };
  *      30 days except legally required records.
  *   8. NEW §7.1 security safeguards + no-absolute-guarantee.
  *   9. §8: aligned with the terms' 18+ requirement.
+ *  10. §3: "to send platform updates to waitlist subscribers (if you
+ *      signed up)" was made FALSE by the Aug 2026 owner decision to add
+ *      every account to the marketing audience at signup. Reworded to
+ *      state what actually happens: account holders AND waitlist
+ *      subscribers receive updates, consented to at signup, unsubscribe
+ *      any time. (The post-login consent modal was removed in the same
+ *      change — see app/signup/page.tsx + migration 015. If marketing
+ *      is ever split back out into its own optional checkbox, this
+ *      sentence must go back to opt-in wording.)
  *   Last-updated date bumped (material changes).
  * Section numbering (two sections numbered 2) is as in the source document.
  */
@@ -94,8 +103,10 @@ export default function PrivacyPage() {
           purchases and deliver digital content to buyers; to display your
           public instructor profile to potential buyers; to calculate and
           display seller earnings; to send transactional emails such as sale
-          notifications; to send platform updates to waitlist subscribers (if you
-          signed up); to detect fraud and keep the platform secure; to comply
+          notifications; to send platform updates and occasional news about
+          kula to account holders and waitlist subscribers — you agree to
+          this when you create an account or join the waitlist, and every
+          such email has an unsubscribe link; to detect fraud and keep the platform secure; to comply
           with legal obligations.
         </Section>
 

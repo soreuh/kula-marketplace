@@ -8,7 +8,6 @@ import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark, LeafLogo } from "@/components/ui";
 import UserMenu from "@/components/user-menu";
-import ConsentModal from "@/components/consent-modal";
 import Analytics from "@/components/analytics";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 import type { Profile } from "@/lib/types";
@@ -120,11 +119,6 @@ export default async function RootLayout({
         </nav>
 
         <main className="flex-1">{children}</main>
-
-        {/* marketing consent — once per user, after first login */}
-        {user && profile && profile.marketing_consent === null && (
-          <ConsentModal userId={user.id} email={profile.email} />
-        )}
 
         <footer className="mt-16 border-t border-ink/5 bg-cream">
           <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-10 text-sm text-fog sm:flex-row">
