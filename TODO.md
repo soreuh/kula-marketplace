@@ -96,6 +96,17 @@ real launch.
 
 ## Admin portal redesign (2026-08-14 — built, pending migration 020 + owner verify)
 
+- [x] **last_seen_at stickiness tracking (021)**: `profiles.last_seen_at`,
+  stamped by the middleware on page views and throttled by a 1-hour COOKIE so
+  steady-state cost is zero extra queries (NOT stamped in the layout — server
+  components must stay pure, the linter enforces it). Supabase's own
+  last_sign_in_at was rejected: persistent sessions mean an active daily user
+  never "signs in" and would look dead. Backfilled from auth.last_sign_in_at
+  in the migration. People panel shows "seen Xh ago" per user + a last-seen
+  sort. Failure-blind: un-run migration or write hiccup never affects
+  browsing. Future idea: WAU/MAU tile in the growth section once real users
+  exist.
+
 - [x] **Top tiles**: period toggle (this month / 3 / 6 / 12 mo / YTD / all-time,
   default YTD — the old tiles were silently ALL-TIME), 4th tile "free
   downloads" ($0 claim orders), refunded orders excluded from revenue with an

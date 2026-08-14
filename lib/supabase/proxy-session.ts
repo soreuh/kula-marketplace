@@ -41,5 +41,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Stickiness signal (migration 021): stamp profiles.last_seen_at, at most
+  // once per hour per user. The throttle is a COOKIE, not a DB read, so the
+  // steady-state cost of this block is zero queries. Awaited (middleware
+  // must not leak work past the response) but failure-blind: if 021 hasn't
+  // run or the write hiccups, browsing is never affected.
+  if (user && !request.cookies.get("kula_seen")) {
+    await supabase
+      .from("profiles")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("id", user.id)
+      .then(() => null, () => null);
+    response.cookies.set("kula_seen", "1", {
+      maxAge: 60 * 60,
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+    });
+  }
+
   return response;
 }

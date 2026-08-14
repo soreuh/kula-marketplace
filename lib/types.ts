@@ -25,6 +25,8 @@ export interface Profile {
   account_status: "active" | "paused" | "deleted";
   /** Profile picture path in the public covers bucket (own folder). */
   avatar_path: string | null;
+  /** Migration 021 — last page view, stamped by the layout (1/hour). */
+  last_seen_at?: string | null;
 }
 
 /** Public-safe instructor info (the `instructors` view). */

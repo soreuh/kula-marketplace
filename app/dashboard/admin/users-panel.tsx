@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { changeUserRole, setAccountStatus } from "./actions";
+import { timeAgo } from "@/lib/fees";
 import type { Profile } from "@/lib/types";
 
 type RoleFilter =
@@ -12,7 +13,7 @@ type RoleFilter =
   | "partner"
   | "paused"
   | "deleted";
-type SortKey = "newest" | "oldest" | "name" | "email";
+type SortKey = "newest" | "oldest" | "name" | "email" | "last-seen";
 
 /** People panel with search, filters, and sort. */
 export default function UsersPanel({ users }: { users: Profile[] }) {
@@ -43,6 +44,9 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
           return byName(a).localeCompare(byName(b));
         case "email":
           return a.email.localeCompare(b.email);
+        case "last-seen":
+          // most recently seen first; never-seen sinks to the bottom
+          return (b.last_seen_at ?? "").localeCompare(a.last_seen_at ?? "");
       }
     });
   }, [users, query, filter, sort]);
@@ -83,6 +87,7 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
           <option value="oldest">oldest first</option>
           <option value="name">name a–z</option>
           <option value="email">email a–z</option>
+          <option value="last-seen">last seen</option>
         </select>
       </div>
 
@@ -137,6 +142,14 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
               </div>
               <div className="truncate text-fog">
                 {u.email} · joined {new Date(u.created_at).toLocaleDateString()}
+                {" · "}
+                {u.last_seen_at ? (
+                  <span title={new Date(u.last_seen_at).toLocaleString()}>
+                    seen {timeAgo(u.last_seen_at)}
+                  </span>
+                ) : (
+                  <span className="text-fog/60">never seen</span>
+                )}
               </div>
             </div>
             {u.account_status !== "deleted" && (
