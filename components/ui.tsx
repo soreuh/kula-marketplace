@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Instructor, Product } from "@/lib/types";
 import { coverUrl } from "@/lib/covers";
+import { placeholderCover } from "@/lib/cover-placeholders";
 import { teachabilityLabel } from "@/lib/categories";
 
 /* Shared presentational pieces — server-safe (no hooks). */
@@ -152,6 +153,15 @@ export function CoverArt({
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img src={url} alt="" className={`object-cover ${className}`} />
+    );
+  }
+  // no seller cover → a curated placeholder photo, picked by a stable
+  // hash of the listing seed (see lib/cover-placeholders.ts)
+  const photo = placeholderCover(seed);
+  if (photo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photo} alt="" className={`object-cover ${className}`} />
     );
   }
   const [from, to] = COVERS[coverIndex(seed)];
