@@ -96,6 +96,16 @@ real launch.
 
 ## Tech — BUGS (found 2026-08-14 while auditing listing edit/pricing)
 
+- [x] 2026-08-14 **Explore quick filters** (not a bug — feature): "show me" group
+  at the top of the explore filter panel with `free only` + `featured only`.
+  `featured only` filters on `products.featured_at` (the admin ★ picks), NOT the
+  `featured_products` view — that view scores EVERY active listing and the
+  homepage just takes the top slice, so filtering on it would match the whole
+  catalogue. Each checkbox is gated on the catalogue being able to satisfy it
+  (first $0 listing / first ★) and the whole group hides if neither applies, so
+  neither can ever render as a filter that only returns an empty grid. Both
+  appear as removable chips and reset with "clear all". Verified live.
+
 - [x] 2026-08-14 **FIXED — archive replaces delete (016/017).** The delete button
   is gone; "archive" flips status to 'archived' and touches NOTHING else.
   NOTHING IS DELETED: the storage file stays, the row stays (orders keep their
@@ -121,6 +131,23 @@ real launch.
   Editing never changes publish state, except that flipping a live listing
   free→paid without Stripe demotes it to draft with an explanation (the 005 DB
   gate would otherwise reject the update).
+
+- [x] 2026-08-14 **VERIFIED END-TO-END on the live site** (migrations 016+017 applied,
+  4 commits deployed): edit changed a live listing free→$999 with Stripe connected
+  (no demote, correct); archive removed it from explore + homepage and the product
+  page refuses to sell it; the BUYER still sees it in their library, the download
+  works, and the product page shows "you've purchased this" + download; the buyer
+  could still leave a review on the archived listing (5.0); and the seller's
+  profile rating STILL SHOWS that review with the listing archived — the exact
+  case that previously erased reputation. Restore returns it to draft.
+  Three follow-on bugs found by Aleks during this testing and fixed in the same
+  session: (1) archiving a seller's ONLY listing hid it with no filter chip left
+  to find it — filter bar now always renders, 'archived' is a permanent chip;
+  (2) restore left a blank panel until reload because the filter was still on
+  'archived' — restore now resets the filter to 'all'; (3) the product page
+  checked availability BEFORE ownership, so a buyer who owned a draft/archived/
+  suspended listing was told their own purchase was "not currently available"
+  (pre-existing, not caused by archiving).
 
 ### original reports, kept for the record
 
