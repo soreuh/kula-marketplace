@@ -45,7 +45,12 @@ export async function mailchimpSubscribe(
         },
         body: JSON.stringify({
           email_address: email,
-          status: "subscribed",
+          // "pending" = Mailchimp double opt-in: the address only joins the
+          // Audience after clicking the confirmation email. This is the
+          // protection against list poisoning (anyone can POST any email to
+          // /api/mailing-list) — do not change to "subscribed".
+          // Our own mailing_list table still records the raw signup.
+          status: "pending",
           tags: [`kula-${source}`],
         }),
       }
