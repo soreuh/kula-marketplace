@@ -94,6 +94,36 @@ real launch.
 - [ ] Decide backup posture: Supabase free-tier backups vs paid PITR before real sales exist
 - [ ] Uptime monitor on the domain (UptimeRobot free or similar) pinging /, alerting discoverkula@gmail.com
 
+## Hygiene sweep (2026-08-14, from the code-quality audit — all 4 applied + verified)
+
+- [x] **Ratings aggregation deduped**: `lib/ratings.ts` `fetchProductRatings()`
+  replaces 5 copy-pasted query+aggregate blocks (home/explore/library/dashboard/
+  profile); parallelism preserved (called inside each page's Promise.all);
+  dashboard keeps its my-products filter; `RatingMap` moved out of a page file.
+  When the reviews table grows, a `product_ratings` view (mirroring 017) drops
+  in at that ONE spot. Verified live: 5.0 / 4.0 / "New" states render
+  consistently on home + explore.
+- [x] **USD formatting unified** on `lib/fees.formatUsd` (email's local usd() +
+  dashboard's inline toFixed). Side effect: thousands separators. Verified:
+  "30% + $0.25 per sale" label renders.
+- [x] **Button/card/note classes deduped**: all px-6 py-3 sage buttons compose
+  `btnPrimary` (with `w-full justify-center` where originals were block-level —
+  naive swap would have shrink-wrapped them); auth pages share `AuthCard` +
+  toned `Note` (error/notice/success). Deliberate deltas: brand shadow+transition
+  now on those buttons; two p-4 notes normalized to p-3. The py-3.5 buy/download
+  CTAs left alone on purpose (size variant, not drift). Verified: login card,
+  red invalid-credentials note.
+- [x] **API guards**: `lib/api-guards.ts` `requireUser()` + `requireActiveAccount()`
+  replace the 401 dance in checkout/claim-free/ai-suggest/onboard and the
+  duplicated moderation gate in the two order writers. Tolerant read PRESERVED
+  (fails open if 007 unapplied); drifted paused copy unified on checkout's fuller
+  wording; /api/download keeps its redirect (link click, not fetch); money routes
+  keep all their own checks per the CLAUDE.md ring-fence. **Full money-path E2E
+  re-verified after the change**: paid purchase ($112 → fee $33.85 = 30%+25¢
+  exact, webhook wrote the order, download worked) · claim-free · paused buyer
+  blocked with the unified message before Stripe is touched · logged-out buy
+  redirects to login.
+
 ## Security — open items (from the 2026-08-14 audit review)
 
 - [x] 2026-08-14 **`featured_products` file_path — trimmed (019), and the claim
@@ -102,7 +132,8 @@ real launch.
   grants ROW access to active listings (row-level, not column-level). The view
   added zero incremental exposure; 019 removes the column anyway as least-
   privilege hygiene (nothing rendered it; downloads only mint signed URLs
-  server-side, bucket private). Scoring unchanged from 013.
+  server-side, bucket private). Scoring unchanged from 013. Applied + verified
+  live: featured shelf renders (★ pick first, score-fill second).
 - [ ] PARKED — the real fix if original-filename privacy ever matters:
   column-level privileges on `products.file_path` (or a public listing view
   without it). Breaks every `select("*")` in the app (explore, homepage,
