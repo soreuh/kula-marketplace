@@ -59,6 +59,9 @@ export default async function RootLayout({
               >
                 sell
               </Link>
+              <Link href="/faq" className="hover:text-sage-600">
+                faq
+              </Link>
               {profile && (
                 <Link href="/library" className="hover:text-sage-600">
                   library
@@ -132,6 +135,9 @@ export default async function RootLayout({
               </Link>
               <Link href="/about" className="lowercase hover:text-ink">
                 about
+              </Link>
+              <Link href="/faq" className="lowercase hover:text-ink">
+                faq
               </Link>
               <Link href="/privacy" className="lowercase hover:text-ink">
                 privacy policy
