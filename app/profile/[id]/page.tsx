@@ -23,8 +23,13 @@ export default async function InstructorProfilePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: instructor }, { data: products }, { data: auth }, { data: reviews }] =
-    await Promise.all([
+  const [
+    { data: instructor },
+    { data: products },
+    { data: auth },
+    { data: reviews },
+    { data: instructorRating },
+  ] = await Promise.all([
       supabase.from("instructors").select("*").eq("id", id).maybeSingle(),
       supabase
         .from("products")
@@ -34,6 +39,16 @@ export default async function InstructorProfilePage({
         .order("created_at", { ascending: false }),
       supabase.auth.getUser(),
       supabase.from("reviews").select("product_id, rating"),
+      // Overall rating comes from the DB view (migration 017), NOT from the
+      // active-listings-only set below. A review is earned by a real buyer
+      // on a real purchase and belongs to the TEACHER — unpublishing or
+      // archiving a listing must never quietly shrink their reputation.
+      // (The view aggregates across every status except 'suspended'.)
+      supabase
+        .from("instructor_ratings")
+        .select("avg_rating, review_count")
+        .eq("instructor_id", id)
+        .maybeSingle(),
     ]);
 
   if (!instructor) notFound();
@@ -50,16 +65,15 @@ export default async function InstructorProfilePage({
   }
   for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
-  // the teacher's overall rating — every review across their live listings
-  const listingIds = new Set(listings.map((l) => l.id));
-  let overallSum = 0;
-  let overallCount = 0;
-  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
-    if (!listingIds.has(r.product_id)) continue;
-    overallSum += r.rating;
-    overallCount += 1;
-  }
-  const overall = overallCount ? overallSum / overallCount : null;
+  // The teacher's overall rating — every review they have ever earned,
+  // including on listings now unpublished or archived (migration 017).
+  // Falls back to null if 017 hasn't been applied yet, so the page still
+  // renders on an un-migrated database instead of erroring.
+  const agg = instructorRating as
+    | { avg_rating: number | string | null; review_count: number | null }
+    | null;
+  const overallCount = agg?.review_count ?? 0;
+  const overall = overallCount ? Number(agg?.avg_rating) : null;
 
   return (
     <div>

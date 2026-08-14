@@ -230,25 +230,30 @@ function ContentTab({
   setShowForm: (v: boolean) => void;
 }) {
   const [q, setQ] = useState("");
+  const [editing, setEditing] = useState<Product | null>(null);
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "draft" | "suspended"
+    "all" | "active" | "draft" | "suspended" | "archived"
   >("all");
 
   const needle = q.trim().toLowerCase();
   const visible = products.filter(
     (p) =>
-      (statusFilter === "all" || p.status === statusFilter) &&
+      // "all" means all the LIVE-ish ones; archived is its own filter so a
+      // long tail of retired listings doesn't bury current work.
+      (statusFilter === "all" ? p.status !== "archived" : p.status === statusFilter) &&
       (!needle ||
         `${p.title} ${p.theme ?? ""} ${p.category ?? ""} ${p.content_type ?? ""}`
           .toLowerCase()
           .includes(needle))
   );
   const hasSuspended = products.some((p) => p.status === "suspended");
+  const hasArchived = products.some((p) => p.status === "archived");
 
   return (
     <div className="flex flex-col gap-4">
-      {showForm ? (
+      {showForm || editing ? (
         <UploadDialog
+          key={editing?.id ?? "new"}
           userId={userId}
           role={role}
           ipAgreed={ipAgreed}
@@ -257,7 +262,11 @@ function ContentTab({
           feePercent={feePercent}
           feeFlatCents={feeFlatCents}
           options={options}
-          onClose={() => setShowForm(false)}
+          editing={editing}
+          onClose={() => {
+            setShowForm(false);
+            setEditing(null);
+          }}
         />
       ) : (
         <div>
@@ -319,6 +328,7 @@ function ContentTab({
                   ["active", "live"],
                   ["draft", "drafts"],
                   ...(hasSuspended ? [["suspended", "suspended"]] : []),
+                  ...(hasArchived ? [["archived", "archived"]] : []),
                 ] as [typeof statusFilter, string][]
               ).map(([value, label]) => (
                 <button
@@ -339,7 +349,12 @@ function ContentTab({
 
           <div className="flex flex-col gap-3">
             {visible.map((p) => (
-              <ProductRow key={p.id} product={p} canPublish={chargesEnabled} />
+              <ProductRow
+                key={p.id}
+                product={p}
+                canPublish={chargesEnabled}
+                onEdit={setEditing}
+              />
             ))}
             {!visible.length && products.length > 0 && (
               <p className="rounded-2xl border border-dashed border-ink/15 bg-white/60 p-8 text-center text-sm text-fog">
@@ -356,44 +371,83 @@ function ContentTab({
 function ProductRow({
   product,
   canPublish,
+  onEdit,
 }: {
   product: Product;
   canPublish: boolean;
+  onEdit: (p: Product) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   async function toggleStatus() {
     setBusy(true);
     const supabase = createClient();
-    await supabase
+    const { error } = await supabase
       .from("products")
       .update({ status: product.status === "active" ? "draft" : "active" })
       .eq("id", product.id);
     setBusy(false);
+    if (error) return setErr(error.message);
     router.refresh();
   }
 
-  async function remove() {
-    if (!confirm(`Delete "${product.title}"? This can't be undone.`)) return;
+  /**
+   * ARCHIVE — replaces the old delete button (migrations 016/017).
+   *
+   * The previous version removed the storage files FIRST and then ran a
+   * row delete whose error was never checked. For any listing that had
+   * sold, the row delete was rejected by the orders foreign key while the
+   * files were already gone — leaving a live, buyable listing with no file
+   * behind it and permanently breaking every prior buyer's download.
+   *
+   * Nothing is destroyed now. The row stays (orders keep their reference),
+   * the files stay (buyers keep the "lifetime access" they paid for), and
+   * the reviews stay AND keep counting toward this teacher's instructor
+   * rating (view in 017) — earned reputation is not a side effect of a
+   * listing's current publish state.
+   */
+  async function archive() {
+    if (
+      !confirm(
+        `Archive "${product.title}"?\n\n` +
+          `It comes off the marketplace right away and can't be bought again.\n\n` +
+          `Nothing is deleted: anyone who already bought it keeps their download, ` +
+          `its reviews still count toward your instructor rating, and you can ` +
+          `restore it at any time.`
+      )
+    )
+      return;
     setBusy(true);
     const supabase = createClient();
-    if (product.file_path) {
-      await supabase.storage.from("product-files").remove([product.file_path]);
-    }
-    const coverPaths = [product.cover_path, product.preview_path].filter(
-      Boolean
-    ) as string[];
-    if (coverPaths.length) {
-      await supabase.storage.from("covers").remove(coverPaths);
-    }
-    await supabase.from("products").delete().eq("id", product.id);
+    const { error } = await supabase
+      .from("products")
+      .update({ status: "archived" })
+      .eq("id", product.id);
     setBusy(false);
+    if (error) return setErr(error.message);
     router.refresh();
   }
 
+  /** Archived → draft. Republishing then goes through the normal gate. */
+  async function restore() {
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("products")
+      .update({ status: "draft" })
+      .eq("id", product.id);
+    setBusy(false);
+    if (error) return setErr(error.message);
+    router.refresh();
+  }
+
+  const isArchived = product.status === "archived";
+
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm">
+    <div className="rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm">
+    <div className={"flex items-center gap-4 " + (isArchived ? "opacity-60" : "")}>
       <CoverArt
         seed={`${product.category}-${product.title}`}
         imagePath={product.cover_path}
@@ -412,30 +466,61 @@ function ProductRow({
           <span className="text-fog">· {product.views} views</span>
         </div>
       </div>
-      {product.status !== "suspended" && (
-        <button
-          onClick={toggleStatus}
-          disabled={
-            busy ||
-            (product.status === "draft" && !canPublish && product.price_cents > 0)
-          }
-          title={
-            product.status === "draft" && !canPublish && product.price_cents > 0
-              ? "Connect Stripe to publish paid listings — free ones publish now"
-              : undefined
-          }
-          className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {product.status === "active" ? "unpublish" : "publish"}
-        </button>
+      {product.status !== "suspended" && !isArchived && (
+        <>
+          <button
+            onClick={() => onEdit(product)}
+            disabled={busy}
+            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
+          >
+            edit
+          </button>
+          <button
+            onClick={toggleStatus}
+            disabled={
+              busy ||
+              (product.status === "draft" && !canPublish && product.price_cents > 0)
+            }
+            title={
+              product.status === "draft" && !canPublish && product.price_cents > 0
+                ? "Connect Stripe to publish paid listings — free ones publish now"
+                : undefined
+            }
+            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {product.status === "active" ? "unpublish" : "publish"}
+          </button>
+        </>
       )}
-      <button
-        onClick={remove}
-        disabled={busy}
-        className="rounded-full border border-red-200 px-3.5 py-1.5 lowercase text-red-700 hover:bg-red-50"
-      >
-        delete
-      </button>
+      {isArchived ? (
+        <button
+          onClick={restore}
+          disabled={busy}
+          className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
+        >
+          restore
+        </button>
+      ) : (
+        product.status !== "suspended" && (
+          <button
+            onClick={archive}
+            disabled={busy}
+            title="Takes it off the marketplace. Nothing is deleted — buyers keep their downloads and reviews still count toward your rating."
+            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase text-fog hover:border-ink/30 disabled:opacity-40"
+          >
+            archive
+          </button>
+        )
+      )}
+    </div>
+    {isArchived && (
+      <p className="mt-2 rounded-xl bg-mist/70 px-3 py-2 text-xs text-fog">
+        archived — off the marketplace, but nothing was deleted. buyers who
+        already have it keep their download, and its reviews still count toward
+        your instructor rating.
+      </p>
+    )}
+    {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
     </div>
   );
 }
@@ -745,6 +830,7 @@ function UploadDialog({
   feePercent,
   feeFlatCents,
   options,
+  editing,
   onClose,
 }: {
   userId: string;
@@ -755,33 +841,46 @@ function UploadDialog({
   feePercent: number;
   feeFlatCents: number;
   options: ProductOptions;
+  /** Present = EDIT an existing listing; null/undefined = create a new one. */
+  editing?: Product | null;
   onClose: () => void;
 }) {
+  const isEdit = !!editing;
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  // In edit mode every field seeds from the existing listing; a new file or
+  // cover is OPTIONAL (leave them alone and the current ones are kept).
   const [file, setFile] = useState<File | null>(null);
   const [cover, setCover] = useState<File | null>(null);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState<string>("");
-  const [contentType, setContentType] = useState<string>("");
-  const [duration, setDuration] = useState<string>("");
-  const [level, setLevel] = useState<string>("");
-  const [theme, setTheme] = useState("");
-  const [teachability, setTeachability] = useState<string>("");
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [description, setDescription] = useState(editing?.description ?? "");
+  const [price, setPrice] = useState(
+    editing && editing.price_cents > 0 ? (editing.price_cents / 100).toFixed(2) : ""
+  );
+  const [category, setCategory] = useState<string>(editing?.category ?? "");
+  const [contentType, setContentType] = useState<string>(editing?.content_type ?? "");
+  const [duration, setDuration] = useState<string>(
+    editing?.duration_minutes != null ? String(editing.duration_minutes) : ""
+  );
+  const [level, setLevel] = useState<string>(editing?.level ?? "");
+  const [theme, setTheme] = useState(editing?.theme ?? "");
+  const [teachability, setTeachability] = useState<string>(editing?.teachability ?? "");
   // optional
-  const [anatomyFocus, setAnatomyFocus] = useState("");
-  const [usageNotes, setUsageNotes] = useState("");
-  const [peakPose, setPeakPose] = useState("");
-  const [sequenceBreakdown, setSequenceBreakdown] = useState("");
-  const [propsNeeded, setPropsNeeded] = useState("");
+  const [anatomyFocus, setAnatomyFocus] = useState(editing?.anatomy_focus ?? "");
+  const [usageNotes, setUsageNotes] = useState(editing?.usage_notes ?? "");
+  const [peakPose, setPeakPose] = useState(editing?.peak_pose ?? "");
+  const [sequenceBreakdown, setSequenceBreakdown] = useState(
+    editing?.sequence_breakdown ?? ""
+  );
+  const [propsNeeded, setPropsNeeded] = useState(editing?.props ?? "");
 
   const [ipChecked, setIpChecked] = useState(ipAgreed);
-  const [isFree, setIsFree] = useState(false); // $0 marketing freebie
-  const [publish, setPublish] = useState(canPublish); // drafts-only until Stripe (free exempt)
+  const [isFree, setIsFree] = useState(editing ? editing.price_cents === 0 : false);
+  const [publish, setPublish] = useState(
+    editing ? editing.status === "active" : canPublish
+  );
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -871,7 +970,7 @@ function UploadDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const priceCents = isFree ? 0 : Math.round(parseFloat(price) * 100);
-    if (!file) return setMessage("Add the file you're selling.");
+    if (!file && !isEdit) return setMessage("Add the file you're selling.");
     if (!isFree && (!Number.isFinite(priceCents) || priceCents < 100))
       return setMessage(
         "Price must be at least $1.00 (below that, fees would eat the entire sale) — or tick the free-listing box."
@@ -898,18 +997,24 @@ function UploadDialog({
           throw new Error(`Could not enable selling: ${roleErr.message}`);
       }
 
-      // 1) main file → private bucket
-      setProgress("uploading file…");
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const filePath = `${userId}/${crypto.randomUUID()}-${safeName}`;
-      const { error: upErr } = await supabase.storage
-        .from("product-files")
-        .upload(filePath, file);
-      if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+      // 1) main file → private bucket.
+      //    On edit with no new file chosen, keep the existing one. When a new
+      //    file IS uploaded it goes to a NEW path and the old object is left
+      //    in storage on purpose — never delete something a buyer may hold.
+      let filePath = editing?.file_path ?? null;
+      if (file) {
+        setProgress("uploading file…");
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        filePath = `${userId}/${crypto.randomUUID()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("product-files")
+          .upload(filePath, file);
+        if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+      }
 
       // 2) blurred preview (PDF only) → public covers bucket
-      let previewPath: string | null = null;
-      if (file.name.toLowerCase().endsWith(".pdf")) {
+      let previewPath: string | null = editing?.preview_path ?? null;
+      if (file && file.name.toLowerCase().endsWith(".pdf")) {
         setProgress("creating blurred preview…");
         const blob = await generatePreview(file);
         if (blob) {
@@ -917,12 +1022,12 @@ function UploadDialog({
           const { error } = await supabase.storage
             .from("covers")
             .upload(previewPath, blob, { contentType: "image/jpeg" });
-          if (error) previewPath = null;
+          if (error) previewPath = editing?.preview_path ?? null;
         }
       }
 
-      // 3) cover image (optional)
-      let coverPath: string | null = null;
+      // 3) cover image (optional; kept as-is on edit unless a new one is picked)
+      let coverPath: string | null = editing?.cover_path ?? null;
       if (cover) {
         setProgress("uploading cover image…");
         const ext = (cover.name.split(".").pop() ?? "jpg").toLowerCase();
@@ -930,7 +1035,7 @@ function UploadDialog({
         const { error } = await supabase.storage
           .from("covers")
           .upload(coverPath, cover);
-        if (error) coverPath = null;
+        if (error) coverPath = editing?.cover_path ?? null;
       }
 
       // 4) first-time IP agreement stamp
@@ -942,9 +1047,8 @@ function UploadDialog({
       }
 
       // 5) the listing itself
-      setProgress("publishing…");
-      const { error: insErr } = await supabase.from("products").insert({
-        seller_id: userId,
+      setProgress(isEdit ? "saving changes…" : "publishing…");
+      const fields = {
         title: title.trim(),
         description: description.trim(),
         category,
@@ -962,9 +1066,32 @@ function UploadDialog({
         file_path: filePath,
         cover_path: coverPath,
         preview_path: previewPath,
-        status: publish && (canPublish || isFree) ? "active" : "draft",
-      });
-      if (insErr) throw new Error(`Save failed: ${insErr.message}`);
+      };
+
+      if (isEdit) {
+        // Status is normally left alone on edit — publish/unpublish is its own
+        // button. The exception: flipping a live listing from free to paid
+        // while Stripe isn't connected would be rejected by the DB gate
+        // (migration 005), so demote it to draft and say so plainly.
+        const mustDemote =
+          editing!.status === "active" && priceCents > 0 && !canPublish;
+        const { error: updErr } = await supabase
+          .from("products")
+          .update(mustDemote ? { ...fields, status: "draft" } : fields)
+          .eq("id", editing!.id);
+        if (updErr) throw new Error(`Save failed: ${updErr.message}`);
+        if (mustDemote)
+          alert(
+            "Saved — but because this listing now has a price and Stripe isn't connected yet, it's been moved back to draft. Connect Stripe and hit publish."
+          );
+      } else {
+        const { error: insErr } = await supabase.from("products").insert({
+          seller_id: userId,
+          ...fields,
+          status: publish && (canPublish || isFree) ? "active" : "draft",
+        });
+        if (insErr) throw new Error(`Save failed: ${insErr.message}`);
+      }
 
       onClose();
       router.refresh();
@@ -985,7 +1112,7 @@ function UploadDialog({
     >
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl font-bold lowercase">
-          post content to sell
+          {isEdit ? "edit listing" : "post content to sell"}
         </h3>
         <button type="button" onClick={onClose} className="text-fog hover:text-ink">
           cancel
@@ -1019,6 +1146,16 @@ function UploadDialog({
             <p className="font-semibold">{file.name}</p>
             <p className="mt-0.5 text-xs text-fog">
               {(file.size / 1024 / 1024).toFixed(1)}MB — click to swap
+            </p>
+          </>
+        ) : isEdit ? (
+          <>
+            <p className="font-display font-semibold lowercase">
+              keeping your current file
+            </p>
+            <p className="mt-0.5 text-xs text-fog">
+              click to replace it — everyone who owns this listing, now or
+              later, gets the new version. your old file is kept, never deleted.
             </p>
           </>
         ) : (
@@ -1285,7 +1422,13 @@ function UploadDialog({
         </span>
       </label>
 
-      {canPublish || isFree ? (
+      {isEdit ? (
+        <p className="rounded-xl bg-mist/70 p-3 text-sm text-fog">
+          this listing stays{" "}
+          <strong>{editing!.status === "active" ? "live" : editing!.status}</strong>{" "}
+          — use the publish / unpublish button on the listing to change that.
+        </p>
+      ) : canPublish || isFree ? (
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -1309,9 +1452,11 @@ function UploadDialog({
       >
         {busy
           ? (progress ?? "saving…")
-          : publish && (canPublish || isFree)
-            ? "publish listing"
-            : "save draft"}
+          : isEdit
+            ? "save changes"
+            : publish && (canPublish || isFree)
+              ? "publish listing"
+              : "save draft"}
       </button>
       {message && <p className="text-red-600">{message}</p>}
     </form>

@@ -1,5 +1,5 @@
 export type UserRole = "buyer" | "seller" | "admin";
-export type ProductStatus = "draft" | "active" | "suspended";
+export type ProductStatus = "draft" | "active" | "suspended" | "archived";
 export type OrderStatus = "pending" | "paid" | "refunded";
 
 export interface Profile {

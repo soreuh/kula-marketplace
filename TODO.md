@@ -77,10 +77,13 @@ real launch.
 ## Before her small-circle launch (the "go-live" checklist)
 
 - [ ] Push the pending commit (legal pass + copy honesty + docs) if not already live
-- [ ] **Apply migrations 014 then 015** in the Supabase SQL editor (014 = terms acceptance + column guard; 015 = marketing consent at signup). The signup form sends the metadata from the next deploy; until they run it's simply ignored, so order doesn't break anything
+- [x] 2026-08-14 **Applied migrations 014 + 015** and deployed. Verified end-to-end with a real signup (`+tos`): `terms_accepted_at` == `created_at` (server-stamped by the trigger, not a client clock), `terms_version` = 2026-08-14, `marketing_consent` = true, and a `mailing_list` row with `source: account` ~3s later. Live /signup serves the consent line with working /terms + /privacy links, the checkbox blocks submit until ticked, and the contact landed in HER Mailchimp audience (tag `kula-account`, status Subscribed, source "API - kula mvp") — full loop confirmed, no hop unverified. Accounts created BEFORE this (izzy, the +buyer1/+pl/aleks.sorra test rows) correctly show NULL terms — they predate the checkbox and must never be backfilled; the test-data wipe removes them anyway.
 - [ ] `git rm --cached components/consent-modal.tsx` (moved to _to_delete/ — the bridge can't delete files) and delete `_to_delete/` when you're happy it's dead
-- [ ] Run `npm run build` on the Mac before pushing (lint + tsc are green; the build itself can't run over the Cowork device bridge — that VM has no network and node_modules is a macOS install)
+- [x] 2026-08-14 Build verified on the Mac (lint + tsc + next build all green) and pushed. NOTE for future AI sessions: `npm run build` CANNOT run over the Cowork device bridge (that VM has no network; node_modules is a macOS install so Next tries to fetch a linux-arm64 swc binary). Don't run `git` over the bridge either — it can't remove .git/index.lock and leaves the repo locked.
+- [ ] Delete the stray 87-byte `package-lock.json` in the parent "Yoga App" folder — it's outside the repo and makes every build print a turbopack.root warning
 - [ ] Bump `TERMS_VERSION` in lib/site.ts + the "last updated" lines on /terms and /privacy whenever the legal text changes in substance (e.g. after the lawyer pass) — old profile rows keep the old version, which is how you'd find who needs to re-consent
+- [ ] **Apply migrations 016 then 017** — run 016 as its OWN query and 017 as a SEPARATE one; Postgres refuses to use a newly added enum value in the same transaction that adds it, and the SQL editor wraps a pasted batch in one transaction
+- [ ] Storage housekeeping: replaced files and archived listings' files are kept forever BY DESIGN. If storage cost ever matters, write a reviewed cleanup that only ever touches objects with zero paid orders — never a blanket sweep
 - [ ] Lawyer pass on /terms + /privacy — deltas are listed in each page's header comment; ask specifically about adding an arbitration/class-action clause (deliberately left out)
 - [ ] Test-data wipe: script or manual SQL to remove test users/listings/orders (keep platform_settings + product_options); delete "RLS Test Listing" + test accounts
 - [ ] Supabase: turn email confirmations back ON (Auth → Sign In / Providers) — deliberately left OFF 2026-08-14 while testing; SMTP is already live, so this is now a one-toggle change
@@ -90,6 +93,60 @@ real launch.
 - [ ] Mailchimp footer address: swap her home address for a PO box / virtual mailbox if she wants (CAN-SPAM requires *an* address; every campaign prints it)
 - [ ] Decide backup posture: Supabase free-tier backups vs paid PITR before real sales exist
 - [ ] Uptime monitor on the domain (UptimeRobot free or similar) pinging /, alerting discoverkula@gmail.com
+
+## Tech — BUGS (found 2026-08-14 while auditing listing edit/pricing)
+
+- [x] 2026-08-14 **FIXED — archive replaces delete (016/017).** The delete button
+  is gone; "archive" flips status to 'archived' and touches NOTHING else.
+  NOTHING IS DELETED: the storage file stays, the row stays (orders keep their
+  FK), cover/preview stay, and THE REVIEWS STAY AND KEEP FEEDING THE INSTRUCTOR
+  RATING. Restore returns it to draft. Errors that were silently swallowed now
+  surface on the row. No RLS change needed — the public read path (007) already
+  requires status='active', so archived listings drop out of browse/explore/
+  homepage/featured/checkout automatically, while `has_paid_order(id)` keeps
+  prior buyers' downloads working.
+- [x] 2026-08-14 **FIXED — unpublishing silently deleted a teacher's reputation.**
+  PRE-EXISTING bug, not caused by archiving: app/profile/[id]/page.tsx computed
+  the instructor's overall rating from reviews on `status='active'` listings only,
+  so unpublishing anything instantly removed its reviews from their profile score.
+  New `instructor_ratings` view (017) aggregates across ALL of a seller's listings
+  regardless of status (only 'suspended' excluded — admin moderation action).
+  Profile reads the view and falls back to null if 017 hasn't been applied yet.
+- [x] 2026-08-14 **FIXED — listings are editable.** UploadDialog takes an
+  `editing` prop and updates instead of inserting: title, description, all
+  options, price, cover, and the file. A replaced file goes to a NEW storage path
+  and THE OLD OBJECT IS DELIBERATELY LEFT IN PLACE — never delete something a
+  buyer may hold. Edit button sits on each listing row in the "my content" tab
+  (edit · publish/unpublish · archive); archived rows show `restore` instead.
+  Editing never changes publish state, except that flipping a live listing
+  free→paid without Stripe demotes it to draft with an explanation (the 005 DB
+  gate would otherwise reject the update).
+
+### original reports, kept for the record
+
+- [x] **DELETING A SOLD LISTING DESTROYS THE FILE BUT KEEPS THE LISTING LIVE.**
+  `remove()` in app/dashboard/dashboard-client.tsx deletes the storage objects
+  FIRST (product-files + covers — storage RLS lets a seller delete inside their
+  own folder), then runs `.delete()` on the row **without checking the error**.
+  `orders.product_id references products(id)` has NO on-delete clause (001:39),
+  so for any listing with a paid order the row delete is rejected (FK 23503)
+  while the files are already gone. Result: the listing stays ACTIVE and
+  purchasable with no file behind it, prior buyers' "lifetime access"
+  downloads break permanently, and the seller sees no error — the UI just
+  refreshes and the listing is still sitting there. (Unsold listings delete
+  fine, which is why this never showed up in testing.)
+  Fix direction — matches the codebase's existing "nothing ever hard-deletes"
+  posture: add an `archived` product status (ghost from browse, keep buyer
+  access), make the seller button archive instead of delete when
+  `sales_count > 0`, only hard-delete when there are zero orders, and always
+  delete the row BEFORE the storage objects so a failure can't strand files.
+- [x] **No edit path for listings at all.** Sellers can only publish/unpublish
+  (active↔draft) and delete — there is no form to change title, description,
+  price, cover, or file after posting. Changing a price today means delete +
+  re-create, which loses the reviews (they cascade), the view count, and the
+  listing URL. This is the single most likely early seller complaint; the
+  upload dialog already collects every field, so an edit mode is mostly
+  re-using it with an update instead of an insert.
 
 ## Tech — small
 

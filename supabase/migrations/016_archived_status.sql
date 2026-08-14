@@ -1,0 +1,29 @@
+-- ============================================================
+-- 016 — add the 'archived' product status
+-- Run AFTER 015, in: Supabase Dashboard → SQL Editor.
+--
+-- ⚠️ RUN THIS FILE ON ITS OWN, and run 017 as a SEPARATE query.
+-- Postgres will not let a newly added enum value be USED in the same
+-- transaction that adds it ("unsafe use of new value"), and the SQL
+-- editor wraps a pasted batch in one transaction. Two runs, in order.
+--
+-- WHY: sellers previously had only "delete", which was destructive AND
+-- broken (it wiped the storage files, then failed to delete the row for
+-- any listing that had sold, leaving a live listing with no file behind
+-- it). 'archived' replaces deletion entirely.
+--
+-- NOTHING IS DELETED — this is the same posture as user moderation (007):
+--   • the product row stays, so orders keep their foreign key
+--   • the files stay in storage, so buyers' "lifetime access" keeps working
+--   • THE REVIEWS STAY, and they keep counting toward the seller's
+--     instructor rating (see 017) — a teacher's earned reputation is the
+--     composite of every review across their content, and archiving or
+--     unpublishing a listing must never quietly reduce it
+--
+-- No RLS change is needed: the public read path (007) already requires
+-- status = 'active', so archived listings drop out of browse, explore,
+-- the homepage, the featured view and checkout automatically, while
+-- `has_paid_order(id)` keeps prior buyers' access intact.
+-- ============================================================
+
+alter type public.product_status add value if not exists 'archived';
