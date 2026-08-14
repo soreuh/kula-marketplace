@@ -138,6 +138,10 @@ admin UI instead of SQL.)
 5. Custom domain (e.g. kula-marketplace.com): Netlify → Domain management →
    add domain, follow the DNS instructions, then update
    `NEXT_PUBLIC_SITE_URL` to the custom domain and redeploy.
+6. If Google Analytics is on: a URL change means updating GA too — edit the
+   web data stream's URL (GA → Admin → Data streams), or, when the site
+   moves to a new owner's Google account, create a fresh GA4 property there
+   and swap the new `G-...` id into `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
 
 ## 9. Going live (when ready — after handover, on HER accounts)
 

@@ -174,10 +174,21 @@ Stripe is still in test mode, so play freely:
 4. Point your domain (e.g. kula-marketplace.com) at Netlify: **Domain
    management → Add a domain** and follow its DNS instructions, then update
    `NEXT_PUBLIC_SITE_URL` to `https://kula-marketplace.com` and redeploy.
-5. Before promoting it: add Terms of Service / refund policy / seller
-   agreement (ask Aleks or any lawyer-reviewed template; note that payment
-   disputes are charged to the seller's balance — sellers should agree to that
-   in writing).
+5. **Google Analytics moves with the address.** Whenever the site's URL
+   changes (netlify.app → your real domain), don't keep the old tag: create
+   your own GA4 property under YOUR Google account (analytics.google.com →
+   Admin → Create property → add a Web data stream with the new URL), copy
+   its new `G-...` Measurement ID into Netlify as
+   `NEXT_PUBLIC_GA_MEASUREMENT_ID`, and redeploy. (If you're only changing
+   the domain on a property you already own, editing the data stream's URL
+   in GA Admin works too — but a new URL under a new owner means a fresh
+   tag.) Analytics stays completely off until that variable exists.
+6. The legal pages (/terms, /privacy, /about) already carry your finalized
+   text — have a lawyer look them over before real sales. One thing they
+   don't yet cover: chargebacks. Card disputes debit KULA's Stripe balance
+   (not the seller's) plus a dispute fee; the seller's share can be pulled
+   back by reversing their transfer, which is easiest before their monthly
+   payout. Consider adding a chargeback clause to the Terms.
 
 ---
 
