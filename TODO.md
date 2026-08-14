@@ -218,6 +218,17 @@ real launch.
   storage RLS folder-scoping + sanitized upload names, download route
   paid-order gate, mailing-list validation+limit, admin step-up auth, no
   secrets in tracked files, no dangerous redirects/innerHTML elsewhere.
+  **Full live verification 2026-08-14 (Aleks):** (A) hostile title
+  `Flow & Fold <v2> "test"` → update email rendered it as literal text — all
+  four escaped chars exercised; unescaped, mail clients would have swallowed
+  the `<v2>` as a tag, so this also proves fancy legit titles survive.
+  (B) sale email regression: normal render, $112 → fee $33.85 / net $78.15
+  exact. (C) paused seller: notify-update → 403 with the new message (gate
+  fires BEFORE the rate limit, no token burned); connect-stripe → "selling is
+  disabled"; unpaused → Stripe onboarding loads again. (D) /faq renders under
+  the escaped JSON-LD. NOTE learned twice today: when debugging "no email",
+  check rate_limits for a content-update row FIRST — a same-day test send
+  re-arms the 24h cap and the dialog swallows the 429 silently.
 
 - [x] 2026-08-14 **`featured_products` file_path — trimmed (019), and the claim
   CORRECTED on closer look:** the view was never the leak. Anon can already read
