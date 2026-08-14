@@ -85,7 +85,13 @@ real launch.
 - [x] 2026-08-14 **Applied migrations 016 + 017** (run as separate queries — the enum-in-transaction constraint). Proven live: archived status works, and an archived listing's review still counts toward the instructor rating.
 - [ ] Storage housekeeping: replaced files and archived listings' files are kept forever BY DESIGN. If storage cost ever matters, write a reviewed cleanup that only ever touches objects with zero paid orders — never a blanket sweep
 - [ ] Lawyer pass on /terms + /privacy — deltas are listed in each page's header comment; ask specifically about adding an arbitration/class-action clause (deliberately left out)
-- [ ] Test-data wipe: script or manual SQL to remove test users/listings/orders (keep platform_settings + product_options); delete "RLS Test Listing" + test accounts
+- [ ] Test-data wipe — **script READY at scripts/wipe-test-data.sql** (2026-08-14):
+  keep-list of user ids at top, dry-run counts first, destructive half commented
+  out until consciously armed, transaction-wrapped. Order matters (orders first —
+  restrict FKs); deletes auth.users not profiles (no login-capable ghosts);
+  empties both storage buckets (rows don't cascade files). Off-DB afterlist in
+  the script header: Mailchimp test contacts, launch_date reset in admin,
+  her avatar re-upload. RUN AT LAUNCH, not before.
 - [ ] Supabase: turn email confirmations back ON (Auth → Sign In / Providers) — deliberately left OFF 2026-08-14 while testing; SMTP is already live, so this is now a one-toggle change
 - [x] 2026-08-14 Supabase custom SMTP via her Resend (Auth → Emails → SMTP: smtp.resend.com:587 / user `resend` / pass = RESEND_API_KEY / from `Kula Marketplace <noreply@kula-marketplace.com>`) — verified: password-reset mail delivers to Gmail **Inbox**, not spam. Note: noreply@ has NO Porkbun forward (replies vanish); auth mail now counts against her Resend send cap. Auth rate limit (Auth → Rate Limits) still at Supabase's low default — raise it when confirmations go on.
 - [ ] Stripe live mode: she completes activation → swap `sk_live_`, create live webhook (same 4 events) → **check the Accounts v1 flag applies in live mode before the first real seller connects**
@@ -371,7 +377,24 @@ real launch.
   a conversion lever. Note the blur is destructive before upload — don't
   "improve" this by switching to a CSS-only blur over the real file.
 - [ ] Admin polish: period pill buttons render a bit scrunched (spotted 2026-08-14 after the 4th tile landed) — spacing/wrap pass on the tiles row when convenient
-- [ ] SEO basics audit: per-page titles/descriptions, OG image for link sharing, sitemap.xml + robots.txt
+- [x] 2026-08-14 **SEO basics — audited + built** under one house rule (Aleks):
+  search engines only ever see words a human wrote for the site — zero
+  generated keywords, zero visual change. Audit found: every listing page
+  served the HOMEPAGE's title/description (site = one page to Google), no
+  OG tags anywhere (bare grey link previews in the exact channels she'll
+  share to), no sitemap/robots, empty alt text, no structured data outside
+  the FAQ. Shipped: metadataBase + title template + site-wide OG/Twitter
+  defaults using the brand-kit banner (public/og.png) · generateMetadata on
+  listings (title + ≤155-char excerpt of the SELLER'S OWN description +
+  their real cover as the OG image; RLS-scoped read so drafts/archived can't
+  leak metadata) and on profiles (name + their own bio) · canonical urls ·
+  sitemap.ts from the live catalog via a bare anon client (RLS = nothing
+  private can appear, by construction; fail-soft to static pages) ·
+  robots.ts disallowing dashboard/library/api/auth pages · Product JSON-LD
+  with real price + aggregateRating ONLY when reviews exist · cover alt =
+  listing title. Decisions: seller-words excerpts over generated summaries;
+  profiles indexed (teachers googling themselves finding their shop = a
+  recruiting asset); brand banner as default OG.
 - [ ] Post-purchase review nudge (Resend email ~3 days after purchase: "how was it? leave a review") — feeds the rating flywheel the featured score runs on
 - [ ] Captcha (Turnstile) matters MORE now — a junk signup is no longer just a dead row, it's a junk Mailchimp contact eating audience quota and hurting deliverability. Build it if junk appears
 - [ ] Watch the first Mailchimp campaign's bounce/complaint rate: account emails are unverified while Supabase confirmations stay OFF, so anyone can subscribe any address — high bounce rates damage the domain's sending reputation (the one you just authenticated)

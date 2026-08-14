@@ -19,6 +19,42 @@ import ViewPing from "./view-ping";
 
 export const dynamic = "force-dynamic";
 
+/** ~155-char excerpt of the SELLER'S OWN description — house SEO rule:
+ *  search engines only ever see words a human wrote for this site. */
+function excerpt(text: string | null): string | undefined {
+  if (!text) return undefined;
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > 155 ? clean.slice(0, 152).trimEnd() + "…" : clean;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+  // Same RLS-scoped read the page itself does: anon sees active listings
+  // only, so drafts/archived can never leak metadata.
+  const { data: p } = await supabase
+    .from("products")
+    .select("title, description, cover_path")
+    .eq("id", id)
+    .maybeSingle();
+  if (!p) return {};
+  const cover = coverUrl(p.cover_path);
+  return {
+    title: p.title,
+    description: excerpt(p.description),
+    alternates: { canonical: `/products/${id}` },
+    openGraph: {
+      title: `${p.title} — kula`,
+      description: excerpt(p.description),
+      images: [{ url: cover ?? "/og.png" }],
+    },
+  };
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -65,6 +101,36 @@ export default async function ProductPage({
     !!user && reviewList.some((r) => r.buyer_id === user.id);
   const previewUrl = coverUrl(p.preview_path);
 
+  // Product structured data — publishes only what the page already shows:
+  // title, the seller's description, real price, real review average.
+  // aggregateRating only when reviews exist (fabricating one is exactly the
+  // kind of thing the no-stuffing rule forbids).
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.title,
+    ...(p.description ? { description: p.description } : {}),
+    ...(coverUrl(p.cover_path) ? { image: coverUrl(p.cover_path) } : {}),
+    offers: {
+      "@type": "Offer",
+      price: (p.price_cents / 100).toFixed(2),
+      priceCurrency: "USD",
+      availability:
+        p.status === "active"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/Discontinued",
+    },
+    ...(avg !== null
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avg.toFixed(1),
+            reviewCount: reviewList.length,
+          },
+        }
+      : {}),
+  };
+
   const meta: [string, string | null][] = [
     ["duration", durationLabel(p.duration_minutes)],
     ["level", p.level],
@@ -77,6 +143,13 @@ export default async function ProductPage({
   const metaRows = meta.filter(([, v]) => v);
 
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+      }}
+    />
     <div className="mx-auto max-w-6xl px-5 py-10">
       <ViewPing productId={p.id} />
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
@@ -85,6 +158,7 @@ export default async function ProductPage({
           <CoverArt
             seed={`${p.category}-${p.title}`}
             imagePath={p.cover_path}
+            alt={p.title}
             className="h-72 w-full rounded-2xl sm:h-96"
           />
           <div className="mt-6">
@@ -312,5 +386,6 @@ export default async function ProductPage({
         </div>
       </div>
     </div>
+    </>
   );
 }

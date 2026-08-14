@@ -12,10 +12,28 @@ import Analytics from "@/components/analytics";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 import type { Profile } from "@/lib/types";
 
+/**
+ * SEO baseline (Aug 2026). House rule: every word search engines see is a
+ * word a human already wrote for the site — no generated keywords, ever.
+ * metadataBase makes OG image urls absolute; pages override title via the
+ * template and listings/profiles supply their own generateMetadata.
+ */
 export const metadata: Metadata = {
-  title: "kula — buy and sell yoga sequences, class plans, and more",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://kula-marketplace.com"
+  ),
+  title: {
+    default: "kula — buy and sell yoga sequences, class plans, and more",
+    template: "%s — kula",
+  },
   description:
     "A marketplace for yoga teachers. Buy what you need to support your teaching. Sell what you've already created.",
+  openGraph: {
+    siteName: "kula",
+    type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630 }],
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default async function RootLayout({

@@ -189,16 +189,19 @@ export function CoverArt({
   seed,
   imagePath = null,
   className = "",
+  alt = "",
 }: {
   seed: string;
   imagePath?: string | null;
   className?: string;
+  /** Listing covers should pass the title; decorative placeholders stay "". */
+  alt?: string;
 }) {
   const url = coverUrl(imagePath);
   if (url) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={url} alt="" className={`object-cover ${className}`} />
+      <img src={url} alt={alt} className={`object-cover ${className}`} />
     );
   }
   // no seller cover → a curated placeholder photo, picked by a stable
@@ -256,6 +259,7 @@ export function ProductCard({
       <CoverArt
         seed={`${product.category}-${product.title}`}
         imagePath={product.cover_path}
+        alt={product.title}
         className="h-44 w-full"
       />
       <div className="flex flex-1 flex-col gap-2 p-5">

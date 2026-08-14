@@ -16,6 +16,32 @@ import ProfileEdit from "./profile-edit";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: inst } = await supabase
+    .from("instructors")
+    .select("display_name, shop_name, bio")
+    .eq("id", id)
+    .maybeSingle();
+  if (!inst) return {};
+  const name = inst.shop_name || inst.display_name || "kula instructor";
+  const bio = inst.bio?.replace(/\s+/g, " ").trim();
+  return {
+    title: name,
+    description: bio
+      ? bio.length > 155
+        ? bio.slice(0, 152).trimEnd() + "…"
+        : bio
+      : `yoga teaching content by ${name} on kula.`,
+    alternates: { canonical: `/profile/${id}` },
+  };
+}
+
 export default async function InstructorProfilePage({
   params,
 }: {
