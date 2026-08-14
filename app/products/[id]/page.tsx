@@ -47,7 +47,11 @@ export async function generateMetadata({
     title: p.title,
     description: excerpt(p.description),
     alternates: { canonical: `/products/${id}` },
+    // Next REPLACES the root openGraph when a page defines one — siteName
+    // and type must be restated here or link cards lose the site name.
     openGraph: {
+      siteName: "kula",
+      type: "website",
       title: `${p.title} — kula`,
       description: excerpt(p.description),
       images: [{ url: cover ?? "/og.png" }],

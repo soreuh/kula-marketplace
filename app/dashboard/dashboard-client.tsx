@@ -878,6 +878,8 @@ function UploadDialog({
   // cover is OPTIONAL (leave them alone and the current ones are kept).
   const [file, setFile] = useState<File | null>(null);
   const [cover, setCover] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [removeCover, setRemoveCover] = useState(false);
 
   const [title, setTitle] = useState(editing?.title ?? "");
   const [description, setDescription] = useState(editing?.description ?? "");
@@ -1087,8 +1089,13 @@ function UploadDialog({
         }
       }
 
-      // 3) cover image (optional; kept as-is on edit unless a new one is picked)
-      let coverPath: string | null = editing?.cover_path ?? null;
+      // 3) cover image (optional). Priority: new upload > explicit removal >
+      //    keep existing. Removal only nulls the row's pointer — the old
+      //    object stays in storage (house rule: never delete what's referenced
+      //    elsewhere or might be); the card falls back to placeholder art.
+      let coverPath: string | null = removeCover
+        ? null
+        : (editing?.cover_path ?? null);
       if (cover) {
         setProgress("uploading cover image…");
         const ext = (cover.name.split(".").pop() ?? "jpg").toLowerCase();
@@ -1096,7 +1103,7 @@ function UploadDialog({
         const { error } = await supabase.storage
           .from("covers")
           .upload(coverPath, cover);
-        if (error) coverPath = editing?.cover_path ?? null;
+        if (error) coverPath = removeCover ? null : (editing?.cover_path ?? null);
       }
 
       // 4) first-time IP agreement stamp
@@ -1256,6 +1263,63 @@ function UploadDialog({
           className="hidden"
           onChange={(e) => acceptFile(e.target.files?.[0] ?? null)}
         />
+      </div>
+
+      {/* Cover photo — promoted OUT of the optional-details drawer (owner
+          call, Aug 2026): it's the highest-leverage optional field on the
+          form — cards, the featured shelf, and link previews are all
+          image-led, and no cover means placeholder art + a generic share
+          image. Optional stays optional; it's just visible now. */}
+      <div className="rounded-2xl border border-ink/10 bg-cream/40 p-4">
+        <p className="font-display font-semibold lowercase">
+          cover photo{" "}
+          <span className="font-sans text-sm font-normal text-fog">
+            (optional — this is what buyers see first)
+          </span>
+        </p>
+        <div className="mt-2.5 flex flex-wrap items-center gap-4">
+          {coverPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coverPreview} alt="new cover preview" className="h-20 w-32 rounded-xl object-cover" />
+          ) : isEdit && editing!.cover_path && !removeCover ? (
+            <CoverArt
+              seed=""
+              imagePath={editing!.cover_path}
+              alt="current cover"
+              className="h-20 w-32 rounded-xl"
+            />
+          ) : (
+            <div className="flex h-20 w-32 items-center justify-center rounded-xl border border-dashed border-ink/15 text-xs text-fog">
+              {removeCover ? "cover removed" : "no cover yet"}
+            </div>
+          )}
+          <div className="flex flex-col gap-1.5 text-sm">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="block w-full text-xs"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setCover(f);
+                setRemoveCover(false);
+                setCoverPreview(f ? URL.createObjectURL(f) : null);
+              }}
+            />
+            <span className="text-xs text-fog">
+              JPG, PNG, or WebP · 5MB max
+              {isEdit && editing!.cover_path && " · choosing a file replaces the current cover"}
+            </span>
+            {isEdit && editing!.cover_path && !cover && (
+              <button
+                type="button"
+                onClick={() => setRemoveCover((v) => !v)}
+                className="w-fit rounded-full border border-ink/10 px-3 py-1 text-xs lowercase text-fog hover:border-ink/30"
+              >
+                {removeCover ? "keep current cover" : "remove cover"}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <label className="text-fog">
@@ -1469,15 +1533,6 @@ function UploadDialog({
           <label className="text-fog">
             anatomy focus
             <input className={inputCls + " mt-1"} placeholder="hips, hamstrings" value={anatomyFocus} onChange={(e) => setAnatomyFocus(e.target.value)} />
-          </label>
-          <label className="text-fog">
-            cover image
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="mt-1 block w-full text-xs"
-              onChange={(e) => setCover(e.target.files?.[0] ?? null)}
-            />
           </label>
           <label className="text-fog sm:col-span-2">
             usage notes

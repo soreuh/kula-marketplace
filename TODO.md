@@ -189,6 +189,20 @@ real launch.
 
 ## Shipped 2026-08-14 (late session)
 
+- [x] Upload dialog cover photo, two fixes (Aleks's finds): (1) PROMOTED out of
+  the optional-details drawer into the main flow under the file dropzone — it's
+  the highest-leverage optional field (cards/featured/link previews are all
+  image-led; no cover = placeholder look + generic OG image) but was buried
+  between "anatomy focus" and "usage notes". Still optional, just visible, with
+  live thumbnail preview of a chosen file. (2) Edit mode now SHOWS the current
+  cover (same info-bug class as the hidden filename), previews a replacement
+  before save, and adds "remove cover" — nulls the row pointer only, old object
+  stays in storage, card falls back to placeholder art. Also fixed og:site_name
+  missing on listing pages (Next REPLACES page-level openGraph rather than
+  merging — siteName/type must be restated in generateMetadata; caught by
+  Aleks's opengraph.xyz scan, which also proved uploaded covers become the
+  share image).
+
 - [x] UX polish, verified live: edit dropzone shows the current file's original
   name (recovered from the storage path, sanitized form) so sellers can confirm
   what they're replacing · teachability defaults to "ready to teach" on new
