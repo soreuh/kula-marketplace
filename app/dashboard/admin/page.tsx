@@ -528,21 +528,28 @@ function GrowthSection({
 
   const num = (v: number, dp = 1) =>
     v.toLocaleString("en-US", { maximumFractionDigits: dp });
-  const rows: [string, string, string][] = model
+  // [label, actual display, target display, actual raw, target raw, isCost]
+  // isCost rows never get the behind-plan dot: running UNDER the model on
+  // a cost is good news, not a lag.
+  type Row = [string, string, string, number, number, boolean];
+  const rows: Row[] = model
     ? [
-        ["active sellers (≥1 live listing)", num(activeSellers, 0), num(model.sellers)],
-        ["live listings", num(liveListings.length, 0), num(model.listings)],
-        ["listings per seller", num(lps, 2), num(model.listingsPerSeller, 2)],
-        [`paid sales (month ${mIdx})`, num(mPaid.length, 0), num(model.sales * monthFrac)],
-        ["sales per listing / mo", num(spl, 3), num(model.salesPerListing * monthFrac, 3)],
-        ["avg sale price", formatUsd(Math.round(avgPrice)), formatUsd(Math.round(drivers.avgPriceCents))],
-        ["gmv this month", formatUsd(gmv), formatUsd(Math.round(model.gmvCents * monthFrac))],
-        ["kula fee this month", formatUsd(fee), formatUsd(Math.round(model.kulaFeeCents * monthFrac))],
-        ["stripe cost (est.)", formatUsd(Math.round(stripeEst)), formatUsd(Math.round(model.stripeCostCents * monthFrac))],
+        ["active sellers (≥1 live listing)", num(activeSellers, 0), num(model.sellers), activeSellers, model.sellers, false],
+        ["live listings", num(liveListings.length, 0), num(model.listings), liveListings.length, model.listings, false],
+        ["listings per seller", num(lps, 2), num(model.listingsPerSeller, 2), lps, model.listingsPerSeller, false],
+        [`paid sales (month ${mIdx})`, num(mPaid.length, 0), num(model.sales * monthFrac), mPaid.length, model.sales * monthFrac, false],
+        ["sales per listing / mo", num(spl, 3), num(model.salesPerListing * monthFrac, 3), spl, model.salesPerListing * monthFrac, false],
+        ["avg sale price", formatUsd(Math.round(avgPrice)), formatUsd(Math.round(drivers.avgPriceCents)), avgPrice, drivers.avgPriceCents, false],
+        ["gmv this month", formatUsd(gmv), formatUsd(Math.round(model.gmvCents * monthFrac)), gmv, model.gmvCents * monthFrac, false],
+        ["kula fee this month", formatUsd(fee), formatUsd(Math.round(model.kulaFeeCents * monthFrac)), fee, model.kulaFeeCents * monthFrac, false],
+        ["stripe cost (est.)", formatUsd(Math.round(stripeEst)), formatUsd(Math.round(model.stripeCostCents * monthFrac)), stripeEst, model.stripeCostCents * monthFrac, true],
         [
           "kula net (est., excl. connect fees until live mode)",
           formatUsd(Math.round(fee - stripeEst)),
           formatUsd(Math.round((model.kulaFeeCents - model.stripeCostCents) * monthFrac)),
+          fee - stripeEst,
+          (model.kulaFeeCents - model.stripeCostCents) * monthFrac,
+          false,
         ],
       ]
     : [];
@@ -599,9 +606,21 @@ function GrowthSection({
               </tr>
             </thead>
             <tbody>
-              {rows.map(([label, actual, target]) => (
+              {rows.map(([label, actual, target, rawA, rawT, isCost]) => (
                 <tr key={label} className="border-b border-ink/5 last:border-0">
-                  <td className="p-3 text-fog">{label}</td>
+                  <td className="p-3 text-fog">
+                    <span className="inline-flex items-center gap-2">
+                      {/* behind-plan marker: below the mid path (costs exempt) */}
+                      {!isCost && rawA < rawT && (
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full bg-amber-300"
+                          title="below the mid path"
+                          aria-label="below the mid path"
+                        />
+                      )}
+                      {label}
+                    </span>
+                  </td>
                   <td className="p-3 font-semibold tabular-nums">{actual}</td>
                   <td className="p-3 tabular-nums text-fog">{target}</td>
                 </tr>
