@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatUsd, priceLabel } from "@/lib/fees";
-import { StatTile, StatusChip } from "@/components/ui";
+import { StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
   addProductOption,
@@ -13,6 +13,16 @@ import {
   updateFeeSettings,
 } from "./actions";
 import UsersPanel from "./users-panel";
+import PeriodTiles from "./period-tiles";
+import AdminSection from "@/components/admin-section";
+import { updateGrowthModel } from "./actions";
+import {
+  DEFAULT_MID_DRIVERS,
+  modelMonth,
+  modelMonthIndex,
+  resolveDrivers,
+  type GrowthDrivers,
+} from "@/lib/growth-model";
 
 type OptionRow = { id: string; kind: string; label: string; sort: number };
 
@@ -43,9 +53,9 @@ export default async function AdminDashboard() {
 
   const s = settings as PlatformSettings;
   const allOrders = (orders as Order[] | null) ?? [];
-  const paid = allOrders.filter((o) => o.status === "paid");
-  const feeRevenue = paid.reduce((sum, o) => sum + o.fee_cents, 0);
-  const grossVolume = paid.reduce((sum, o) => sum + o.amount_cents, 0);
+  const allProducts = (products as Product[] | null) ?? [];
+  const allUsers = (users as Profile[] | null) ?? [];
+  const suspendedCount = allProducts.filter((p) => p.status === "suspended").length;
   const inputCls =
     "mt-1 block w-28 rounded-xl border border-ink/10 bg-white px-3 py-2 focus:border-sage-400 focus:outline-none";
 
@@ -63,20 +73,30 @@ export default async function AdminDashboard() {
       </section>
 
       <div className="mx-auto flex max-w-5xl flex-col gap-10 px-5 py-8">
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatTile label="your fee revenue" value={formatUsd(feeRevenue)} />
-          <StatTile label="gross volume" value={formatUsd(grossVolume)} />
-          <StatTile label="paid orders" value={String(paid.length)} />
-        </section>
+        <PeriodTiles
+          orders={allOrders.map((o) => ({
+            amount_cents: o.amount_cents,
+            fee_cents: o.fee_cents,
+            status: o.status,
+            created_at: o.created_at,
+          }))}
+        />
 
-        <section className="rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 font-display text-xl font-bold lowercase">
-            platform fee
-          </h2>
+        <GrowthSection
+          settings={s}
+          orders={allOrders}
+          products={allProducts}
+          users={allUsers}
+        />
+
+        <section className="rounded-2xl border border-ink/5 bg-white px-6 py-4 shadow-sm">
           <form
             action={updateFeeSettings}
             className="flex flex-wrap items-end gap-4 text-sm"
           >
+            <h2 className="mr-2 self-center font-display text-xl font-bold lowercase">
+              platform fee
+            </h2>
             <label className="text-fog">
               percent
               <input
@@ -121,18 +141,30 @@ export default async function AdminDashboard() {
 
         <OptionsSection options={(optionRows as OptionRow[] | null) ?? []} />
 
-        <SellersSection
-          users={(users as Profile[] | null) ?? []}
-          products={(products as Product[] | null) ?? []}
-          orders={allOrders}
-          defaultPercent={Number(s.fee_percent)}
-          flatCents={s.fee_flat_cents}
-        />
+        <AdminSection
+          title="sellers"
+          subtitle={`default rate: ${Number(s.fee_percent)}% + ${formatUsd(s.fee_flat_cents)} per sale — open to manage partner rates.`}
+        >
+          <SellersSection
+            users={allUsers}
+            products={allProducts}
+            orders={allOrders}
+            defaultPercent={Number(s.fee_percent)}
+          />
+        </AdminSection>
 
-        <section>
-          <h2 className="mb-3 font-display text-xl font-bold lowercase">
-            listings
-          </h2>
+        <AdminSection
+          title="listings"
+          defaultOpen={suspendedCount > 0}
+          badge={
+            suspendedCount > 0 ? (
+              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                {suspendedCount} suspended
+              </span>
+            ) : undefined
+          }
+          subtitle="feature (★) and moderate every listing. stays open while anything is suspended."
+        >
           <ul className="overflow-hidden rounded-2xl border border-ink/5 bg-white text-sm shadow-sm">
             {!(products as Product[] | null)?.length && (
               <li className="p-4 text-fog">no listings yet.</li>
@@ -184,14 +216,13 @@ export default async function AdminDashboard() {
               </li>
             ))}
           </ul>
-        </section>
+        </AdminSection>
 
-        <UsersPanel users={(users as Profile[] | null) ?? []} />
+        <AdminSection title="people" subtitle="search, roles, pause / reactivate / delete.">
+          <UsersPanel users={allUsers} />
+        </AdminSection>
 
-        <section>
-          <h2 className="mb-3 font-display text-xl font-bold lowercase">
-            all orders
-          </h2>
+        <AdminSection title="all orders">
           <ul className="overflow-hidden rounded-2xl border border-ink/5 bg-white text-sm shadow-sm">
             {!allOrders.length && (
               <li className="p-4 text-fog">no orders yet.</li>
@@ -212,7 +243,7 @@ export default async function AdminDashboard() {
               </li>
             ))}
           </ul>
-        </section>
+        </AdminSection>
       </div>
     </div>
   );
@@ -228,13 +259,11 @@ function SellersSection({
   products,
   orders,
   defaultPercent,
-  flatCents,
 }: {
   users: Profile[];
   products: Product[];
   orders: Order[];
   defaultPercent: number;
-  flatCents: number;
 }) {
   const sellers = users.filter((u) => u.role === "seller" || u.role === "admin");
   const paid = orders.filter((o) => o.status === "paid");
@@ -242,13 +271,7 @@ function SellersSection({
 
   return (
     <section>
-      <h2 className="mb-1 font-display text-xl font-bold lowercase">sellers</h2>
-      <p className="mb-3 text-sm text-fog">
-        default rate: {defaultPercent}% + {formatUsd(flatCents)} per sale — set a
-        custom rate below to give a seller a discount; blank returns them to the
-        default.
-      </p>
-      <div className="overflow-x-auto rounded-2xl border border-ink/5 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-ink/5 bg-cream/40">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-ink/5 text-left text-fog">
@@ -375,37 +398,17 @@ const OPTION_KINDS: { kind: string; title: string }[] = [
 
 function OptionsSection({ options }: { options: OptionRow[] }) {
   return (
-    // native <details> — collapsed by default, no client JS needed
-    <details className="group rounded-2xl border border-ink/5 bg-white p-6 shadow-sm">
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden">
-        <div>
-          <h2 className="font-display text-xl font-bold lowercase">
-            listing options
-          </h2>
-          <p className="mt-1 text-sm text-fog">
-            the choices sellers pick from when posting content. removing one
-            only affects future listings — existing listings keep their label.
-            durations and the teachability scale are fixed parts of the
-            product design.
-          </p>
-        </div>
-        <span
-          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-mist text-fog transition-transform group-open:rotate-180"
-          aria-hidden
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m6 9 6 6 6-6" />
-          </svg>
-        </span>
-      </summary>
-
+    <AdminSection
+      title="listing options"
+      subtitle="the choices sellers pick from when posting content. removing one only affects future listings — existing listings keep their label. durations and the teachability scale are fixed parts of the product design."
+    >
       {!options.length ? (
-        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
           run migration <code>009_product_options.sql</code> in the Supabase
           SQL editor to enable editing — until then the built-in lists apply.
         </p>
       ) : (
-        <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {OPTION_KINDS.map(({ kind, title }) => (
             <div key={kind}>
               <h3 className="font-display text-sm font-semibold lowercase text-sage-700">
@@ -450,6 +453,246 @@ function OptionsSection({ options }: { options: OptionRow[] }) {
           ))}
         </div>
       )}
-    </details>
+    </AdminSection>
+  );
+}
+
+/* ───────────────────── growth model check-in (migration 020) ───────────────────── */
+
+/**
+ * Live actuals vs the growth model's Mid path (lib/growth-model.ts — a
+ * verified replica of ../kula-growth-model.xlsx). The point is DRIVERS,
+ * not vanity totals: sellers, listings/seller, and sales/listing are the
+ * variables the model forecasts from, so when revenue lags, this table
+ * says WHICH lever is behind. Flow metrics prorate the model by how far
+ * through the month we are; stock metrics compare directly.
+ */
+function GrowthSection({
+  settings,
+  orders,
+  products,
+  users,
+}: {
+  settings: PlatformSettings;
+  orders: Order[];
+  products: Product[];
+  users: Profile[];
+}) {
+  const drivers = resolveDrivers(settings.growth_model);
+  const launch = settings.launch_date ?? null;
+  const now = new Date();
+  const mIdx = launch ? modelMonthIndex(launch, now) : 0;
+  const model = mIdx >= 1
+    ? modelMonth(drivers, mIdx, Number(settings.fee_percent), settings.fee_flat_cents)
+    : null;
+
+  // fraction of the current month elapsed — for prorating flow metrics
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const monthFrac = Math.min(1, now.getDate() / daysInMonth);
+
+  // ---- actuals, current calendar month ----
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const paidMoney = orders.filter(
+    (o) => o.status === "paid" && o.amount_cents > 0
+  );
+  const mPaid = paidMoney.filter((o) => new Date(o.created_at) >= monthStart);
+  const gmv = mPaid.reduce((x, o) => x + o.amount_cents, 0);
+  const fee = mPaid.reduce((x, o) => x + o.fee_cents, 0);
+  // stripe cost estimated per real order (2.9% + 30¢) — labelled est.
+  const stripeEst = mPaid.reduce(
+    (x, o) => x + o.amount_cents * drivers.stripePct + drivers.stripeFlatCents,
+    0
+  );
+  const liveListings = products.filter((p) => p.status === "active");
+  const activeSellerIds = new Set(liveListings.map((p) => p.seller_id));
+  const activeSellers = activeSellerIds.size;
+  const lps = activeSellers ? liveListings.length / activeSellers : 0;
+  const spl = liveListings.length ? mPaid.length / liveListings.length : 0;
+  const avgPrice = mPaid.length ? gmv / mPaid.length : 0;
+
+  // ---- funnels (all-time) ----
+  const sellersWithListing = new Set(products.map((p) => p.seller_id)).size;
+  const stripeConnected = users.filter((u) => u.stripe_charges_enabled).length;
+  const freeClaimBuyers = new Map<string, string>(); // buyer -> first claim time
+  for (const o of orders)
+    if (o.status === "paid" && o.amount_cents === 0) {
+      const prev = freeClaimBuyers.get(o.buyer_id);
+      if (!prev || o.created_at < prev) freeClaimBuyers.set(o.buyer_id, o.created_at);
+    }
+  let converted = 0;
+  for (const [buyer, claimedAt] of freeClaimBuyers)
+    if (
+      paidMoney.some((o) => o.buyer_id === buyer && o.created_at > claimedAt)
+    )
+      converted++;
+
+  const num = (v: number, dp = 1) =>
+    v.toLocaleString("en-US", { maximumFractionDigits: dp });
+  const rows: [string, string, string][] = model
+    ? [
+        ["active sellers (≥1 live listing)", num(activeSellers, 0), num(model.sellers)],
+        ["live listings", num(liveListings.length, 0), num(model.listings)],
+        ["listings per seller", num(lps, 2), num(model.listingsPerSeller, 2)],
+        [`paid sales (month ${mIdx})`, num(mPaid.length, 0), num(model.sales * monthFrac)],
+        ["sales per listing / mo", num(spl, 3), num(model.salesPerListing * monthFrac, 3)],
+        ["avg sale price", formatUsd(Math.round(avgPrice)), formatUsd(Math.round(drivers.avgPriceCents))],
+        ["gmv this month", formatUsd(gmv), formatUsd(Math.round(model.gmvCents * monthFrac))],
+        ["kula fee this month", formatUsd(fee), formatUsd(Math.round(model.kulaFeeCents * monthFrac))],
+        ["stripe cost (est.)", formatUsd(Math.round(stripeEst)), formatUsd(Math.round(model.stripeCostCents * monthFrac))],
+        [
+          "kula net (est., excl. connect fees until live mode)",
+          formatUsd(Math.round(fee - stripeEst)),
+          formatUsd(Math.round((model.kulaFeeCents - model.stripeCostCents) * monthFrac)),
+        ],
+      ]
+    : [];
+
+  const D = drivers;
+  const driverInput =
+    "mt-1 block w-full rounded-xl border border-ink/10 bg-white px-2.5 py-1.5 text-sm focus:border-sage-400 focus:outline-none";
+  const DRIVER_FIELDS: [keyof GrowthDrivers, string, number][] = [
+    ["startingSellers", "starting sellers", D.startingSellers],
+    ["growthEarly", "seller growth /mo, m1–12", D.growthEarly],
+    ["growthLate", "seller growth /mo, m13+", D.growthLate],
+    ["listingsPerSellerStart", "listings/seller at start", D.listingsPerSellerStart],
+    ["newListingsPerMonth", "new listings/seller/mo", D.newListingsPerMonth],
+    ["salesPerListingStart", "sales/listing/mo, start", D.salesPerListingStart],
+    ["demandGrowth", "demand growth /mo", D.demandGrowth],
+    ["demandCap", "demand cap (sales/listing)", D.demandCap],
+    ["avgPriceCents", "avg listing price (¢)", D.avgPriceCents],
+    ["stripePct", "stripe %", D.stripePct],
+    ["stripeFlatCents", "stripe flat (¢)", D.stripeFlatCents],
+    ["connectFeeCents", "connect fee (¢/seller/mo)", D.connectFeeCents],
+    ["payoutShare", "share of sellers paid out /mo", D.payoutShare],
+  ];
+  const isCustom = !!settings.growth_model &&
+    Object.keys(settings.growth_model).some(
+      (k) =>
+        settings.growth_model![k] !==
+        DEFAULT_MID_DRIVERS[k as keyof GrowthDrivers]
+    );
+
+  return (
+    <AdminSection
+      title="growth model check-in"
+      subtitle={
+        model
+          ? `month ${mIdx} of the 24-month model (launched ${launch}) — live actuals vs the mid path. flow rows are prorated to day ${now.getDate()} of ${daysInMonth}.`
+          : "set a launch date below to compare live actuals against the growth model's mid path."
+      }
+      badge={
+        isCustom ? (
+          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+            custom drivers
+          </span>
+        ) : undefined
+      }
+    >
+      {model ? (
+        <div className="overflow-x-auto rounded-2xl border border-ink/5">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="border-b border-ink/5 text-left text-fog">
+                <th className="p-3 font-display font-semibold lowercase">metric</th>
+                <th className="p-3 font-display font-semibold lowercase">actual</th>
+                <th className="p-3 font-display font-semibold lowercase">mid path</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(([label, actual, target]) => (
+                <tr key={label} className="border-b border-ink/5 last:border-0">
+                  <td className="p-3 text-fog">{label}</td>
+                  <td className="p-3 font-semibold tabular-nums">{actual}</td>
+                  <td className="p-3 tabular-nums text-fog">{target}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : mIdx === 0 && launch ? (
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          launch date {launch} is in the future — the check-in starts at month 1.
+        </p>
+      ) : (
+        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          run migration <code>020_admin_growth.sql</code> to enable this section.
+        </p>
+      )}
+
+      {/* funnels — the leading indicators the TODO tracks */}
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-ink/5 bg-cream/40 p-4 text-sm">
+          <h3 className="font-display font-semibold lowercase text-sage-700">
+            seller activation (all-time)
+          </h3>
+          <p className="mt-1.5 text-fog">
+            {users.length} accounts → {sellersWithListing} posted a listing →{" "}
+            {stripeConnected} connected stripe
+          </p>
+        </div>
+        <div className="rounded-2xl border border-ink/5 bg-cream/40 p-4 text-sm">
+          <h3 className="font-display font-semibold lowercase text-sage-700">
+            freebie funnel (all-time)
+          </h3>
+          <p className="mt-1.5 text-fog">
+            {freeClaimBuyers.size} claimed a freebie → {converted} later bought
+            something{" "}
+            {freeClaimBuyers.size > 0 &&
+              `(${Math.round((converted / freeClaimBuyers.size) * 100)}%)`}
+          </p>
+        </div>
+      </div>
+
+      {/* editable drivers — nested, collapsed */}
+      <details className="group/drivers mt-4 rounded-2xl border border-ink/5 bg-cream/40 p-4">
+        <summary className="cursor-pointer list-none text-sm font-semibold lowercase text-sage-700 [&::-webkit-details-marker]:hidden">
+          model drivers (mid scenario) — edit ▾
+        </summary>
+        <p className="mt-2 text-xs text-fog">
+          these mirror the editable cells in kula-growth-model.xlsx. changing
+          them recomputes the whole comparison — the spreadsheet stays the
+          reference; &quot;reset&quot; returns everything to its mid column.
+          the kula fee itself always comes from the platform fee setting above.
+        </p>
+        <form action={updateGrowthModel} className="mt-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <label className="text-xs text-fog">
+              launch date (month 1)
+              <input
+                name="launch_date"
+                type="date"
+                defaultValue={launch ?? ""}
+                className={driverInput}
+              />
+            </label>
+            {DRIVER_FIELDS.map(([name, label, value]) => (
+              <label key={name} className="text-xs text-fog">
+                {label}
+                <input
+                  name={name}
+                  type="number"
+                  step="any"
+                  min="0"
+                  defaultValue={value}
+                  className={driverInput}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button className="rounded-full bg-sage-500 px-5 py-2 text-sm font-display font-semibold lowercase text-white hover:bg-sage-600">
+              save drivers
+            </button>
+            <button
+              name="reset"
+              value="true"
+              className="rounded-full border border-ink/10 px-5 py-2 text-sm lowercase text-fog hover:border-ink/30"
+            >
+              reset to mid defaults
+            </button>
+          </div>
+        </form>
+      </details>
+    </AdminSection>
   );
 }

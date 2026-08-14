@@ -94,6 +94,32 @@ real launch.
 - [ ] Decide backup posture: Supabase free-tier backups vs paid PITR before real sales exist
 - [ ] Uptime monitor on the domain (UptimeRobot free or similar) pinging /, alerting discoverkula@gmail.com
 
+## Admin portal redesign (2026-08-14 — built, pending migration 020 + owner verify)
+
+- [x] **Top tiles**: period toggle (this month / 3 / 6 / 12 mo / YTD / all-time,
+  default YTD — the old tiles were silently ALL-TIME), 4th tile "free
+  downloads" ($0 claim orders), refunded orders excluded from revenue with an
+  annotation. `period-tiles.tsx` (client).
+- [x] **Collapsible sections** via native `<details>` (`components/
+  admin-section.tsx`, zero JS): listing options / sellers / listings / people /
+  all orders — all collapsed by default, EXCEPT listings auto-opens with a red
+  badge while anything is suspended (moderation must never hide in a drawer).
+  Platform fee section compacted to a single row. Duplicate h2s removed from
+  SellersSection/UsersPanel (headers live on the wrapper now).
+- [x] **Growth model check-in (NEW, migration 020)**: `lib/growth-model.ts`
+  replicates kula-growth-model.xlsx cell-for-cell (verified m1/m12/m24 — m24
+  net = $609.85/mo = the TODO benchmark). Table shows current-month ACTUALS vs
+  the Mid path for the DRIVER variables (active sellers, live listings,
+  listings/seller, sales, sales/listing, avg price, GMV, fee, stripe est, net
+  est) — flow rows prorated to day-of-month; net excludes Connect fees until
+  live mode. Month index anchored on `platform_settings.launch_date`
+  (default 2026-08-01 — **reset in admin at real launch**). Funnels: seller
+  activation (accounts → listed → stripe) and freebie→paid conversion.
+  Nested collapsed editor exposes all 13 xlsx drivers + launch date
+  (`growth_model` jsonb; reset button returns to Mid; "custom drivers" badge
+  when overridden; fee % always read live from platform settings, never
+  duplicated in the drivers).
+
 ## Hygiene sweep (2026-08-14, from the code-quality audit — all 4 applied + verified)
 
 - [x] **Ratings aggregation deduped**: `lib/ratings.ts` `fetchProductRatings()`

@@ -101,4 +101,8 @@ export interface PlatformSettings {
   fee_percent: number;
   fee_flat_cents: number;
   updated_at: string;
+  /** Migration 020 — undefined until it runs (tolerant read). */
+  launch_date?: string | null;
+  /** Migration 020 — driver overrides for lib/growth-model.ts; null = Mid defaults. */
+  growth_model?: Record<string, number> | null;
 }

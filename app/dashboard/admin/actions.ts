@@ -211,3 +211,43 @@ export async function togglePartner(formData: FormData) {
     .eq("id", userId);
   revalidatePath("/dashboard/admin");
 }
+
+/**
+ * Growth-model drivers + launch date (migration 020). "reset" wipes the
+ * overrides back to the Mid defaults baked into lib/growth-model.ts.
+ * Values are validated as finite non-negatives; anything else is dropped
+ * rather than stored — resolveDrivers() ignores junk anyway (defense in
+ * depth for hand-edited jsonb).
+ */
+export async function updateGrowthModel(formData: FormData) {
+  const supabase = await requireAdmin();
+
+  if (formData.get("reset") === "true") {
+    await supabase
+      .from("platform_settings")
+      .update({ growth_model: null })
+      .eq("id", true);
+    revalidatePath("/dashboard/admin");
+    return;
+  }
+
+  const KEYS = [
+    "startingSellers", "growthEarly", "growthLate",
+    "listingsPerSellerStart", "newListingsPerMonth",
+    "salesPerListingStart", "demandGrowth", "demandCap",
+    "avgPriceCents", "stripePct", "stripeFlatCents",
+    "connectFeeCents", "payoutShare",
+  ] as const;
+  const model: Record<string, number> = {};
+  for (const k of KEYS) {
+    const v = Number(formData.get(k));
+    if (Number.isFinite(v) && v >= 0) model[k] = v;
+  }
+
+  const launch = String(formData.get("launch_date") ?? "");
+  const patch: Record<string, unknown> = { growth_model: model };
+  if (/^\d{4}-\d{2}-\d{2}$/.test(launch)) patch.launch_date = launch;
+
+  await supabase.from("platform_settings").update(patch).eq("id", true);
+  revalidatePath("/dashboard/admin");
+}

@@ -59,7 +59,6 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
 
   return (
     <section>
-      <h2 className="mb-3 font-display text-xl font-bold lowercase">people</h2>
 
       {/* search + sort */}
       <div className="mb-3 flex flex-wrap items-center gap-3">
