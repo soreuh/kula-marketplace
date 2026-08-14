@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
 import { ProductCard, btnPrimary } from "@/components/ui";
 import type { Order, Product } from "@/lib/types";
@@ -15,14 +16,14 @@ export default async function LibraryPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: orders }, { data: reviews }] = await Promise.all([
+  const [{ data: orders }, ratings] = await Promise.all([
     supabase
       .from("orders")
       .select("*")
       .eq("buyer_id", user.id)
       .eq("status", "paid")
       .order("created_at", { ascending: false }),
-    supabase.from("reviews").select("product_id, rating"),
+    fetchProductRatings(supabase),
   ]);
 
   const paid = (orders as Order[] | null) ?? [];
@@ -36,14 +37,6 @@ export default async function LibraryPage() {
   const productById = new Map(
     ((products as Product[] | null) ?? []).map((p) => [p.id, p])
   );
-
-  const ratings: Record<string, { avg: number; count: number }> = {};
-  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
-    const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
-    e.avg += r.rating;
-    e.count += 1;
-  }
-  for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
   return (
     <div>

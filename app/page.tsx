@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
 import type { Product } from "@/lib/types";
 import { ProductCard, btnPrimary, btnOutline, EmptyState } from "@/components/ui";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, { data: freeProducts }, { data: reviews }] =
+  const [{ data: products }, { data: freeProducts }, ratings] =
     await Promise.all([
       // featured shelf: admin picks first (featured_at, newest pick first),
       // then the transparent score fills remaining slots — see the
@@ -34,7 +35,7 @@ export default async function HomePage() {
         .eq("price_cents", 0)
         .order("created_at", { ascending: false })
         .limit(6),
-      supabase.from("reviews").select("product_id, rating"),
+      fetchProductRatings(supabase),
     ]);
 
   const featured = (products as Product[] | null) ?? [];
@@ -43,14 +44,6 @@ export default async function HomePage() {
   const freebies = ((freeProducts as Product[] | null) ?? [])
     .filter((p) => !featuredIds.has(p.id))
     .slice(0, 3);
-  const ratings: Record<string, { avg: number; count: number }> = {};
-  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
-    const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
-    e.avg += r.rating;
-    e.count += 1;
-  }
-  for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
-
   return (
     <div>
       {/* ── hero ── */}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { inputCls } from "@/components/ui";
+import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -29,17 +29,16 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-5 py-16">
-      <div className="rounded-2xl border border-ink/5 bg-white p-8 shadow-sm">
+    <AuthCard>
         <h1 className="font-display text-3xl font-bold lowercase">
           reset your password
         </h1>
 
         {sent ? (
-          <p className="mt-4 rounded-xl bg-sage-50 p-4 text-sm text-sage-700">
+          <Note tone="success" className="mt-4">
             if an account exists for that address, a reset link is on its way —
             check your inbox (and spam). the link works in this browser.
-          </p>
+          </Note>
         ) : (
           <>
             <p className="mt-1 text-sm text-fog">
@@ -57,15 +56,13 @@ export default function ForgotPasswordPage() {
               />
               <button
                 disabled={busy}
-                className="mt-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
+                className={`mt-2 w-full justify-center ${btnPrimary}`}
               >
                 {busy ? "sending…" : "send reset link"}
               </button>
             </form>
             {message && (
-              <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
-                {message}
-              </p>
+              <Note className="mt-3">{message}</Note>
             )}
           </>
         )}
@@ -76,7 +73,6 @@ export default function ForgotPasswordPage() {
             log in
           </Link>
         </p>
-      </div>
-    </div>
+    </AuthCard>
   );
 }

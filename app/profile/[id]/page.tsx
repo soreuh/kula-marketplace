@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import InstructorRating from "@/components/instructor-rating";
+import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
 import type { Instructor, Product } from "@/lib/types";
 import {
@@ -23,7 +24,7 @@ export default async function InstructorProfilePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: instructor }, { data: products }, { data: auth }, { data: reviews }] =
+  const [{ data: instructor }, { data: products }, { data: auth }, ratings] =
     await Promise.all([
       supabase.from("instructors").select("*").eq("id", id).maybeSingle(),
       supabase
@@ -33,7 +34,7 @@ export default async function InstructorProfilePage({
         .eq("status", "active")
         .order("created_at", { ascending: false }),
       supabase.auth.getUser(),
-      supabase.from("reviews").select("product_id, rating"),
+      fetchProductRatings(supabase),
     ]);
 
   if (!instructor) notFound();
@@ -41,14 +42,6 @@ export default async function InstructorProfilePage({
   const listings = (products as Product[] | null) ?? [];
   const isOwner = auth.user?.id === inst.id;
   const name = inst.shop_name || inst.display_name || "kula instructor";
-
-  const ratings: Record<string, { avg: number; count: number }> = {};
-  for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
-    const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
-    e.avg += r.rating;
-    e.count += 1;
-  }
-  for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
 
   // The overall rating is rendered by <InstructorRating/>, which owns the
   // instructor_ratings lookup (migration 017) — every review the teacher has

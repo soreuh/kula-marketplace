@@ -1,5 +1,7 @@
 import "server-only";
 
+import { formatUsd as usd } from "@/lib/fees";
+
 /**
  * Sale-notification emails via Resend. Feature-flagged: if RESEND_API_KEY
  * is not set, this is a silent no-op. Always fail-soft — an email problem
@@ -15,7 +17,6 @@ export async function sendSaleEmail(opts: {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
 
-  const usd = (c: number) => `$${(c / 100).toFixed(2)}`;
   try {
     await fetch("https://api.resend.com/emails", {
       method: "POST",

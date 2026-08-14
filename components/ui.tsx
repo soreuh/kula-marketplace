@@ -45,6 +45,46 @@ export function Wordmark() {
   );
 }
 
+/**
+ * The centered white card every auth page (login / signup / forgot / reset)
+ * wraps itself in. Structural only — pages keep their own headings/content.
+ */
+export function AuthCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto max-w-md px-5 py-16">
+      <div className="rounded-2xl border border-ink/5 bg-white p-8 shadow-sm">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Inline feedback note. tone: "error" (red) for failures, "notice" (amber)
+ * for warnings/mixed messages, "success" (sage) for confirmations.
+ * className carries the margin (mt-3 etc.) so spacing stays per-page.
+ */
+export function Note({
+  tone = "error",
+  className = "",
+  children,
+}: {
+  tone?: "error" | "notice" | "success";
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const tones = {
+    error: "bg-red-50 text-red-700",
+    notice: "bg-amber-50 text-amber-800",
+    success: "bg-sage-50 text-sage-700",
+  } as const;
+  return (
+    <p className={`rounded-xl p-3 text-sm ${tones[tone]} ${className}`}>
+      {children}
+    </p>
+  );
+}
+
 export const btnPrimary =
   "inline-flex items-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white shadow-sm transition hover:bg-sage-600 disabled:opacity-50";
 export const btnOutline =

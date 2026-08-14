@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd, priceLabel, timeAgo } from "@/lib/fees";
 import { DURATIONS, TEACHABILITY } from "@/lib/categories";
-import { CoverArt, StatTile, StatusChip, Stars, inputCls } from "@/components/ui";
+import { CoverArt, StatTile, StatusChip, Stars, btnPrimary, inputCls } from "@/components/ui";
 import type { ProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
 
@@ -21,7 +21,7 @@ export type SaleRow = {
   created_at: string;
 };
 
-type Ratings = Record<string, { avg: number; count: number }>;
+import type { RatingMap as Ratings } from "@/lib/ratings";
 
 export default function DashboardClient({
   userId,
@@ -189,7 +189,7 @@ function ConnectStripeCard({ started }: { started: boolean }) {
       <button
         onClick={connect}
         disabled={busy}
-        className="mt-4 w-full rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
+        className={`mt-4 w-full justify-center ${btnPrimary}`}
       >
         {busy
           ? "opening…"
@@ -271,7 +271,7 @@ function ContentTab({
         <div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 sm:w-fit"
+            className={`w-full justify-center sm:w-fit ${btnPrimary}`}
           >
             <span aria-hidden>+</span> post content to sell
           </button>
@@ -299,7 +299,7 @@ function ContentTab({
           <p className="mt-1 text-fog">create your first listing to start earning.</p>
           <button
             onClick={() => setShowForm(true)}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600"
+            className={`mt-5 ${btnPrimary}`}
           >
             <span aria-hidden>+</span> post your first content
           </button>

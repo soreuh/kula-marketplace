@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { inputCls } from "@/components/ui";
+import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,8 +29,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-5 py-16">
-      <div className="rounded-2xl border border-ink/5 bg-white p-8 shadow-sm">
+    <AuthCard>
         <h1 className="font-display text-3xl font-bold lowercase">welcome back</h1>
         <p className="mt-1 text-sm text-fog">log in to your kula account.</p>
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
@@ -58,15 +57,13 @@ export default function LoginPage() {
           </Link>
           <button
             disabled={busy}
-            className="mt-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
+            className={`mt-2 w-full justify-center ${btnPrimary}`}
           >
             {busy ? "logging in…" : "log in"}
           </button>
         </form>
         {message && (
-          <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
-            {message}
-          </p>
+          <Note className="mt-3">{message}</Note>
         )}
         <p className="mt-5 text-center text-sm text-fog">
           new here?{" "}
@@ -74,7 +71,6 @@ export default function LoginPage() {
             create an account
           </Link>
         </p>
-      </div>
-    </div>
+    </AuthCard>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { inputCls } from "@/components/ui";
+import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
 import { TERMS_VERSION } from "@/lib/site";
 
 /**
@@ -91,8 +91,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-5 py-16">
-      <div className="rounded-2xl border border-ink/5 bg-white p-8 shadow-sm">
+    <AuthCard>
         <h1 className="font-display text-3xl font-bold lowercase">
           join the kula
         </h1>
@@ -158,15 +157,15 @@ export default function SignupPage() {
           </label>
           <button
             disabled={busy || !agreed}
-            className="mt-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
+            className={`mt-2 w-full justify-center ${btnPrimary}`}
           >
             {busy ? "creating…" : "sign up"}
           </button>
         </form>
         {message && (
-          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+          <Note tone="notice" className="mt-3">
             {message}
-          </p>
+          </Note>
         )}
         <p className="mt-5 text-center text-sm text-fog">
           already have an account?{" "}
@@ -174,7 +173,6 @@ export default function SignupPage() {
             log in
           </Link>
         </p>
-      </div>
-    </div>
+    </AuthCard>
   );
 }

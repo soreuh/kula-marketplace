@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { inputCls } from "@/components/ui";
+import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
 
 /**
  * Landing page for the recovery link Supabase emails from
@@ -69,8 +69,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-5 py-16">
-      <div className="rounded-2xl border border-ink/5 bg-white p-8 shadow-sm">
+    <AuthCard>
         <h1 className="font-display text-3xl font-bold lowercase">
           set a new password
         </h1>
@@ -81,13 +80,13 @@ export default function ResetPasswordPage() {
 
         {status === "invalid" && (
           <div className="mt-4">
-            <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+            <Note tone="notice">
               this link is expired, already used, or was opened in a different
               browser than the one that requested it.
-            </p>
+            </Note>
             <Link
               href="/forgot-password"
-              className="mt-4 inline-block rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600"
+              className={`mt-4 ${btnPrimary}`}
             >
               request a new link
             </Link>
@@ -107,18 +106,13 @@ export default function ResetPasswordPage() {
             />
             <button
               disabled={busy}
-              className="mt-2 rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600 disabled:opacity-50"
+              className={`mt-2 w-full justify-center ${btnPrimary}`}
             >
               {busy ? "saving…" : "save new password"}
             </button>
-            {message && (
-              <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
-                {message}
-              </p>
-            )}
+            {message && <Note>{message}</Note>}
           </form>
         )}
-      </div>
-    </div>
+    </AuthCard>
   );
 }

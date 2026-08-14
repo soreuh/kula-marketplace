@@ -11,7 +11,7 @@ import {
 } from "@/lib/categories";
 import type { ProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
-import type { RatingMap } from "./page";
+import type { RatingMap } from "@/lib/ratings";
 
 type ListKey = "teach" | "styles" | "types" | "levels";
 

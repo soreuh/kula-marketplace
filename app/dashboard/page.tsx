@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProductOptions } from "@/lib/options";
+import { fetchProductRatings } from "@/lib/ratings";
+import { formatUsd } from "@/lib/fees";
 import { getStripe } from "@/lib/stripe";
-import type { Order, Product, Profile, Review } from "@/lib/types";
+import type { Order, Product, Profile } from "@/lib/types";
 import DashboardClient, { type SaleRow } from "./dashboard-client";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,7 @@ export default async function DashboardPage() {
   if (!profile) redirect("/login");
   const prof = profile as Profile;
 
-  const [{ data: products }, { data: orders }, { data: reviews }, { data: settings }, options] =
+  const [{ data: products }, { data: orders }, allRatings, { data: settings }, options] =
     await Promise.all([
       supabase
         .from("products")
@@ -38,7 +40,7 @@ export default async function DashboardPage() {
         .select("*")
         .in("status", ["paid", "refunded"])
         .order("created_at", { ascending: false }),
-      supabase.from("reviews").select("product_id, rating"),
+      fetchProductRatings(supabase),
       supabase.from("platform_settings").select("*").single(),
       getProductOptions(),
     ]);
@@ -47,7 +49,7 @@ export default async function DashboardPage() {
   const feePercent =
     prof.commission_override ?? Number(settings?.fee_percent ?? 30);
   const feeFlat = settings?.fee_flat_cents ?? 25;
-  const feeRateLabel = `${Number(feePercent)}% + $${(feeFlat / 100).toFixed(2)} per sale`;
+  const feeRateLabel = `${Number(feePercent)}% + ${formatUsd(feeFlat)} per sale`;
 
   const myProducts = (products as Product[] | null) ?? [];
   const myIds = new Set(myProducts.map((p) => p.id));
@@ -68,14 +70,9 @@ export default async function DashboardPage() {
     }));
 
   // Ratings for my products only
-  const ratings: Record<string, { avg: number; count: number }> = {};
-  for (const r of (reviews as Pick<Review, "product_id" | "rating">[] | null) ?? []) {
-    if (!myIds.has(r.product_id)) continue;
-    const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
-    e.avg += r.rating;
-    e.count += 1;
-  }
-  for (const k of Object.keys(ratings)) ratings[k].avg /= ratings[k].count;
+  const ratings = Object.fromEntries(
+    Object.entries(allRatings).filter(([id]) => myIds.has(id))
+  );
 
   // Stripe status — live check, persisted so public pages can show
   // the Verified badge without an API call.
