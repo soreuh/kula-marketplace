@@ -246,11 +246,14 @@ export default async function ProductPage({
               kula and the seller (and partner rates are private). */}
 
           <div className="mt-6">
-            {p.status !== "active" && !isSeller ? (
-              <p className="rounded-xl bg-mist p-4 text-center text-sm text-fog">
-                this listing is not currently available.
-              </p>
-            ) : isSeller ? (
+            {/* Order matters: ownership is checked BEFORE availability.
+                "not currently available" used to come first, so a buyer who
+                already owned a draft/archived/suspended listing was told their
+                own purchase was unavailable and lost the download button on
+                this page (the library still worked, and /api/download only
+                ever checks for a paid order — so the page was simply lying).
+                Access is permanent; only the ability to BUY goes away. */}
+            {isSeller ? (
               <div className="flex flex-col gap-2">
                 <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
                   you own this — it&apos;s your listing.
@@ -262,7 +265,7 @@ export default async function ProductPage({
                   download your file
                 </a>
               </div>
-            ) : alreadyOwned ? (
+            ) : alreadyOwned ? (  // owns it — status is irrelevant
               <div className="flex flex-col gap-2">
                 <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
                   you&apos;ve purchased this.
@@ -274,6 +277,14 @@ export default async function ProductPage({
                   download
                 </a>
               </div>
+            ) : p.status !== "active" ? (
+              // Doesn't own it and it isn't live — no buy button. (Mostly
+              // unreachable: RLS hides non-active rows from anyone who isn't
+              // the seller, an admin, or a prior buyer, so this is the admin
+              // view. Kept so the UI can never offer an unbuyable listing.)
+              <p className="rounded-xl bg-mist p-4 text-center text-sm text-fog">
+                this listing is not currently available.
+              </p>
             ) : (
               <BuyButton
                 productId={p.id}
