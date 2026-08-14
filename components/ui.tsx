@@ -244,7 +244,28 @@ export function ProductCard({
 }
 
 /** Initials avatar for instructor profiles. */
-export function Avatar({ name, size = 48 }: { name: string; size?: number }) {
+export function Avatar({
+  name,
+  size = 48,
+  imagePath = null,
+}: {
+  name: string;
+  size?: number;
+  /** covers-bucket path of an uploaded profile photo; initials otherwise */
+  imagePath?: string | null;
+}) {
+  const url = coverUrl(imagePath);
+  if (url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt=""
+        className="rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   const initials = name
     .split(/\s+/)
     .map((w) => w[0])
@@ -270,7 +291,7 @@ export function InstructorCard({ instructor }: { instructor: Instructor }) {
       href={`/profile/${instructor.id}`}
       className="flex items-start gap-4 rounded-2xl border border-ink/5 bg-white p-5 shadow-sm transition hover:shadow-md"
     >
-      <Avatar name={name} />
+      <Avatar name={name} imagePath={instructor.avatar_path} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-display font-bold">{name}</span>

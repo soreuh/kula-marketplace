@@ -23,6 +23,8 @@ export interface Profile {
   partner: boolean;
   /** Moderation: paused = buying blocked + listings ghosted; deleted = also login-banned. Data always retained. */
   account_status: "active" | "paused" | "deleted";
+  /** Profile picture path in the public covers bucket (own folder). */
+  avatar_path: string | null;
 }
 
 /** Public-safe instructor info (the `instructors` view). */
@@ -34,6 +36,7 @@ export interface Instructor {
   specialisations: string[];
   stripe_charges_enabled: boolean;
   created_at: string;
+  avatar_path: string | null;
 }
 
 export interface Product {

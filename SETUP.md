@@ -41,6 +41,8 @@ Time: ~20 minutes. Everything is test-mode until step 8 — no real money moves.
    11. `011_free_listings.sql` — sellers can list FREE content ($0), which
        publishes even before Stripe is connected (paid listings keep the
        $1 minimum and the Stripe gate).
+   12. `012_profile_avatars.sql` — profile pictures (uploaded from the
+       edit-profile menu; stored in the public covers bucket).
 
    (Existing project? Just run the ones you haven't run yet, in order.)
 

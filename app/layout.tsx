@@ -81,6 +81,7 @@ export default async function RootLayout({
                     name={displayName}
                     email={profile.email}
                     isAdmin={profile.role === "admin"}
+                    avatarPath={profile.avatar_path}
                   />
                 </>
               ) : (

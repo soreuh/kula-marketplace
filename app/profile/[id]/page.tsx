@@ -65,7 +65,7 @@ export default async function InstructorProfilePage({
     <div>
       <section className="bg-mist/60 px-5 py-12">
         <div className="mx-auto flex max-w-5xl flex-col items-start gap-5 sm:flex-row sm:items-center">
-          <Avatar name={name} size={76} />
+          <Avatar name={name} size={76} imagePath={inst.avatar_path} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="font-display text-3xl font-bold">{name}</h1>
@@ -110,6 +110,7 @@ export default async function InstructorProfilePage({
               shop_name: inst.shop_name ?? "",
               bio: inst.bio ?? "",
               specialisations: inst.specialisations,
+              avatar_path: inst.avatar_path,
             }}
           />
         )}

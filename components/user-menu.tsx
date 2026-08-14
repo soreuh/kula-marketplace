@@ -9,11 +9,13 @@ export default function UserMenu({
   name,
   email,
   isAdmin,
+  avatarPath = null,
 }: {
   userId: string;
   name: string;
   email: string;
   isAdmin: boolean;
+  avatarPath?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -34,7 +36,7 @@ export default function UserMenu({
         aria-expanded={open}
         className="flex items-center"
       >
-        <Avatar name={name} size={38} />
+        <Avatar name={name} size={38} imagePath={avatarPath} />
       </button>
       {open && (
         <div className="absolute right-0 top-12 z-30 w-60 overflow-hidden rounded-2xl border border-ink/5 bg-white py-2 shadow-lg">

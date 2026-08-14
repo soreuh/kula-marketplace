@@ -4,18 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { STYLES } from "@/lib/categories";
-import { inputCls } from "@/components/ui";
+import { Avatar, inputCls } from "@/components/ui";
+
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // covers bucket limit
 
 export default function ProfileEdit({
   initial,
 }: {
-  initial: { shop_name: string; bio: string; specialisations: string[] };
+  initial: {
+    shop_name: string;
+    bio: string;
+    specialisations: string[];
+    avatar_path: string | null;
+  };
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [shopName, setShopName] = useState(initial.shop_name);
   const [bio, setBio] = useState(initial.bio);
   const [specs, setSpecs] = useState<string[]>(initial.specialisations);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -23,6 +32,17 @@ export default function ProfileEdit({
     setSpecs((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     );
+  }
+
+  function pickAvatar(f: File | null) {
+    if (!f) return;
+    if (!f.type.startsWith("image/"))
+      return setMessage("Profile photo must be an image (jpg, png, or webp).");
+    if (f.size > AVATAR_MAX_BYTES)
+      return setMessage("Profile photo must be under 5MB.");
+    setMessage(null);
+    setAvatarFile(f);
+    setAvatarPreview(URL.createObjectURL(f));
   }
 
   async function save(e: React.FormEvent) {
@@ -37,12 +57,33 @@ export default function ProfileEdit({
       setBusy(false);
       return setMessage("Please log in.");
     }
+
+    // upload the new photo first (own folder in the public covers bucket),
+    // then clean up the old one — losing an orphan beats losing the avatar
+    let avatarPath = initial.avatar_path;
+    if (avatarFile) {
+      const ext = (avatarFile.name.split(".").pop() ?? "jpg").toLowerCase();
+      const newPath = `${user.id}/avatar-${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("covers")
+        .upload(newPath, avatarFile);
+      if (upErr) {
+        setBusy(false);
+        return setMessage(`Photo upload failed: ${upErr.message}`);
+      }
+      if (initial.avatar_path) {
+        await supabase.storage.from("covers").remove([initial.avatar_path]);
+      }
+      avatarPath = newPath;
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
         shop_name: shopName.trim() || null,
         bio: bio.trim() || null,
         specialisations: specs,
+        avatar_path: avatarPath,
       })
       .eq("id", user.id);
     setBusy(false);
@@ -72,6 +113,33 @@ export default function ProfileEdit({
           cancel
         </button>
       </div>
+
+      <div className="flex items-center gap-4">
+        {avatarPreview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarPreview}
+            alt=""
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <Avatar
+            name={shopName || "kula"}
+            size={64}
+            imagePath={initial.avatar_path}
+          />
+        )}
+        <label className="flex-1 text-fog">
+          profile photo (jpg/png/webp, up to 5MB)
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="mt-1 block w-full text-xs"
+            onChange={(e) => pickAvatar(e.target.files?.[0] ?? null)}
+          />
+        </label>
+      </div>
+
       <label className="text-fog">
         shop name (shown instead of your display name)
         <input
