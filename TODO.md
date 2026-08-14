@@ -103,9 +103,16 @@ real launch.
   prompt would have been theater). Section is now a collapsed AdminSection at
   the very bottom of the admin page. Gap closed same day: `setCommissionOverride` now
   runs the same step-up (shared `requireStepUp` helper; password field in each
-  set-rate row). `togglePartner` stays UNGATED on purpose — unmarking clears an
-  override back to the platform default, which can only RAISE kula's take, so
-  it isn't a fee-leak vector.
+  set-rate row). The partner-toggle story then collapsed entirely (023, Aleks's
+  call): the stored `partner` flag had zero economic function — its only
+  behavior was the coupling that let one ungated click wipe a negotiated deal.
+  Column DROPPED; "partner" is now DERIVED (commission_override non-null),
+  badge + people-panel filter compute it, togglePartner action deleted, 008
+  guard recreated without the partner clause. The password-gated rate field is
+  the ONLY control. Deliberately given up: badge-only partners — if a public
+  promoted-teacher label is ever wanted, that's a separate build.
+  ⚠️ DEPLOY ORDER: push the code FIRST, then run 023 — the old deploy still
+  writes `partner` on rate changes and would error against the dropped column.
 
 - [x] **last_seen_at stickiness tracking (021)**: `profiles.last_seen_at`,
   stamped by the middleware on page views and throttled by a 1-hour COOKIE so

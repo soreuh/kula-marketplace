@@ -10,7 +10,6 @@ import {
   setCommissionOverride,
   setProductStatus,
   toggleFeatured,
-  togglePartner,
   updateFeeSettings,
 } from "./actions";
 import UsersPanel from "./users-panel";
@@ -372,29 +371,16 @@ function SellersSection({
                   <td className="p-3.5 tabular-nums">{theirListings.length}</td>
                   <td className="p-3.5 tabular-nums">{theirSales.length}</td>
                   <td className="p-3.5">
-                    <form action={togglePartner}>
-                      <input type="hidden" name="user_id" value={u.id} />
-                      <input
-                        type="hidden"
-                        name="make_partner"
-                        value={u.partner ? "false" : "true"}
-                      />
-                      <button
-                        title={
-                          u.partner
-                            ? "Remove partner status (also clears their custom rate)"
-                            : "Mark as partner"
-                        }
-                        className={
-                          "rounded-full px-3 py-1.5 text-xs font-semibold transition " +
-                          (u.partner
-                            ? "bg-sage-500 text-white hover:bg-sage-600"
-                            : "border border-ink/15 text-fog hover:border-ink/40")
-                        }
-                      >
-                        {u.partner ? "partner ✓" : "mark partner"}
-                      </button>
-                    </form>
+                    {/* DERIVED (023): partner IS "has a negotiated rate" —
+                        no toggle, no state to desync. Set or blank the rate
+                        (password-gated) and this follows. */}
+                    {u.commission_override !== null ? (
+                      <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-semibold text-sage-700">
+                        partner ✓
+                      </span>
+                    ) : (
+                      <span className="text-xs text-fog">—</span>
+                    )}
                   </td>
                   <td className="p-3.5">
                     {u.commission_override !== null ? (
@@ -407,6 +393,7 @@ function SellersSection({
                   </td>
                   <td className="p-3.5">
                     <form
+                      id={`rate-form-${u.id}`}
                       action={setCommissionOverride}
                       className="flex items-center gap-1.5"
                     >

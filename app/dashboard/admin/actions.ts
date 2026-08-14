@@ -130,9 +130,6 @@ export async function setCommissionOverride(formData: FormData) {
   const supabase = await requireAdmin();
   // Same step-up as the platform fee: a per-seller override to 0% is
   // economically identical to zeroing the platform fee for that seller.
-  // (togglePartner stays ungated on purpose: unmarking CLEARS an override —
-  // restoring the platform default — so it can only ever raise kula's take,
-  // never leak fee revenue.)
   await requireStepUp(supabase, formData);
   const userId = String(formData.get("user_id"));
   const raw = String(formData.get("commission_override") ?? "").trim();
@@ -144,14 +141,12 @@ export async function setCommissionOverride(formData: FormData) {
       throw new Error("Rate must be 0–100, or blank for the default");
   }
 
-  // Setting a custom rate auto-marks the seller as a partner.
-  // Clearing the rate leaves partner status alone (badge-only partners exist).
-  const patch: { commission_override: number | null; partner?: boolean } = {
-    commission_override: value,
-  };
-  if (value !== null) patch.partner = true;
-
-  await supabase.from("profiles").update(patch).eq("id", userId);
+  // Partner is DERIVED (023): having an override IS being a partner.
+  // Nothing else to write, nothing to desync, nothing to misclick.
+  await supabase
+    .from("profiles")
+    .update({ commission_override: value })
+    .eq("id", userId);
   revalidatePath("/dashboard/admin");
 }
 
@@ -234,25 +229,6 @@ export async function setAccountStatus(formData: FormData) {
   revalidatePath("/");
 }
 
-/**
- * Partner toggle. Turning partner OFF also clears any negotiated rate —
- * the deal ends with the partnership, and they return to platform defaults.
- */
-export async function togglePartner(formData: FormData) {
-  const supabase = await requireAdmin();
-  const userId = String(formData.get("user_id"));
-  const makePartner = String(formData.get("make_partner")) === "true";
-
-  await supabase
-    .from("profiles")
-    .update(
-      makePartner
-        ? { partner: true }
-        : { partner: false, commission_override: null }
-    )
-    .eq("id", userId);
-  revalidatePath("/dashboard/admin");
-}
 
 /**
  * Growth-model drivers + launch date (migration 020). "reset" wipes the

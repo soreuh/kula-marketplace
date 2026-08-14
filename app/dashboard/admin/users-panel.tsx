@@ -26,7 +26,7 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
     const filtered = users.filter((u) => {
       if (q && !`${u.display_name ?? ""} ${u.shop_name ?? ""} ${u.email}`.toLowerCase().includes(q))
         return false;
-      if (filter === "partner") return u.partner;
+      if (filter === "partner") return u.commission_override !== null; // derived (023)
       if (filter === "paused") return u.account_status === "paused";
       if (filter === "deleted") return u.account_status === "deleted";
       if (filter !== "all" && u.role !== filter) return false;
@@ -124,7 +124,7 @@ export default function UsersPanel({ users }: { users: Profile[] }) {
             <div className="min-w-0 flex-1">
               <div className="truncate font-medium">
                 {u.display_name ?? u.email}
-                {u.partner && (
+                {u.commission_override !== null && (
                   <span className="ml-2 rounded-full bg-sage-100 px-2 py-0.5 text-xs font-semibold text-sage-700">
                     partner
                   </span>

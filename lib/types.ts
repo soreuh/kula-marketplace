@@ -17,10 +17,11 @@ export interface Profile {
   marketing_consent: boolean | null;
   ip_agreement_accepted_at: string | null;
   stripe_charges_enabled: boolean;
-  /** Partner rate: custom commission percent; null = platform default. Private. */
+  /** Partner rate: custom commission percent; null = platform default.
+   *  Private. "Partner" is DERIVED from this (023): non-null = partner —
+   *  there is no stored partner flag. */
   commission_override: number | null;
   /** Partner status; auto-set when a rate override exists. */
-  partner: boolean;
   /** Moderation: paused = buying blocked + listings ghosted; deleted = also login-banned. Data always retained. */
   account_status: "active" | "paused" | "deleted";
   /** Profile picture path in the public covers bucket (own folder). */

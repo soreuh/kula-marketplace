@@ -42,10 +42,13 @@ owner before enabling in production).
   default; flat fee always applies; override takes precedence over any later
   change to the platform default) — negotiated rates are PRIVATE: never
   expose them in the public `instructors` view or any buyer-facing UI.
-  `profiles.partner`: auto-true when a rate is set; unmarking partner clears
-  the override (see togglePartner in admin actions).
-- Money-critical profile columns (commission_override, partner,
-  stripe_charges_enabled, stripe_account_id) are guarded (migration 008):
+  "Partner" is DERIVED, not stored (023): it means commission_override is
+  not null, computed in the admin UI. No partner column, no toggle, no
+  coupling rules — the (password-gated) rate field is the only control. A
+  PUBLIC promoted-teacher label, if ever wanted, is a new feature, not this.
+- Money-critical profile columns (commission_override,
+  stripe_charges_enabled, stripe_account_id) are guarded (migration 008;
+  partner clause removed in 023 with the column):
   a user CANNOT change them on their own row — only admins, or the
   service-role/SQL context. RLS grants row access, not column access, so
   these need the trigger. Server writes to these columns MUST use the
