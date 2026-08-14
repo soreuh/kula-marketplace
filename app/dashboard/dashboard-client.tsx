@@ -145,14 +145,24 @@ function ConnectStripeCard({ started }: { started: boolean }) {
   async function connect() {
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/stripe/onboard", { method: "POST" });
-    const json = await res.json();
-    setBusy(false);
-    if (!res.ok) {
-      setError(json.error ?? "Could not start Stripe onboarding");
-      return;
+    try {
+      const res = await fetch("/api/stripe/onboard", { method: "POST" });
+      // A crashed route returns an HTML error page — don't let a failed
+      // .json() parse strand the button in "opening…" forever.
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) {
+        setError(
+          json.error ??
+            `could not start stripe onboarding (HTTP ${res.status}) — try again, and if it persists check the platform's Stripe Connect setup`,
+        );
+        return;
+      }
+      window.location.href = json.url;
+    } catch {
+      setError("network hiccup talking to the server — try again");
+    } finally {
+      setBusy(false);
     }
-    window.location.href = json.url;
   }
 
   return (

@@ -85,6 +85,11 @@ owner before enabling in production).
   scored auto-fill (bayesian rating 50 / conversion 30 / 14-day-half-life
   recency 20 — weights live in the view). The view exposes only the blended
   score, never raw sales counts, and respects moderation ghosting.
+  Shelf scope (app/page.tsx, owner decision Aug 2026): admin ★ ALWAYS
+  features, free or paid; the scored auto-fill fills remaining slots from
+  PAID listings only (unstarred freebies never score in — they have their
+  own homepage row, which skips already-featured ids so a starred freebie
+  never renders twice).
 - Listing options (styles/content types/levels) live in `product_options`
   (migration 009), admin-curated from the dashboard; lib/categories.ts
   arrays are FALLBACK only (missing/empty table). Durations + teachability

@@ -14,27 +14,35 @@ export default async function HomePage() {
     await Promise.all([
       // featured shelf: admin picks first (featured_at, newest pick first),
       // then the transparent score fills remaining slots — see the
-      // featured_products view (migration 013). Paid only; freebies get
-      // their own shelf below.
+      // featured_products view (migration 013). Scope: paid listings, PLUS
+      // anything the admin starred regardless of price — ★ always features.
+      // Unstarred freebies never score their way in; they have their own
+      // shelf below (which skips already-featured items so nothing shows
+      // twice).
       supabase
         .from("featured_products")
         .select("*")
-        .gt("price_cents", 0)
+        .or("price_cents.gt.0,featured_at.not.is.null")
         .order("featured_at", { ascending: false, nullsFirst: false })
         .order("featured_score", { ascending: false })
         .limit(3),
+      // over-fetch: some of these may already sit on the featured shelf
       supabase
         .from("products")
         .select("*")
         .eq("status", "active")
         .eq("price_cents", 0)
         .order("created_at", { ascending: false })
-        .limit(3),
+        .limit(6),
       supabase.from("reviews").select("product_id, rating"),
     ]);
 
   const featured = (products as Product[] | null) ?? [];
-  const freebies = (freeProducts as Product[] | null) ?? [];
+  const featuredIds = new Set(featured.map((p) => p.id));
+  // a starred freebie lives on the featured shelf — don't render it twice
+  const freebies = ((freeProducts as Product[] | null) ?? [])
+    .filter((p) => !featuredIds.has(p.id))
+    .slice(0, 3);
   const ratings: Record<string, { avg: number; count: number }> = {};
   for (const r of (reviews as { product_id: string; rating: number }[] | null) ?? []) {
     const e = (ratings[r.product_id] ??= { avg: 0, count: 0 });
