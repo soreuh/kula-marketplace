@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendNewReviewEmail, sendReviewNudgeEmail } from "@/lib/email";
+import {
+  emailAllowed,
+  sendNewReviewEmail,
+  sendReviewNudgeEmail,
+} from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 
 /**
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
           .single(),
         admin
           .from("profiles")
-          .select("email, account_status")
+          .select("email, account_status, review_nudge_emails")
           .eq("id", o.buyer_id)
           .single(),
       ]);
@@ -109,6 +113,16 @@ export async function POST(request: Request) {
       if (!product || product.status === "suspended" || product.status === "draft")
         continue;
       if (!buyer?.email || buyer.account_status !== "active") continue;
+
+      // Buyer opted out of nudges (031): stamp WITHOUT sending, like the
+      // already-reviewed path — a stable choice must not queue mail forever.
+      if (!emailAllowed("review_nudge", null, buyer)) {
+        await admin
+          .from("orders")
+          .update({ review_nudge_sent_at: new Date().toISOString() })
+          .eq("id", o.id);
+        continue;
+      }
 
       const sent = await sendReviewNudgeEmail({
         to: buyer.email,
@@ -169,7 +183,7 @@ export async function POST(request: Request) {
         const wants =
           !!seller?.email &&
           seller.account_status === "active" &&
-          seller.sale_notifications;
+          emailAllowed("review_notice", null, seller);
         const sent = wants
           ? await sendNewReviewEmail({ to: seller!.email, items: g.items, siteUrl: site })
           : false;

@@ -96,6 +96,58 @@ async function sendViaResend(
   }
 }
 
+/* ── notification gates (settings block S2, 2026-08-15) ─────────────────
+ * ONE authoritative map from email kind → the platform switch and the
+ * per-user profiles column that gate it. Every send site asks
+ * emailAllowed() instead of hand-checking columns, so adding a
+ * notification type is one line here plus a toggle in /settings — and the
+ * storage behind it (columns today) can change later without any call
+ * site knowing.
+ * Semantics: a gate blocks ONLY on an explicit `false` — missing rows,
+ * un-run migrations, and nulls all read as ON (matches every pre-existing
+ * tolerant check). Pass null/undefined for a layer the caller has already
+ * gated (e.g. the sweep checks the platform switch once up front). */
+export type EmailKind =
+  | "sale" // seller: paid-sale + free-claim pings
+  | "purchase_paid" // buyer: paid receipt (no user opt-out — it's a receipt)
+  | "purchase_free" // buyer: free-download confirmation
+  | "content_update" // buyer: file-updated notices
+  | "review_nudge" // buyer: "how was it?" reminder
+  | "review_notice"; // seller: new-review batch (rides sale_notifications)
+
+const EMAIL_GATES: Record<EmailKind, { platform: string; user: string | null }> =
+  {
+    sale: { platform: "notify_sale_emails", user: "sale_notifications" },
+    purchase_paid: { platform: "notify_purchase_emails", user: null },
+    purchase_free: {
+      platform: "notify_purchase_emails",
+      user: "free_claim_emails",
+    },
+    content_update: {
+      platform: "notify_content_updates",
+      user: "content_update_emails",
+    },
+    review_nudge: {
+      platform: "notify_review_emails",
+      user: "review_nudge_emails",
+    },
+    review_notice: {
+      platform: "notify_review_emails",
+      user: "sale_notifications",
+    },
+  };
+
+export function emailAllowed(
+  kind: EmailKind,
+  platform?: Record<string, unknown> | null,
+  user?: Record<string, unknown> | null
+): boolean {
+  const g = EMAIL_GATES[kind];
+  if (platform && platform[g.platform] === false) return false;
+  if (g.user && user && user[g.user] === false) return false;
+  return true;
+}
+
 /** Sale notification to the SELLER ("you made a sale"). */
 export async function sendSaleEmail(opts: {
   to: string;
@@ -209,7 +261,7 @@ export async function sendReviewNudgeEmail(opts: {
       helps other teachers find the good stuff — and tells the teacher who
       made it that it landed.</p>
       ${btn(`${opts.siteUrl}/products/${opts.productId}`, "leave a review →")}
-      ${fine("this is a one-time note — you own the content forever either way.")}
+      ${fine("this is a one-time note — you own the content forever either way. turn review reminders off any time in your settings.")}
     `)
   );
 }
@@ -248,7 +300,7 @@ export async function sendNewReviewEmail(opts: {
           : `${opts.siteUrl}/dashboard`,
         n === 1 ? "read + reply →" : "open your dashboard →"
       )}
-      ${fine("you're receiving this because sale notifications are on in your earnings tab.")}
+      ${fine("you're receiving this because sale notifications are on in your settings.")}
     `)
   );
 }
@@ -275,7 +327,7 @@ export async function sendFreeClaimEmail(opts: {
       buyers meet your work — they can review it now, and it puts your
       paid content in front of them.</p>
       ${btn(`${opts.siteUrl}/dashboard`, "view your listings →")}
-      ${fine("you're receiving this because sale notifications are on in your earnings tab.")}
+      ${fine("you're receiving this because sale notifications are on in your settings.")}
     `)
   );
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireActiveAccount, requireUser } from "@/lib/api-guards";
 import { rateLimitOk } from "@/lib/rate-limit";
-import { sendContentUpdateEmails } from "@/lib/email";
+import { emailAllowed, sendContentUpdateEmails } from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 
 /**
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     .from("platform_settings")
     .select("*")
     .single();
-  if (settings && settings.notify_content_updates === false)
+  if (!emailAllowed("content_update", settings))
     return NextResponse.json({ ok: true, sent: 0, disabled: true });
 
   // The real spam ceiling — one send per product per day, server-side.
@@ -86,9 +86,9 @@ export async function POST(request: Request) {
     .in("id", buyerIds);
   const to = (buyers ?? [])
     .filter(
-      (b: { account_status?: string; content_update_emails?: boolean }) =>
+      (b: { account_status?: string }) =>
         (!b.account_status || b.account_status === "active") &&
-        b.content_update_emails !== false // per-buyer opt-out (022)
+        emailAllowed("content_update", null, b) // per-buyer opt-out (022)
     )
     .map((b: { email: string }) => b.email)
     .filter(Boolean);

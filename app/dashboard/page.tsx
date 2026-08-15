@@ -117,7 +117,6 @@ export default async function DashboardPage() {
           ratings={ratings}
           stripeStarted={!!prof.stripe_account_id}
           chargesEnabled={chargesEnabled}
-          saleNotifications={prof.sale_notifications}
           ipAgreed={!!prof.ip_agreement_accepted_at}
           aiEnabled={!!process.env.KULA_ANTHROPIC_API_KEY}
           feeRateLabel={feeRateLabel}

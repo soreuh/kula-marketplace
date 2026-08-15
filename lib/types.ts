@@ -30,6 +30,10 @@ export interface Profile {
   last_seen_at?: string | null;
   /** Migration 022 — buyer pref: email me when content I own is updated. */
   content_update_emails?: boolean | null;
+  /** Migration 031 (settings S2) — buyer opt-outs: review nudges + free-
+   *  download confirmations. Tolerant reads: missing column = ON. */
+  review_nudge_emails?: boolean | null;
+  free_claim_emails?: boolean | null;
   /** Migrations 026/027 — profile v2, all self-editable. Website normalized
    *  to https?:// on save; socials is a curated-key map of bare handles
    *  (lib/socials.ts, replaced 026's instagram_handle column); banner lives

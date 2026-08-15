@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe, siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendPurchaseEmail, sendSaleEmail } from "@/lib/email";
+import { emailAllowed, sendPurchaseEmail, sendSaleEmail } from "@/lib/email";
 
 /**
  * POST /api/stripe/webhook
@@ -67,59 +67,49 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      // Emails (feature-flagged on RESEND_API_KEY; fail-soft): sale
-      // notification to the seller, purchase confirmation to the buyer.
-      // Platform switches from admin → notifications; tolerant reads —
-      // an un-migrated column is undefined, which counts as ON.
+      // Emails (feature-flagged on RESEND_API_KEY; fail-soft). All gating
+      // goes through emailAllowed() — the ONE platform-switch + user-pref
+      // map in lib/email (settings S2).
       const { data: product } = await admin
         .from("products")
         .select("title, seller_id")
         .eq("id", meta.product_id)
         .single();
       if (product) {
-        const { data: notifSettings } = await admin
-          .from("platform_settings")
-          .select("*")
-          .single();
-        const ns = notifSettings as {
-          notify_sale_emails?: boolean;
-          notify_purchase_emails?: boolean;
-        } | null;
-
-        // seller side — platform switch AND the seller's own preference
-        if (ns?.notify_sale_emails !== false) {
-          const { data: seller } = await admin
-            .from("profiles")
-            .select("email, sale_notifications")
-            .eq("id", product.seller_id)
-            .single();
-          if (seller?.sale_notifications) {
-            await sendSaleEmail({
-              to: seller.email,
-              productTitle: product.title,
-              netCents,
-              grossCents: session.amount_total ?? priceCents,
-              feeCents,
-            });
-          }
+        const [{ data: seller }, { data: buyer }, { data: notifSettings }] =
+          await Promise.all([
+            admin
+              .from("profiles")
+              .select("email, sale_notifications")
+              .eq("id", product.seller_id)
+              .single(),
+            admin
+              .from("profiles")
+              .select("email")
+              .eq("id", meta.buyer_id)
+              .single(),
+            admin.from("platform_settings").select("*").single(),
+          ]);
+        if (seller?.email && emailAllowed("sale", notifSettings, seller)) {
+          await sendSaleEmail({
+            to: seller.email,
+            productTitle: product.title,
+            netCents,
+            grossCents: session.amount_total ?? priceCents,
+            feeCents,
+          });
         }
-
-        // buyer side — transactional "it's in your library" (025); no
-        // per-buyer toggle, receipts are expected mail
-        if (ns?.notify_purchase_emails !== false) {
-          const { data: buyer } = await admin
-            .from("profiles")
-            .select("email")
-            .eq("id", meta.buyer_id)
-            .single();
-          if (buyer?.email) {
-            await sendPurchaseEmail({
-              to: buyer.email,
-              productTitle: product.title,
-              paidCents: session.amount_total ?? priceCents,
-              siteUrl: siteUrl(),
-            });
-          }
+        // Buyer receipt — REGRESSION FIX (found in the 2026-08-15 settings
+        // survey): this send was lost in a later webhook edit, so free
+        // claims confirmed while PAID buyers got nothing. Receipts have no
+        // per-user opt-out (proof of purchase); platform switch only.
+        if (buyer?.email && emailAllowed("purchase_paid", notifSettings)) {
+          await sendPurchaseEmail({
+            to: buyer.email,
+            productTitle: product.title,
+            paidCents: session.amount_total ?? priceCents,
+            siteUrl: siteUrl(),
+          });
         }
       }
       break;

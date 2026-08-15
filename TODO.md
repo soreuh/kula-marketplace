@@ -361,19 +361,43 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Settings consolidation (ANALYZED 2026-08-15 — Aleks's ask; his
-  go/no-go pending):** no /settings page exists; settings-ish controls are
-  scattered — buyer content-update email toggle on the LIBRARY page, seller
-  sale_notifications toggle inside the dashboard EARNINGS tab, profile edit
-  on own profile page, marketing_consent set ONCE at signup with no UI to
-  change it, password change only via the logged-out forgot-password loop,
-  change-email has NO surface at all (the drafted Supabase change-email
-  template is dormant). Per-user email-opt-out gaps: review NUDGES (buyer)
-  and purchase receipts have no individual toggle (platform switch only).
-  Full email-hook matrix + proposed /settings architecture (incl. the
-  column-per-pref vs email_prefs jsonb fork, mirroring the 027 socials
-  precedent) delivered in-chat 2026-08-15; when built, land the compact
-  matrix in CLAUDE.md.
+- [ ] **Settings S2 — prefs in one place (BUILT 2026-08-15 — migration 031
+  FIRST, then push + live verify):** ARCHITECTURE (Aleks's call after the
+  MVP-horizon discussion): stay column-per-pref (jsonb fold rejected — no
+  payoff inside a 3yr horizon, and it would reopen verified gates) BUT add
+  the seam: lib/email's emailAllowed(kind, platformRow, userRow) is now the
+  ONE map from email kind → platform switch + user column; every send site
+  (webhook, claim-free, sweep A+B, notify-update) asks it. New notification
+  type = one map line + one /settings toggle. 031: profiles.
+  review_nudge_emails + free_claim_emails (default true) + auth→profiles
+  email mirror trigger (change-email can't strand notification mail).
+  /settings gains change-email + the full email-preferences section; the
+  LIBRARY toggle and the EARNINGS-TAB switch MOVED there (one home —
+  Aleks runs `git rm app/library/update-emails-toggle.tsx`). Seller
+  sales&reviews toggle shown to non-buyer roles only. Email footers now
+  say "in your settings"; nudge email discloses its off-switch.
+  ⚠ TWO REGRESSIONS found by the survey and fixed here: (1) PAID buyers'
+  receipt email had NO call site — the webhook send was lost in a later
+  edit (free claims still confirmed; lib/email's own doc comment proved
+  original intent); (2) the freebie SELLER ping (sendFreeClaimEmail) had
+  lost its only call site. Both restored behind emailAllowed. Lesson
+  echoes the stale-stage trap: a verified feature isn't permanently
+  verified — S3's full email test matrix is the answer.
+  DELIBERATELY EXCLUDED: mailing-list toggle (signup consent is BUNDLED by
+  owner decision, Aug 2026 — Mailchimp campaigns carry the unsubscribe;
+  splitting consent is the EU/Canada-triggered change, not this block);
+  paid-receipt opt-out (receipts are proof of purchase).
+- [x] 2026-08-15 **Settings S1 — /settings page + account section** (pushed
+  + VERIFIED same day, all 5 checks: menu entry → page + correct email ·
+  password change → re-login with new password · mismatch rejected ·
+  logged-out /settings → /login?next=/settings → back after login ·
+  shortcuts land). Logged-in password change existed nowhere before this —
+  the only path was logging out into forgot-password. Origin: Aleks's
+  settings-localization ask; survey found controls scattered across
+  library / earnings tab / profile page / signup-only consent, no
+  change-email surface (drafted template dormant), no nudge opt-out.
+  Email-hook matrix delivered in-chat; compact version lands in CLAUDE.md
+  at S3.
 - [ ] HELD (Aleks 2026-08-15) — **gap-report tier-2 remainder, build on his
   go:** 6 discount codes (fork decision still open: A platform-funded — 
   seller nets full price, kula's fee absorbs the discount — vs B

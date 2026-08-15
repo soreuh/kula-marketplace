@@ -31,7 +31,6 @@ export default function DashboardClient({
   ratings,
   stripeStarted,
   chargesEnabled,
-  saleNotifications,
   ipAgreed,
   aiEnabled,
   feeRateLabel,
@@ -46,7 +45,6 @@ export default function DashboardClient({
   ratings: Ratings;
   stripeStarted: boolean;
   chargesEnabled: boolean;
-  saleNotifications: boolean;
   ipAgreed: boolean;
   aiEnabled: boolean;
   feeRateLabel: string;
@@ -106,7 +104,6 @@ export default function DashboardClient({
           products={products}
           sales={sales}
           ratings={ratings}
-          saleNotifications={saleNotifications}
           openUpload={() => {
             setTab("content");
             setShowForm(true);
@@ -546,17 +543,14 @@ function EarningsTab({
   products,
   sales,
   ratings,
-  saleNotifications,
   openUpload,
 }: {
   userId: string;
   products: Product[];
   sales: SaleRow[];
   ratings: Ratings;
-  saleNotifications: boolean;
   openUpload: () => void;
 }) {
-  const [notify, setNotify] = useState(saleNotifications);
   const [copied, setCopied] = useState(false);
   const [perfQuery, setPerfQuery] = useState("");
 
@@ -573,16 +567,6 @@ function EarningsTab({
   const sum = (rows: SaleRow[], k: "seller_amount_cents" | "fee_cents" | "amount_cents") =>
     rows.reduce((acc, r) => acc + r[k], 0);
   const soldTitles = new Set(paid.map((s) => s.product_id)).size;
-
-  async function toggleNotify() {
-    const next = !notify;
-    setNotify(next);
-    const supabase = createClient();
-    await supabase
-      .from("profiles")
-      .update({ sale_notifications: next })
-      .eq("id", userId);
-  }
 
   if (!products.length) {
     return (
@@ -767,32 +751,6 @@ function EarningsTab({
         )}
       </div>
 
-      {/* notifications */}
-      <label className="flex w-fit cursor-pointer items-center gap-3 rounded-2xl border border-ink/5 bg-white px-5 py-3.5 shadow-sm">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={notify}
-          onClick={toggleNotify}
-          className={
-            "relative h-6 w-11 rounded-full transition " +
-            (notify ? "bg-sage-500" : "bg-ink/15")
-          }
-        >
-          <span
-            className={
-              "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " +
-              (notify ? "left-[22px]" : "left-0.5")
-            }
-          />
-        </button>
-        <span className="text-sm">
-          email me when I make a sale
-          <span className="block text-xs text-fog">
-            sent to your account email
-          </span>
-        </span>
-      </label>
     </div>
   );
 }

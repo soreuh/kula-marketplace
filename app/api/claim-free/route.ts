@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser, requireActiveAccount } from "@/lib/api-guards";
-import { sendFreeClaimEmail, sendPurchaseEmail } from "@/lib/email";
+import {
+  emailAllowed,
+  sendFreeClaimEmail,
+  sendPurchaseEmail,
+} from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 
 /**
@@ -69,21 +73,24 @@ export async function POST(request: Request) {
   if (error)
     return NextResponse.json({ error: "Could not add to library" }, { status: 500 });
 
-  // Emails — fail-soft: the claim already succeeded, so nothing past this
-  // point can undo it. Both platform switches come from the one settings
-  // row, read tolerantly (missing column = ON).
-  const { data: settings } = await supabase
-    .from("platform_settings")
-    .select("*")
-    .single();
-  const ns = settings as {
-    notify_purchase_emails?: boolean;
-    notify_sale_emails?: boolean;
-  } | null;
+  // Emails — fail-soft: the claim already succeeded, nothing past this
+  // point can undo it. Gates via emailAllowed (lib/email, settings S2).
+  const [{ data: settings }, { data: me }, { data: seller }] =
+    await Promise.all([
+      supabase.from("platform_settings").select("*").single(),
+      // own-row read: the buyer's free-download email pref (031)
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      // seller contact via admin — buyers can't read seller profiles (RLS)
+      admin
+        .from("profiles")
+        .select("email, sale_notifications, account_status")
+        .eq("id", product.seller_id)
+        .single(),
+    ]);
 
-  // buyer — "it's in your library", same mail the webhook sends for paid
-  // orders (025), in its free-claim wording
-  if (ns?.notify_purchase_emails !== false && user.email) {
+  // Buyer confirmation ("it's in your library") — unlike paid receipts,
+  // free claims are a courtesy, so buyers can switch them off (031).
+  if (user.email && emailAllowed("purchase_free", settings, me)) {
     await sendPurchaseEmail({
       to: user.email,
       productTitle: product.title,
@@ -92,24 +99,19 @@ export async function POST(request: Request) {
     });
   }
 
-  // seller — "someone grabbed your freebie". Free claims never hit the
-  // Stripe webhook, so this is the seller's only signal. Rides the
-  // SALE-email controls (platform switch + seller's own toggle): no new
-  // knob to maintain. Duplicate claims return early above, so a buyer
-  // re-clicking never re-pings the seller.
-  if (ns?.notify_sale_emails !== false) {
-    const { data: seller } = await admin
-      .from("profiles")
-      .select("email, sale_notifications")
-      .eq("id", product.seller_id)
-      .single();
-    if (seller?.sale_notifications) {
-      await sendFreeClaimEmail({
-        to: seller.email,
-        productTitle: product.title,
-        siteUrl: siteUrl(),
-      });
-    }
+  // Seller ping ("someone grabbed your freebie") — REGRESSION FIX (found
+  // in the 2026-08-15 settings survey): sendFreeClaimEmail had lost its
+  // only call site. Rides the sale-notification gates — no new knob.
+  if (
+    seller?.email &&
+    seller.account_status === "active" &&
+    emailAllowed("sale", settings, seller)
+  ) {
+    await sendFreeClaimEmail({
+      to: seller.email,
+      productTitle: product.title,
+      siteUrl: siteUrl(),
+    });
   }
 
   return NextResponse.json({ ok: true });
