@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProductCard, EmptyState } from "@/components/ui";
 import { priceLabel } from "@/lib/fees";
 import {
@@ -60,6 +61,63 @@ const EMPTY_FILTERS: Filters = {
   levels: [],
 };
 
+/* ── URL as the source of truth (block N2) ──────────────────────────────
+ * Every filter, the search text, and the sort live in the querystring
+ * (?q=&sort=&free=1&featured=1&teach=…&style=…&type=…&level=…&dur=lo-hi;
+ * list params repeat, so option labels may contain anything). Two wins:
+ * browser BACK from a listing restores the exact explore state instead of
+ * wiping it, and filtered views become shareable links her campaigns can
+ * point at. Writes go through history.replaceState — a SHALLOW update, no
+ * Next navigation — so filter clicks never refetch the (force-dynamic)
+ * page; useSearchParams is read once for the initial state on mount.
+ * Defaults are omitted so bare /explore stays bare. Unknown or malformed
+ * values parse to defaults and fall away on the next write. */
+
+type ParamsLike = { get(k: string): string | null; getAll(k: string): string[] };
+
+function parseSort(sp: ParamsLike): Sort {
+  const raw = sp.get("sort");
+  return SORTS.some(([v]) => v === raw) ? (raw as Sort) : "recommended";
+}
+
+function parseFilters(sp: ParamsLike): Filters {
+  const max = DURATIONS.length - 1;
+  let duration: [number, number] = FULL_RANGE;
+  const dur = sp.get("dur");
+  if (dur) {
+    const m = dur.match(/^(\d+)-(\d+)$/);
+    if (m) {
+      const lo = Math.min(parseInt(m[1], 10), max);
+      const hi = Math.min(parseInt(m[2], 10), max);
+      if (lo <= hi) duration = [lo, hi];
+    }
+  }
+  return {
+    freeOnly: sp.get("free") === "1",
+    featuredOnly: sp.get("featured") === "1",
+    teach: sp.getAll("teach"),
+    styles: sp.getAll("style"),
+    duration,
+    types: sp.getAll("type"),
+    levels: sp.getAll("level"),
+  };
+}
+
+function buildQuery(query: string, sort: Sort, filters: Filters): string {
+  const p = new URLSearchParams();
+  if (query.trim()) p.set("q", query.trim());
+  if (sort !== "recommended") p.set("sort", sort);
+  if (filters.freeOnly) p.set("free", "1");
+  if (filters.featuredOnly) p.set("featured", "1");
+  filters.teach.forEach((v) => p.append("teach", v));
+  filters.styles.forEach((v) => p.append("style", v));
+  filters.types.forEach((v) => p.append("type", v));
+  filters.levels.forEach((v) => p.append("level", v));
+  const [lo, hi] = filters.duration;
+  if (lo > 0 || hi < DURATIONS.length - 1) p.set("dur", `${lo}-${hi}`);
+  return p.toString();
+}
+
 export default function ExploreClient({
   products,
   scores,
@@ -71,10 +129,19 @@ export default function ExploreClient({
   ratings: RatingMap;
   options: ProductOptions; // admin-curated lists (styles/types/levels)
 }) {
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<Sort>("recommended");
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const sp = useSearchParams();
+  const [query, setQuery] = useState(() => sp.get("q") ?? "");
+  const [sort, setSort] = useState<Sort>(() => parseSort(sp));
+  const [filters, setFilters] = useState<Filters>(() => parseFilters(sp));
   const [panelOpen, setPanelOpen] = useState(false); // mobile slide-in
+
+  // Mirror state → URL, shallowly (no navigation, no refetch). replaceState
+  // rather than pushState: fifteen checkbox clicks should not become
+  // fifteen history entries between the user and the previous page.
+  useEffect(() => {
+    const qs = buildQuery(query, sort, filters);
+    window.history.replaceState(null, "", qs ? `/explore?${qs}` : "/explore");
+  }, [query, sort, filters]);
 
   // Both quick-filters are gated on there being something for them to match.
   // A filter that can only ever return an empty grid reads as broken, so each

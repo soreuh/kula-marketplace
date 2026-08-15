@@ -361,7 +361,29 @@ real launch.
 
 ## Tech — small
 
-- [ ] **N1 — auth return-path / "click behavior" (BUILT 2026-08-15 — no
+- [ ] **N2 — explore state in the URL (BUILT 2026-08-15 — no migration; push
+  + live verify):** filters, search, and sort now LIVE in the querystring
+  (?q= &sort= &free=1 &featured=1 &teach/style/type/level as repeated params
+  &dur=lo-hi), so browser BACK from a listing restores the exact explore
+  state — before this, every return trip wiped filters/search/sort because
+  they were React state only. Second win: filtered views are SHAREABLE
+  LINKS (her campaigns can point at e.g. /explore?free=1&style=Yin).
+  Mechanics: writes via history.replaceState — SHALLOW, no Next navigation,
+  so filter clicks never refetch the force-dynamic page (router.replace
+  would have); replace not push, so clicking checkboxes doesn't stack
+  history entries; useSearchParams read once for initial state; defaults
+  omitted (bare /explore stays bare); malformed params parse to defaults.
+  VERIFY: filter+search+sort → URL updates live · open a listing →
+  browser back → everything still applied incl. sort · copy a filtered
+  URL into incognito → same filtered view + chips · clear all → URL back
+  to bare /explore · paste garbage params (?dur=9-2&sort=nope) → page
+  renders with defaults.
+- [x] 2026-08-15 **N1 — auth return-path / "click behavior"** (pushed +
+  VERIFIED same day, all 7 checks: buy→login→back-on-listing ·
+  buy→signup-cross-link→back-on-listing · /library guard → library ·
+  nav-login returns to the listing · role-aware defaults (buyer→explore,
+  admin→dashboard) · /login?next=//evil.com discarded, landed on default ·
+  signed-in flows unchanged) — (BUILT 2026-08-15 — no
   migration; push + live verify. From Aleks's return-path-integrity
   analysis; N2 explore-state-in-URL and N3 back-affordance queued behind
   it):** every doorway that interrupts a user now carries the destination
