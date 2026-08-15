@@ -360,6 +360,30 @@ real launch.
 
 ## Tech — small
 
+- [ ] **5b — instructor profile v2 (BUILT 2026-08-15 — ⚠️ run migration 026
+  FIRST, then push; needs live verify):** from the seller-profile comparison
+  vs TpT/Etsy/Gumroad (Aleks's ask): kula already had the click-through
+  table stakes (rating, bio, grid, per-listing reviews) — this adds the four
+  missing ones. (1) member-since ("· on kula since aug 2026") from
+  instructors.created_at, zero schema. (2) website + instagram link chips —
+  profiles.website_url / instagram_handle (026), normalized on save
+  (https:// forced, bare handle extracted from @/pasted URLs) AND
+  scheme-guarded at render so a stored javascript: can never become a live
+  href; edit form gains both fields. (3) profile banner —
+  profiles.banner_path, covers bucket own-folder like avatars (012 pattern,
+  storage policies already cover it); wide rounded image above the header;
+  upload+preview in the edit form (avatar upload refactored into one
+  swapImage helper — anti-bloat). (4) "ask a question about this teacher's
+  content" — prefilled mailto relay through CONTACT_EMAIL (seller emails
+  stay private; real messaging stays a scale-tier build). Deliberately NOT
+  built (research: even Gumroad skips these at small scale): follow, public
+  sales counts, shop-level review list, pinned items, in-store search.
+  VERIFY: edit profile → set website (paste with/without https), instagram
+  (paste @handle or full URL), upload banner → all render; member-since
+  shows; logged-out visitor sees ask-a-question (owner doesn't); pre-026
+  profile pages render fine (fields just absent). NOTE: instructors view
+  RECREATED in 026 — any future column additions must keep appending LAST.
+  Block 6 (next, per the gap report's numbering) = discount codes.
 - [ ] **Report-listing form + "more from this teacher" + freebie seller ping
   (BUILT 2026-08-15 — no migration; push + live verify):** three small
   closes in one push. (1) "report this listing" under the price card —

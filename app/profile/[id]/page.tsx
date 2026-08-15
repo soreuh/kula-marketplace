@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import InstructorRating from "@/components/instructor-rating";
+import { coverUrl } from "@/lib/covers";
 import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
+import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
 import type { Instructor, Product } from "@/lib/types";
 import {
   Avatar,
@@ -75,10 +77,47 @@ export default async function InstructorProfilePage({
   // NOT re-derived from `listings` below: that set is active-only, and deriving
   // it there is precisely the bug 017 fixed.
 
+  // External links, scheme-guarded at render as well as on save: a stored
+  // value that somehow isn't http(s) gets https:// prepended, so it can
+  // never become a javascript: href.
+  const website = inst.website_url
+    ? /^https?:\/\//i.test(inst.website_url)
+      ? inst.website_url
+      : `https://${inst.website_url}`
+    : null;
+  const websiteLabel = website
+    ? website.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/+$/, "")
+    : null;
+
+  const memberSince = new Date(inst.created_at)
+    .toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    .toLowerCase();
+
+  // "Ask a question" relays through the kula inbox — seller emails stay
+  // private (Etsy-style direct messaging is a later build; this is the
+  // honest startup version of the contact path every comparable has).
+  const askHref = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+    `question for ${name} (via kula)`
+  )}&body=${encodeURIComponent(
+    `teacher: ${SITE_URL}/profile/${id}\n\nmy question:\n`
+  )}`;
+
+  const linkChip =
+    "inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-sage-700 hover:bg-sage-100";
+
   return (
     <div>
       <section className="bg-mist/60 px-5 py-12">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-5 sm:flex-row sm:items-center">
+        <div className="mx-auto max-w-5xl">
+          {inst.banner_path && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverUrl(inst.banner_path) ?? ""}
+              alt=""
+              className="mb-6 h-40 w-full rounded-2xl object-cover shadow-sm sm:h-52"
+            />
+          )}
+          <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
           <Avatar name={name} size={76} imagePath={inst.avatar_path} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -90,8 +129,9 @@ export default async function InstructorProfilePage({
               {listings.length} published listing{listings.length === 1 ? "" : "s"}
               {inst.specialisations.length > 0 &&
                 ` · ${inst.specialisations.length} specialisation${inst.specialisations.length === 1 ? "" : "s"}`}
+              {` · on kula since ${memberSince}`}
             </p>
-            {inst.specialisations.length > 0 && (
+            {(inst.specialisations.length > 0 || website || inst.instagram_handle) && (
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {inst.specialisations.map((s) => (
                   <span
@@ -101,15 +141,46 @@ export default async function InstructorProfilePage({
                     {s}
                   </span>
                 ))}
+                {website && (
+                  <a
+                    href={website}
+                    target="_blank"
+                    rel="me noopener noreferrer"
+                    className={linkChip}
+                  >
+                    {websiteLabel} <span aria-hidden>↗</span>
+                  </a>
+                )}
+                {inst.instagram_handle && (
+                  <a
+                    href={`https://instagram.com/${inst.instagram_handle}`}
+                    target="_blank"
+                    rel="me noopener noreferrer"
+                    className={linkChip}
+                  >
+                    @{inst.instagram_handle} <span aria-hidden>↗</span>
+                  </a>
+                )}
               </div>
             )}
             {inst.bio && <p className="mt-3 max-w-2xl text-fog">{inst.bio}</p>}
+            {!isOwner && (
+              <p className="mt-3 text-xs">
+                <a
+                  href={askHref}
+                  className="lowercase text-fog underline hover:text-ink"
+                >
+                  ask a question about this teacher&apos;s content
+                </a>
+              </p>
+            )}
           </div>
           {isOwner && (
             <Link href="/dashboard" className={btnSmallOutline}>
               + add content
             </Link>
           )}
+          </div>
         </div>
       </section>
 
@@ -121,6 +192,9 @@ export default async function InstructorProfilePage({
               bio: inst.bio ?? "",
               specialisations: inst.specialisations,
               avatar_path: inst.avatar_path,
+              website_url: inst.website_url ?? "",
+              instagram_handle: inst.instagram_handle ?? "",
+              banner_path: inst.banner_path ?? null,
             }}
           />
         )}

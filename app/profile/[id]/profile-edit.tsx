@@ -4,9 +4,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { STYLES } from "@/lib/categories";
+import { coverUrl } from "@/lib/covers";
 import { Avatar, inputCls } from "@/components/ui";
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // covers bucket limit
+
+/** website: trim; force an http(s) scheme so a stored value can never be
+ *  a javascript: url. instagram: accept "@handle", a pasted profile URL,
+ *  or a bare handle — store the bare handle. */
+function normalizeWebsite(v: string): string | null {
+  const t = v.trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+function normalizeInstagram(v: string): string | null {
+  const t = v
+    .trim()
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/^@/, "")
+    .replace(/\/+$/, "");
+  return t || null;
+}
 
 export default function ProfileEdit({
   initial,
@@ -16,6 +34,9 @@ export default function ProfileEdit({
     bio: string;
     specialisations: string[];
     avatar_path: string | null;
+    website_url: string;
+    instagram_handle: string;
+    banner_path: string | null;
   };
 }) {
   const router = useRouter();
@@ -23,8 +44,12 @@ export default function ProfileEdit({
   const [shopName, setShopName] = useState(initial.shop_name);
   const [bio, setBio] = useState(initial.bio);
   const [specs, setSpecs] = useState<string[]>(initial.specialisations);
+  const [website, setWebsite] = useState(initial.website_url);
+  const [instagram, setInstagram] = useState(initial.instagram_handle);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -34,15 +59,20 @@ export default function ProfileEdit({
     );
   }
 
-  function pickAvatar(f: File | null) {
+  function pickImage(
+    f: File | null,
+    what: "Profile photo" | "Banner",
+    setFile: (f: File) => void,
+    setPreview: (u: string) => void
+  ) {
     if (!f) return;
     if (!f.type.startsWith("image/"))
-      return setMessage("Profile photo must be an image (jpg, png, or webp).");
+      return setMessage(`${what} must be an image (jpg, png, or webp).`);
     if (f.size > AVATAR_MAX_BYTES)
-      return setMessage("Profile photo must be under 5MB.");
+      return setMessage(`${what} must be under 5MB.`);
     setMessage(null);
-    setAvatarFile(f);
-    setAvatarPreview(URL.createObjectURL(f));
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
   }
 
   async function save(e: React.FormEvent) {
@@ -58,23 +88,33 @@ export default function ProfileEdit({
       return setMessage("Please log in.");
     }
 
-    // upload the new photo first (own folder in the public covers bucket),
-    // then clean up the old one — losing an orphan beats losing the avatar
-    let avatarPath = initial.avatar_path;
-    if (avatarFile) {
-      const ext = (avatarFile.name.split(".").pop() ?? "jpg").toLowerCase();
-      const newPath = `${user.id}/avatar-${crypto.randomUUID()}.${ext}`;
+    // upload new images first (own folder in the public covers bucket),
+    // then clean up the old ones — losing an orphan beats losing the image
+    async function swapImage(
+      file: File | null,
+      oldPath: string | null,
+      prefix: "avatar" | "banner"
+    ): Promise<string | null | undefined> {
+      if (!file) return oldPath;
+      const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+      const newPath = `${user!.id}/${prefix}-${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("covers")
-        .upload(newPath, avatarFile);
-      if (upErr) {
-        setBusy(false);
-        return setMessage(`Photo upload failed: ${upErr.message}`);
-      }
-      if (initial.avatar_path) {
-        await supabase.storage.from("covers").remove([initial.avatar_path]);
-      }
-      avatarPath = newPath;
+        .upload(newPath, file);
+      if (upErr) return undefined; // signal failure
+      if (oldPath) await supabase.storage.from("covers").remove([oldPath]);
+      return newPath;
+    }
+
+    const avatarPath = await swapImage(avatarFile, initial.avatar_path, "avatar");
+    if (avatarPath === undefined) {
+      setBusy(false);
+      return setMessage("Photo upload failed — try again.");
+    }
+    const bannerPath = await swapImage(bannerFile, initial.banner_path, "banner");
+    if (bannerPath === undefined) {
+      setBusy(false);
+      return setMessage("Banner upload failed — try again.");
     }
 
     const { error } = await supabase
@@ -84,6 +124,9 @@ export default function ProfileEdit({
         bio: bio.trim() || null,
         specialisations: specs,
         avatar_path: avatarPath,
+        banner_path: bannerPath,
+        website_url: normalizeWebsite(website),
+        instagram_handle: normalizeInstagram(instagram),
       })
       .eq("id", user.id);
     setBusy(false);
@@ -135,7 +178,42 @@ export default function ProfileEdit({
             type="file"
             accept="image/png,image/jpeg,image/webp"
             className="mt-1 block w-full text-xs"
-            onChange={(e) => pickAvatar(e.target.files?.[0] ?? null)}
+            onChange={(e) =>
+              pickImage(
+                e.target.files?.[0] ?? null,
+                "Profile photo",
+                setAvatarFile,
+                setAvatarPreview
+              )
+            }
+          />
+        </label>
+      </div>
+
+      <div>
+        {(bannerPreview || initial.banner_path) && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={bannerPreview ?? coverUrl(initial.banner_path) ?? ""}
+            alt=""
+            className="mb-2 h-24 w-full rounded-xl object-cover"
+          />
+        )}
+        <label className="block text-fog">
+          banner (wide image across the top of your profile — jpg/png/webp, up
+          to 5MB)
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="mt-1 block w-full text-xs"
+            onChange={(e) =>
+              pickImage(
+                e.target.files?.[0] ?? null,
+                "Banner",
+                setBannerFile,
+                setBannerPreview
+              )
+            }
           />
         </label>
       </div>
@@ -149,6 +227,27 @@ export default function ProfileEdit({
           onChange={(e) => setShopName(e.target.value)}
         />
       </label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="text-fog">
+          website
+          <input
+            className={inputCls + " mt-1"}
+            placeholder="yourstudio.com"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </label>
+        <label className="text-fog">
+          instagram
+          <input
+            className={inputCls + " mt-1"}
+            placeholder="@yourhandle"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value)}
+          />
+        </label>
+      </div>
+
       <label className="text-fog">
         bio
         <textarea
