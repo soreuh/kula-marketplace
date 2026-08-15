@@ -124,6 +124,21 @@ owner before enabling in production).
   self-flip buyer↔seller — signup no longer asks (one unified flow); the
   first post or Stripe onboard upgrades buyer→seller automatically.
 
+## Working conventions — standing rules from Aleks (2026-08-15)
+
+- LIMIT CODE BLOAT. When patching or building on an existing feature, prefer
+  the version that reuses/extends what's already there (lib/ helpers,
+  components/ui.tsx, existing views/queries) over layering a parallel copy.
+  When a block you're touching could be condensed or shared globally, fold
+  that in — or flag it — rather than adding on top. Not about golfing line
+  count (comments and clarity stay); one obvious home per behavior. The
+  2026-08-14 hygiene sweep in TODO.md is the reference for the spirit.
+- WORK IN BLOCKS, TEST PER STEP. New work proceeds block by block: step
+  through the changes within a block, test as needed at each step, then run
+  the block's final tests (build/lint + a live or E2E check when it touches
+  anything user-facing or money-adjacent) BEFORE moving to the next block.
+  Don't batch several blocks and test at the end.
+
 ## Commands
 
 - `npm run dev` — local dev (plus `stripe listen --forward-to localhost:3000/api/stripe/webhook`)

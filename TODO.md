@@ -360,6 +360,19 @@ real launch.
 
 ## Tech — small
 
+- [ ] **Explore sort (BUILT 2026-08-15 — needs Mac `npm run build` + push +
+  live verify):** sort select on explore next to search — recommended
+  (default) / top rated / price low→high / high→low / newest. "Recommended"
+  reuses the featured_products blended score (013): page.tsx fetches an
+  id→featured_score map alongside the products query; rows still come from
+  `products`, so no view column gates the grid, and a missing/erroring view
+  degrades to newest-first. All sorting client-side in explore-client
+  (`sorted` memo); every order tie-breaks on newest. VERIFY: default order
+  looks curated (starred/high-scored first-ish), each sort reorders, search +
+  filters + chips still narrow without resetting sort, toolbar wraps sanely
+  on a phone. Origin: comparable-market gap report
+  (../kula-functional-gap-analysis.md) — TpT and Etsy both ship sort;
+  remaining report items stay in the report until agreed here.
 - [x] 2026-08-14 STALE ITEM CORRECTED: seller sale-notification prefs already
   existed end-to-end (`profiles.sale_notifications` + earnings-tab toggle +
   webhook check at webhook/route.ts:82) — this TODO was wrong about the check

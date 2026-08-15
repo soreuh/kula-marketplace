@@ -10,15 +10,28 @@ export const dynamic = "force-dynamic";
 export default async function ExplorePage() {
   const supabase = await createClient();
 
-  const [{ data: products }, ratings, options] = await Promise.all([
-    supabase
-      .from("products")
-      .select("*")
-      .eq("status", "active")
-      .order("created_at", { ascending: false }),
-    fetchProductRatings(supabase),
-    getProductOptions(),
-  ]);
+  const [{ data: products }, { data: scored }, ratings, options] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false }),
+      // Blended quality score per active listing (featured_products view,
+      // migration 013) — powers the default "recommended" sort. Score map
+      // ONLY: the rows the page renders still come from `products`, so no
+      // view column can ever gate the grid. Fail-soft: view missing/erroring
+      // → empty map → recommended degrades to the newest-first fetch order.
+      supabase.from("featured_products").select("id, featured_score"),
+      fetchProductRatings(supabase),
+      getProductOptions(),
+    ]);
+
+  const scores = Object.fromEntries(
+    ((scored as { id: string; featured_score: number }[] | null) ?? []).map(
+      (r) => [r.id, r.featured_score]
+    )
+  );
 
   return (
     <div>
@@ -36,6 +49,7 @@ export default async function ExplorePage() {
       </section>
       <ExploreClient
         products={(products as Product[] | null) ?? []}
+        scores={scores}
         ratings={ratings}
         options={options}
       />

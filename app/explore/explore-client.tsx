@@ -37,6 +37,19 @@ type Filters = {
 
 const FULL_RANGE: [number, number] = [0, DURATIONS.length - 1];
 
+/** Sort orders, in menu order. "recommended" (the default) reuses the
+ *  featured_products blended score — bayesian rating / conversion / recency,
+ *  migration 013 — so the landing order is curated-feeling instead of
+ *  upload-chronological. Everything else sorts fields already on the page. */
+const SORTS = [
+  ["recommended", "recommended"],
+  ["rating", "top rated"],
+  ["price-asc", "price: low to high"],
+  ["price-desc", "price: high to low"],
+  ["newest", "newest"],
+] as const;
+type Sort = (typeof SORTS)[number][0];
+
 const EMPTY_FILTERS: Filters = {
   freeOnly: false,
   featuredOnly: false,
@@ -49,14 +62,17 @@ const EMPTY_FILTERS: Filters = {
 
 export default function ExploreClient({
   products,
+  scores,
   ratings,
   options,
 }: {
   products: Product[];
+  scores: Record<string, number>; // featured_score by product id (may be empty)
   ratings: RatingMap;
   options: ProductOptions; // admin-curated lists (styles/types/levels)
 }) {
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<Sort>("recommended");
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [panelOpen, setPanelOpen] = useState(false); // mobile slide-in
 
@@ -149,6 +165,23 @@ export default function ExploreClient({
     });
   }, [products, query, filters]);
 
+  const sorted = useMemo(() => {
+    const newest = (a: Product, b: Product) =>
+      +new Date(b.created_at) - +new Date(a.created_at);
+    const cmp: Record<Sort, (a: Product, b: Product) => number> = {
+      recommended: (a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0),
+      // avg first (unrated sinks below any rating), review count breaks ties
+      rating: (a, b) =>
+        (ratings[b.id]?.avg ?? -1) - (ratings[a.id]?.avg ?? -1) ||
+        (ratings[b.id]?.count ?? 0) - (ratings[a.id]?.count ?? 0),
+      "price-asc": (a, b) => a.price_cents - b.price_cents,
+      "price-desc": (a, b) => b.price_cents - a.price_cents,
+      newest,
+    };
+    // every order tie-breaks on newest, so equal items land predictably
+    return [...filtered].sort((a, b) => cmp[sort](a, b) || newest(a, b));
+  }, [filtered, sort, scores, ratings]);
+
   const filterBody = (
     <>
       {(hasFree || hasFeatured) && (
@@ -222,9 +255,9 @@ export default function ExploreClient({
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8">
-      {/* search + mobile filter button */}
-      <div className="flex gap-3">
-        <label className="flex flex-1 items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3 shadow-sm focus-within:border-sage-400">
+      {/* search + sort + mobile filter button (wraps on narrow screens) */}
+      <div className="flex flex-wrap gap-3">
+        <label className="flex min-w-[200px] flex-1 items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3 shadow-sm focus-within:border-sage-400">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-fog" aria-hidden>
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4-4" />
@@ -236,6 +269,18 @@ export default function ExploreClient({
             className="w-full bg-transparent outline-none placeholder:text-fog"
           />
         </label>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          aria-label="sort listings"
+          className="rounded-2xl border border-ink/10 bg-white px-4 py-3 font-display text-sm font-semibold lowercase shadow-sm outline-none focus:border-sage-400"
+        >
+          {SORTS.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
         <button
           onClick={() => setPanelOpen(true)}
           className="rounded-2xl border border-ink/10 bg-white px-4 font-display text-sm font-semibold lowercase shadow-sm lg:hidden"
@@ -302,7 +347,7 @@ export default function ExploreClient({
 
         {/* grid */}
         <div>
-          {!filtered.length ? (
+          {!sorted.length ? (
             <EmptyState>
               {products.length
                 ? "nothing matches those filters — try widening the search."
@@ -310,7 +355,7 @@ export default function ExploreClient({
             </EmptyState>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {filtered.map((p) => (
+              {sorted.map((p) => (
                 <ProductCard
                   key={p.id}
                   product={p}
