@@ -361,8 +361,23 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Settings S2 — prefs in one place (BUILT 2026-08-15 — migration 031
-  FIRST, then push + live verify):** ARCHITECTURE (Aleks's call after the
+- [ ] **Settings S3 — close-out (IN PROGRESS 2026-08-15):** email-hooks
+  matrix landed in CLAUDE.md (the durable annotation) + the one deferred
+  live check: sweep RESPECTS the new nudge opt-out (backdate an order into
+  the 3–14d window, flip the buyer's review-reminders toggle off, curl the
+  sweep → nudges_sent 0 AND the order comes back STAMPED so opt-outs never
+  requeue). Positive nudge path already proven in block 9. Tick on Aleks's
+  zeros.
+- [x] 2026-08-15 **Settings S2 + S2b — prefs in one place** (031 run +
+  pushed + VERIFIED same day, all checks: toggles live in /settings and
+  stick after reload (3 buyer / 4 seller) · old homes empty (library
+  header, earnings tab) · freebie claim = buyer email AND seller ping ·
+  free-download opt-out honored (no buyer email, seller ping intact) ·
+  PAID receipt restored — test-mode buy sent both receipt + sale notice ·
+  change-email confirmed end-to-end, mirror trigger updated profiles.email
+  · S2b: admin notifications card = the same instant Switch pills
+  (checkbox+save form gone), stale subtitle now points at /settings,
+  change-email confirm link lands login→settings — BUILT 2026-08-15 — ARCHITECTURE (Aleks's call after the
   MVP-horizon discussion): stay column-per-pref (jsonb fold rejected — no
   payoff inside a 3yr horizon, and it would reopen verified gates) BUT add
   the seam: lib/email's emailAllowed(kind, platformRow, userRow) is now the

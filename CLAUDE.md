@@ -124,6 +124,36 @@ owner before enabling in production).
   self-flip buyer↔seller — signup no longer asks (one unified flow); the
   first post or Stripe onboard upgrades buyer→seller automatically.
 
+## Email hooks (settings S2, 2026-08-15 — keep in sync with lib/email.ts)
+
+All app mail goes through lib/email's sendViaResend (no RESEND_API_KEY =
+silent no-op, never throws) and is gated by emailAllowed(kind, platformRow,
+userRow) — the ONE map (EMAIL_GATES) from kind → platform_settings switch +
+profiles column. A gate blocks only on explicit false; missing rows/columns
+read as ON. Adding a notification type = one EMAIL_GATES line + one
+/settings toggle (+ a default-true profiles column migration). NEVER
+hand-check notify columns at a send site.
+
+| kind           | to     | fires from                | platform switch        | user column             |
+| -------------- | ------ | ------------------------- | ---------------------- | ----------------------- |
+| sale           | seller | stripe webhook, claim-free| notify_sale_emails     | sale_notifications      |
+| purchase_paid  | buyer  | stripe webhook            | notify_purchase_emails | — (receipt, no opt-out) |
+| purchase_free  | buyer  | claim-free                | notify_purchase_emails | free_claim_emails       |
+| content_update | buyer  | /api/notify-update        | notify_content_updates | content_update_emails   |
+| review_nudge   | buyer  | daily sweep, pass A       | notify_review_emails   | review_nudge_emails     |
+| review_notice  | seller | daily sweep, pass B       | notify_review_emails   | sale_notifications      |
+
+Ungated: report emails (the mail IS the feature) and the Supabase auth
+templates (supabase/auth-emails/, pasted in the dashboard; change-email
+confirm redirects to /login?next=/settings). User toggles render ONLY in
+/settings; platform switches ONLY in admin → notifications — both use the
+shared ui.tsx Switch (instant apply; never pair a Switch with a save
+button). Auth email changes mirror into profiles.email via trigger (031).
+Lesson (2026-08-15): two live-verified sends — the paid receipt and the
+freebie seller ping — were silently DROPPED by later edits to their call
+sites; when touching webhook / claim-free / sweep / notify-update, re-run
+the full email matrix test, not just the email you changed.
+
 ## Working conventions — standing rules from Aleks (2026-08-15)
 
 - LIMIT CODE BLOAT. When patching or building on an existing feature, prefer
