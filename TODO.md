@@ -375,8 +375,18 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M5 — mobile row-wrap sweep (BUILT 2026-08-15 — no migration; push
-  + live verify):** Aleks's phone screenshots: (1) dashboard "my content"
+- [ ] **M6 — mobile nav declutter + menu hierarchy (BUILT 2026-08-15 — no
+  migration; push + live verify):** Aleks: (1) the mobile mini-nav (lone
+  "explore" link by the wordmark) removed — no real function; homepage
+  CTAs, footer, and sm+ nav still carry explore. (2) avatar-menu "my
+  library" + "dashboard" now BOLD (MenuLink strong prop) — the two
+  workhorse destinations get hierarchy over profile/settings/admin.
+  VERIFY (phone): banner = wordmark + avatar only · menu shows the two
+  bold entries · desktop nav unchanged.
+- [x] 2026-08-15 **M5 — mobile row-wrap sweep** (pushed + VERIFIED same
+  day by Aleks on-phone: "looks clean" — dashboard + library pills on
+  their own line, nothing overlapping) — (BUILT 2026-08-15 — no
+  migration; push + live verify):** Aleks's phone screenshots: (1) dashboard "my content"
   rows had NO flex-wrap — on phones the edit/unpublish/archive pills
   collided with (transparent-bg pills: overlapped) the title/price text;
   (2) the new library rows wrapped but let the view/download pills

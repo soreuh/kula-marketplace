@@ -86,15 +86,10 @@ export default async function RootLayout({
               )}
             </div>
 
-            {/* Mobile mini-nav: the full text nav is sm+ only, and this
-                audience is heavily mobile - explore is the one link a
-                first-time phone visitor needs. (faq lives in the footer -
-                owner's call, Aug 2026.) */}
-            <div className="flex items-center gap-5 font-display text-[15px] font-medium lowercase sm:hidden">
-              <Link href="/explore" className="hover:text-sage-600">
-                explore
-              </Link>
-            </div>
+            {/* No mobile mini-nav (M6, Aleks 2026-08-15): the lone explore
+                link next to the wordmark read as clutter with no real
+                function — homepage CTAs, the footer, and the sm+ nav all
+                still carry explore. */}
 
             <div className="ml-auto flex items-center gap-3">
               {user && profile ? (

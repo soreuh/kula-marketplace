@@ -44,10 +44,10 @@ export default function UserMenu({
             <div className="truncate font-display font-semibold">{name}</div>
             <div className="truncate text-xs text-fog">{email}</div>
           </div>
-          <MenuLink href="/library" onClick={() => setOpen(false)}>
+          <MenuLink href="/library" onClick={() => setOpen(false)} strong>
             my library
           </MenuLink>
-          <MenuLink href="/dashboard" onClick={() => setOpen(false)}>
+          <MenuLink href="/dashboard" onClick={() => setOpen(false)} strong>
             dashboard
           </MenuLink>
           {/* every account has a profile page since 029 — buyers included
@@ -77,17 +77,22 @@ export default function UserMenu({
 function MenuLink({
   href,
   onClick,
+  strong = false, // M6: the two workhorse destinations get display weight
   children,
 }: {
   href: string;
   onClick: () => void;
+  strong?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="block px-4 py-2.5 text-sm lowercase hover:bg-mist"
+      className={
+        "block px-4 py-2.5 text-sm lowercase hover:bg-mist" +
+        (strong ? " font-display font-semibold" : "")
+      }
     >
       {children}
     </Link>
