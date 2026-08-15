@@ -219,10 +219,10 @@ export default function ProfileEdit({
       </div>
 
       <label className="text-fog">
-        shop name (shown instead of your display name)
+        public name (what everyone sees — your shop name if you sell)
         <input
           className={inputCls + " mt-1"}
-          placeholder="e.g. moon & mat studio"
+          placeholder="e.g. moon & mat studio, or just your name"
           value={shopName}
           onChange={(e) => setShopName(e.target.value)}
         />

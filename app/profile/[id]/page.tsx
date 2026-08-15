@@ -14,6 +14,7 @@ import {
   ProductCard,
   VerifiedBadge,
   btnSmallOutline,
+  publicName,
 } from "@/components/ui";
 import ProfileEdit from "./profile-edit";
 
@@ -39,7 +40,7 @@ export async function generateMetadata({
       .eq("status", "active"),
   ]);
   if (!inst) return {};
-  const name = inst.shop_name || inst.display_name || "kula instructor";
+  const name = publicName(inst);
   const bio = inst.bio?.replace(/\s+/g, " ").trim();
   return {
     title: name,
@@ -81,7 +82,7 @@ export default async function InstructorProfilePage({
   const inst = instructor as Instructor;
   const listings = (products as Product[] | null) ?? [];
   const isOwner = auth.user?.id === inst.id;
-  const name = inst.shop_name || inst.display_name || "kula instructor";
+  const name = publicName(inst);
 
   // The overall rating is rendered by <InstructorRating/>, which owns the
   // instructor_ratings lookup (migration 017) — every review the teacher has

@@ -101,6 +101,19 @@ export const inputCls =
 export const fileInputCls =
   "block w-full cursor-pointer rounded-xl border border-dashed border-ink/20 bg-white p-2.5 text-xs text-fog transition hover:border-sage-400 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-sage-100 file:px-3.5 file:py-1.5 file:font-display file:text-xs file:font-semibold file:lowercase file:text-sage-700 hover:file:bg-sage-200";
 
+/** The ONLY way to derive a PUBLIC name for an account (030): shop name
+ *  first, then display_name — but anything containing "@" is masked to the
+ *  fallback, so an email-seeded name (pre-030 rows, or bad data sneaking
+ *  back) can never render on a public page. Private contexts (nav greeting,
+ *  admin) may keep their own email-based fallbacks. */
+export function publicName(p: {
+  shop_name?: string | null;
+  display_name?: string | null;
+}): string {
+  const raw = p.shop_name || p.display_name;
+  return raw && !raw.includes("@") ? raw : "kula member";
+}
+
 export function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-block rounded-full border border-ink/10 bg-white px-3 py-1 text-xs font-semibold text-ink/70">
@@ -316,7 +329,10 @@ export function Avatar({
       <img
         src={url}
         alt=""
-        className="rounded-full object-cover"
+        // ring + mist backdrop: a pale or transparent upload must still
+        // read as a button against the white nav (lesson of 2026-08-15 —
+        // an uploaded light-background mark rendered invisible)
+        className="rounded-full bg-mist object-cover ring-1 ring-ink/10"
         style={{ width: size, height: size }}
       />
     );
@@ -349,7 +365,7 @@ export function InstructorCard({
    *  by client components (dashboard-client pulls Stars/CoverArt from here). */
   rating?: React.ReactNode;
 }) {
-  const name = instructor.shop_name || instructor.display_name || "kula instructor";
+  const name = publicName(instructor);
   return (
     <Link
       href={`/profile/${instructor.id}`}

@@ -32,12 +32,16 @@ export default function ReviewForm({ productId }: { productId: string }) {
       .eq("id", user.id)
       .single();
 
+    // reviewer_name is PUBLIC on the product page — never let an
+    // email-derived display_name through (030; pre-030 rows were seeded
+    // from the signup email and the DB scrub handles history)
+    const dn = profile?.display_name;
     const { error: insertError } = await supabase.from("reviews").insert({
       product_id: productId,
       buyer_id: user.id,
       rating,
       body: body.trim() || null,
-      reviewer_name: profile?.display_name ?? "verified buyer",
+      reviewer_name: dn && !dn.includes("@") ? dn : "verified buyer",
     });
     setBusy(false);
     if (insertError) return setError(insertError.message);

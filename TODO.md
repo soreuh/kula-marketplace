@@ -361,8 +361,34 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Every account gets a profile page (029, BUILT 2026-08-15 mid-block-9
-  testing — run 029 any time, order-safe; push + verify):** Aleks's product
+- [ ] **030 — public names must never be emails (BUILT 2026-08-15 — run 030
+  any time, order-safe; push + verify):** found DURING the 029 verify: a
+  buyer profile rendered the account's RAW EMAIL as its public name (h1,
+  title, meta description). Roots: the signup trigger seeds display_name
+  from the email (live DB carries an older variant of 001's function — the
+  file was edited after being applied, which is exactly why 001 is
+  never-rewrite), no UI has ever let users SET display_name, and the review
+  form copies display_name into PUBLIC reviewer_name. 030: trigger recreated
+  to seed from explicit metadata only (null otherwise) · every email-derived
+  display_name nulled · email-derived reviewer_names scrubbed to "verified
+  buyer". Code belt & braces: publicName() in components/ui.tsx is now THE
+  one derivation for public names (masks any @-value → "kula member"), used
+  by profile page (incl. metadata) + InstructorCard; review form guards
+  reviewer_name the same way; profile-edit's shop-name label reworded to
+  "public name" since buyers use it now too. Private contexts unchanged
+  (nav greeting, admin panel may still show email fallbacks). VERIFY:
+  buyer profile shows "kula member" not the email (h1 + view-source
+  title/description) · existing test reviews show "verified buyer" ·
+  set a public name in edit profile → it shows everywhere · new review
+  carries the chosen name · sign up a FRESH account → profile is
+  "kula member" from the start.
+- [x] 2026-08-15 **Every account gets a profile page (029)** — applied,
+  pushed, VERIFIED same day: buyer's "my profile" renders (member-since,
+  empty shelf, "+ add content") and the buyer set an avatar AND banner ·
+  noindex meta confirmed in view-source on the empty profile, absent on
+  sellers' · /sitemap.xml = the 3 selling profiles only · ask-a-question
+  correctly gated · bell text renders ink. The verify also SURFACED the
+  email-as-name leak → spun out and fixed as 030 above. (Original entry: Aleks's product
   call, surfaced when his test BUYER's "my profile" menu link 404'd — a
   PRE-EXISTING trap: the instructors view was sellers/admins-only from v1,
   yet the menu offered the link to everyone, and buyers couldn't even set an
