@@ -38,7 +38,7 @@ export default async function AdminDashboard({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/dashboard/admin");
 
   const { data: me } = await supabase
     .from("profiles")

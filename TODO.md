@@ -361,7 +361,38 @@ real launch.
 
 ## Tech — small
 
-- [ ] **030 — public names must never be emails (BUILT 2026-08-15 — run 030
+- [ ] **N1 — auth return-path / "click behavior" (BUILT 2026-08-15 — no
+  migration; push + live verify. From Aleks's return-path-integrity
+  analysis; N2 explore-state-in-URL and N3 back-affordance queued behind
+  it):** every doorway that interrupts a user now carries the destination
+  as ?next= and auth sends them back. Before: login HARDCODED
+  /dashboard — a logged-out buyer clicking buy landed on the "connect
+  stripe" seller pitch mid-purchase, and every email CTA dead-ended the
+  same way for logged-out recipients. Threaded: buy button
+  (next=/products/id) · library, dashboard, admin page guards ·
+  /api/download (→ next=/library, deliberately not the file stream) ·
+  NAV login/signup links via new components/auth-links.tsx (client,
+  usePathname — closes the email loop: nudge → listing → nav login →
+  back on the listing) · login↔signup cross-links preserve next ·
+  signup passes emailRedirectTo so the return path survives the
+  confirmation email once confirmations go ON. SECURITY: lib/site
+  safeNext() is the only honoring path — same-site relative paths only
+  ("//host" and "/\\host" rejected), so ?next can never become an open
+  redirect. Defaults with no next are now ROLE-AWARE: sellers/admins →
+  /dashboard, buyers → /explore (signup → /explore) — the
+  everyone-to-dashboard landing is gone. VERIFY: logged out, click buy
+  on a listing → login → land BACK ON THAT LISTING and buy · same via
+  the signup cross-link (stay on the listing after account creation) ·
+  logged out, open /library → login → library · nav log-in from a
+  listing returns to it · buyer login with no next → explore; admin →
+  dashboard · hostile link /login?next=//evil.com then log in → lands
+  on default, not evil.
+- [x] 2026-08-15 **030 — public names must never be emails** (applied,
+  pushed, VERIFIED same day from an incognito view-source of the buyer
+  profile: h1/title/description all "kula member", email gone everywhere,
+  noindex intact, ringed avatar rendering — the pale क upload now reads as
+  a button. Bonus finding while testing: Gmail dark mode auto-inverts the
+  email shell and it stays legible.) — (BUILT 2026-08-15 — run 030
   any time, order-safe; push + verify):** found DURING the 029 verify: a
   buyer profile rendered the account's RAW EMAIL as its public name (h1,
   title, meta description). Roots: the signup trigger seeds display_name

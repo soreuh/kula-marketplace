@@ -21,7 +21,11 @@ export default function BuyButton({
 
   async function buy() {
     if (!loggedIn) {
-      router.push("/login");
+      // Return-path (N1): come back to THIS listing after auth — a buyer
+      // with wallet out must never land on the dashboard mid-purchase.
+      router.push(
+        `/login?next=${encodeURIComponent(`/products/${productId}`)}`
+      );
       return;
     }
     setBusy(true);

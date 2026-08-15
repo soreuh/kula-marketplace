@@ -15,7 +15,7 @@ export default async function LibraryPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/library");
 
   const [{ data: orders }, ratings, { data: myProfile }] = await Promise.all([
     supabase

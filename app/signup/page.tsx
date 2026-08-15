@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
-import { TERMS_VERSION } from "@/lib/site";
+import { TERMS_VERSION, safeNext } from "@/lib/site";
 
 /**
  * ONE unified signup — no buyer/seller fork. Every account can both buy
@@ -33,6 +33,11 @@ import { TERMS_VERSION } from "@/lib/site";
  */
 export default function SignupPage() {
   const router = useRouter();
+  // Return-path integrity (N1): a signup forced mid-journey (her freebie
+  // funnel: email → listing → "add to library" → THIS wall) lands the new
+  // account back on that listing, not in the dashboard. Validated by
+  // safeNext; preserved on the log-in cross-link below.
+  const next = safeNext(useSearchParams().get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -62,6 +67,12 @@ export default function SignupPage() {
           terms_accepted: true,
           terms_version: TERMS_VERSION,
         },
+        // When email confirmations are ON (go-live), the confirm link
+        // should also land back on the interrupted destination — without
+        // this the return path dies inside the confirmation email.
+        ...(next
+          ? { emailRedirectTo: `${window.location.origin}${next}` }
+          : {}),
       },
     });
 
@@ -86,7 +97,9 @@ export default function SignupPage() {
       );
       return;
     }
-    router.push("/dashboard");
+    // Fresh accounts are buyers: with no interrupted destination, explore
+    // beats the old /dashboard landing (which opened on the seller pitch).
+    router.push(next ?? "/explore");
     router.refresh();
   }
 
@@ -169,7 +182,10 @@ export default function SignupPage() {
         )}
         <p className="mt-5 text-center text-sm text-fog">
           already have an account?{" "}
-          <Link href="/login" className="text-sage-600 underline">
+          <Link
+            href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+            className="text-sage-600 underline"
+          >
             log in
           </Link>
         </p>

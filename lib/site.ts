@@ -34,6 +34,25 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://kula-marketplace.com";
 
 /**
+ * safeNext — the ONLY way a ?next= return path may be honored (block N1).
+ *
+ * Return-path integrity: every doorway that interrupts a user (login wall,
+ * signup wall) carries where they were going in ?next=, and login/signup
+ * send them back there afterward. This validator is the security half:
+ * only SAME-SITE relative paths survive. It must start with exactly one
+ * "/" — "//evil.com" (protocol-relative) and "/\evil.com" (backslash
+ * trick) are rejected — so a crafted login link can never bounce a fresh
+ * session to another site. Anything invalid → null → the caller uses its
+ * role-aware default landing.
+ */
+export function safeNext(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\"))
+    return null;
+  return raw;
+}
+
+/**
  * TERMS_VERSION — which revision of /terms + /privacy a user agreed to.
  *
  * The signup checkbox sends this string with the account; migration 014

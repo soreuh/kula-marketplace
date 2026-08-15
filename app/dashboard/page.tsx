@@ -18,14 +18,14 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?next=/dashboard");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
-  if (!profile) redirect("/login");
+  if (!profile) redirect("/login?next=/dashboard");
   const prof = profile as Profile;
 
   const [{ data: products }, { data: orders }, allRatings, { data: settings }, options] =

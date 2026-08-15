@@ -2,12 +2,26 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { safeNext } from "@/lib/site";
 import { AuthCard, Note, btnPrimary, inputCls } from "@/components/ui";
 
+/**
+ * Return-path integrity (block N1): if the user was interrupted on the way
+ * to somewhere — buy button, library, an email link — that destination
+ * arrives here as ?next= and login sends them straight back to it. The
+ * param is validated by safeNext (same-site relative paths only) and is
+ * preserved across the login ↔ signup cross-links so switching forms
+ * doesn't drop it.
+ *
+ * With no next: role-aware landing. Sellers/admins live in the dashboard;
+ * pure buyers get explore — the old always-/dashboard default marched
+ * buyers into the "connect stripe" seller pitch mid-purchase.
+ */
 export default function LoginPage() {
   const router = useRouter();
+  const next = safeNext(useSearchParams().get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -18,13 +32,25 @@ export default function LoginPage() {
     setBusy(true);
     setMessage(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) {
+      setBusy(false);
       setMessage(error.message);
       return;
     }
-    router.push("/dashboard");
+    let dest = next;
+    if (!dest) {
+      const { data: me } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+      dest = me?.role === "buyer" ? "/explore" : "/dashboard";
+    }
+    router.push(dest);
     router.refresh();
   }
 
@@ -67,7 +93,10 @@ export default function LoginPage() {
         )}
         <p className="mt-5 text-center text-sm text-fog">
           new here?{" "}
-          <Link href="/signup" className="text-sage-600 underline">
+          <Link
+            href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+            className="text-sage-600 underline"
+          >
             create an account
           </Link>
         </p>

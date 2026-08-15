@@ -7,6 +7,7 @@ import "@fontsource-variable/nunito-sans";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark, KulaMark } from "@/components/ui";
+import AuthLinks from "@/components/auth-links";
 import BellMenu from "@/components/bell-menu";
 import UserMenu from "@/components/user-menu";
 import Analytics from "@/components/analytics";
@@ -116,35 +117,9 @@ export default async function RootLayout({
                   />
                 </>
               ) : (
-                <>
-                  <Link
-                    href="/signup"
-                    className="hidden font-display text-sm lowercase text-fog hover:text-ink sm:block"
-                  >
-                    sign up
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="hidden items-center gap-2 rounded-full bg-sage-500 px-5 py-2 font-display text-sm font-semibold lowercase text-white hover:bg-sage-600 sm:inline-flex"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M15 3h4v18h-4" />
-                      <path d="M10 17l5-5-5-5" />
-                      <path d="M15 12H3" />
-                    </svg>
-                    log in
-                  </Link>
-                  <Link
-                    href="/login"
-                    aria-label="Log in"
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-mist text-ink sm:hidden"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-                      <circle cx="12" cy="8" r="3.5" />
-                      <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" />
-                    </svg>
-                  </Link>
-                </>
+                // client component: carries the current path as ?next= so
+                // logging in via the nav returns you to where you were (N1)
+                <AuthLinks />
               )}
             </div>
           </div>

@@ -18,7 +18,16 @@ export async function GET(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"));
+  // Logged-out download click (stale tab, copied link): after login, land
+  // in the LIBRARY — not back on this route, which would stream a file at
+  // a fresh session with no page behind it (N1 decision).
+  if (!user)
+    return NextResponse.redirect(
+      new URL(
+        "/login?next=/library",
+        process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+      )
+    );
 
   const admin = createAdminClient();
 
