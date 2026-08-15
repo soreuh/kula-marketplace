@@ -99,12 +99,11 @@ export default async function RootLayout({
             <div className="ml-auto flex items-center gap-3">
               {user && profile ? (
                 <>
-                  <Link
-                    href="/dashboard"
-                    className="hidden items-center gap-2 rounded-full bg-sage-500 px-5 py-2 font-display text-sm font-semibold lowercase text-white hover:bg-sage-600 sm:inline-flex"
-                  >
-                    dashboard
-                  </Link>
+                  {/* No dashboard pill (M2, Aleks 2026-08-15): "sell" in the
+                      nav and the avatar menu both already lead there, and a
+                      loud dashboard CTA reads seller-centric to buyers.
+                      Etsy/TpT pattern: account surfaces live behind the
+                      avatar. */}
                   {/* derived to-do bell (reviews to leave / replies owed) —
                       renders nothing while there's nothing to do */}
                   <BellMenu />

@@ -361,8 +361,20 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M1 — mobile buy CTA placement (BUILT 2026-08-15 — no migration;
-  push + live verify):** Aleks's phone find: on mobile the price card (and
+- [ ] **M2 — drop the nav dashboard pill (BUILT 2026-08-15 — no migration;
+  push + live verify):** Aleks's call: the green "dashboard" button in the
+  logged-in nav was REDUNDANT ("sell" links to /dashboard, so does the
+  avatar menu) and reads seller-centric/confusing to plain buyers. Removed;
+  right side is now bell + avatar (Etsy/TpT pattern — account surfaces
+  behind the avatar). VERIFY: logged-in desktop — pill gone, bell + avatar
+  intact · "sell" still lands on /dashboard · avatar menu dashboard link
+  works · mobile unchanged (pill was sm+ only).
+- [x] 2026-08-15 **M1 — mobile buy CTA placement + freebie stripe-line**
+  (pushed + VERIFIED same day: phone screenshot shows price card + CTA
+  directly under title/stars, first screen · "Secure payment via Stripe"
+  line GONE on free listings, mobile + desktop (it renders only when
+  price_cents > 0) · desktop 2-col unchanged, card still sticky) —
+  (BUILT 2026-08-15 — no migration; push + live verify):** Aleks's phone find: on mobile the price card (and
   the buy button in it) rendered LAST — the 2-col product grid stacks on
   small screens and the card was the second grid child, so phones scrolled
   past cover, description, details, preview, seller card and ALL reviews
