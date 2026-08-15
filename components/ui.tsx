@@ -95,6 +95,11 @@ export const btnSmallOutline =
   "inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-4 py-1.5 text-sm font-display font-semibold lowercase text-ink transition hover:border-ink/40";
 export const inputCls =
   "w-full rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-ink placeholder:text-fog focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-200";
+/** Bare `<input type="file">`s vanish against the page — this gives the
+ *  clickable area a visible dashed rim + a styled browse pill (Tailwind
+ *  `file:` modifiers). Use on every file input that isn't a full dropzone. */
+export const fileInputCls =
+  "block w-full cursor-pointer rounded-xl border border-dashed border-ink/20 bg-white p-2.5 text-xs text-fog transition hover:border-sage-400 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-sage-100 file:px-3.5 file:py-1.5 file:font-display file:text-xs file:font-semibold file:lowercase file:text-sage-700 hover:file:bg-sage-200";
 
 export function Chip({ children }: { children: React.ReactNode }) {
   return (

@@ -5,25 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { STYLES } from "@/lib/categories";
 import { coverUrl } from "@/lib/covers";
-import { Avatar, inputCls } from "@/components/ui";
+import { SOCIAL_NETWORKS, normalizeHandle } from "@/lib/socials";
+import { Avatar, fileInputCls, inputCls } from "@/components/ui";
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // covers bucket limit
 
 /** website: trim; force an http(s) scheme so a stored value can never be
- *  a javascript: url. instagram: accept "@handle", a pasted profile URL,
- *  or a bare handle — store the bare handle. */
+ *  a javascript: url. (Social handles are normalized by lib/socials.) */
 function normalizeWebsite(v: string): string | null {
   const t = v.trim();
   if (!t) return null;
   return /^https?:\/\//i.test(t) ? t : `https://${t}`;
-}
-function normalizeInstagram(v: string): string | null {
-  const t = v
-    .trim()
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
-    .replace(/^@/, "")
-    .replace(/\/+$/, "");
-  return t || null;
 }
 
 export default function ProfileEdit({
@@ -35,7 +27,7 @@ export default function ProfileEdit({
     specialisations: string[];
     avatar_path: string | null;
     website_url: string;
-    instagram_handle: string;
+    socials: Record<string, string>;
     banner_path: string | null;
   };
 }) {
@@ -45,7 +37,9 @@ export default function ProfileEdit({
   const [bio, setBio] = useState(initial.bio);
   const [specs, setSpecs] = useState<string[]>(initial.specialisations);
   const [website, setWebsite] = useState(initial.website_url);
-  const [instagram, setInstagram] = useState(initial.instagram_handle);
+  const [socials, setSocials] = useState<Record<string, string>>(
+    initial.socials
+  );
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -126,7 +120,13 @@ export default function ProfileEdit({
         avatar_path: avatarPath,
         banner_path: bannerPath,
         website_url: normalizeWebsite(website),
-        instagram_handle: normalizeInstagram(instagram),
+        // curated keys only, bare handles only — see lib/socials.ts
+        socials: Object.fromEntries(
+          SOCIAL_NETWORKS.flatMap((n) => {
+            const h = normalizeHandle(socials[n.key] ?? "");
+            return h ? [[n.key, h]] : [];
+          })
+        ),
       })
       .eq("id", user.id);
     setBusy(false);
@@ -177,7 +177,7 @@ export default function ProfileEdit({
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            className="mt-1 block w-full text-xs"
+            className={fileInputCls + " mt-1"}
             onChange={(e) =>
               pickImage(
                 e.target.files?.[0] ?? null,
@@ -205,7 +205,7 @@ export default function ProfileEdit({
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            className="mt-1 block w-full text-xs"
+            className={fileInputCls + " mt-1"}
             onChange={(e) =>
               pickImage(
                 e.target.files?.[0] ?? null,
@@ -228,7 +228,7 @@ export default function ProfileEdit({
         />
       </label>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-fog">
+        <label className="text-fog sm:col-span-2">
           website
           <input
             className={inputCls + " mt-1"}
@@ -237,15 +237,21 @@ export default function ProfileEdit({
             onChange={(e) => setWebsite(e.target.value)}
           />
         </label>
-        <label className="text-fog">
-          instagram
-          <input
-            className={inputCls + " mt-1"}
-            placeholder="@yourhandle"
-            value={instagram}
-            onChange={(e) => setInstagram(e.target.value)}
-          />
-        </label>
+        {/* curated networks (lib/socials.ts) — paste @handle, a profile
+            URL, or a bare handle; empty ones simply don't render */}
+        {SOCIAL_NETWORKS.map((n) => (
+          <label key={n.key} className="text-fog">
+            {n.label}
+            <input
+              className={inputCls + " mt-1"}
+              placeholder="@yourhandle"
+              value={socials[n.key] ?? ""}
+              onChange={(e) =>
+                setSocials((prev) => ({ ...prev, [n.key]: e.target.value }))
+              }
+            />
+          </label>
+        ))}
       </div>
 
       <label className="text-fog">

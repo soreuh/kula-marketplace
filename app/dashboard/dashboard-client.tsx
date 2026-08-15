@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd, priceLabel, timeAgo } from "@/lib/fees";
 import { DURATIONS, TEACHABILITY } from "@/lib/categories";
-import { CoverArt, StatTile, StatusChip, Stars, btnPrimary, inputCls } from "@/components/ui";
+import { CoverArt, StatTile, StatusChip, Stars, btnPrimary, fileInputCls, inputCls } from "@/components/ui";
 import type { ProductOptions } from "@/lib/options";
 import type { Product } from "@/lib/types";
 
@@ -1311,11 +1311,11 @@ function UploadDialog({
               {removeCover ? "cover removed" : "no cover yet"}
             </div>
           )}
-          <div className="flex flex-col gap-1.5 text-sm">
+          <div className="flex min-w-48 flex-1 flex-col gap-1.5 text-sm">
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              className="block w-full text-xs"
+              className={fileInputCls}
               onChange={(e) => {
                 const f = e.target.files?.[0] ?? null;
                 setCover(f);

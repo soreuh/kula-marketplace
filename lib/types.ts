@@ -30,12 +30,13 @@ export interface Profile {
   last_seen_at?: string | null;
   /** Migration 022 — buyer pref: email me when content I own is updated. */
   content_update_emails?: boolean | null;
-  /** Migration 026 — profile v2, all self-editable. Website normalized to
-   *  https?:// on save; instagram stored as a bare handle; banner lives in
-   *  the covers bucket like the avatar. */
+  /** Migrations 026/027 — profile v2, all self-editable. Website normalized
+   *  to https?:// on save; socials is a curated-key map of bare handles
+   *  (lib/socials.ts, replaced 026's instagram_handle column); banner lives
+   *  in the covers bucket like the avatar. */
   website_url?: string | null;
-  instagram_handle?: string | null;
   banner_path?: string | null;
+  socials?: Record<string, string> | null;
 }
 
 /** Public-safe instructor info (the `instructors` view). */
@@ -48,10 +49,10 @@ export interface Instructor {
   stripe_charges_enabled: boolean;
   created_at: string;
   avatar_path: string | null;
-  /** Migration 026 — optional so the page renders on a pre-026 view. */
+  /** Migrations 026/027 — optional so the page renders on a pre-migration view. */
   website_url?: string | null;
-  instagram_handle?: string | null;
   banner_path?: string | null;
+  socials?: Record<string, string> | null;
 }
 
 export interface Product {

@@ -360,7 +360,36 @@ real launch.
 
 ## Tech — small
 
-- [ ] **5b — instructor profile v2 (BUILT 2026-08-15 — ⚠️ run migration 026
+- [ ] **5b.1 — polish pass on 5b (BUILT 2026-08-15 — ⚠️ run migration 027
+  FIRST, then push; needs live verify):** three fixes from Aleks's 5b review.
+  (1) SOCIALS EXPANSION, his ask "tiktok, fb, x etc as options": one
+  `profiles.socials` jsonb map (027) + curated allowlist in NEW lib/socials.ts
+  (instagram/tiktok/youtube/facebook/pinterest/x) replaces 026's
+  instagram_handle column (backfilled, dropped — fold-in over layering; the
+  instructors VIEW is DROPPED + recreated in 027 because create-or-replace
+  can't remove a column; grants restated). Adding a network later = one line
+  in lib/socials.ts, zero migrations. Every chip href is built by US from a
+  normalized bare handle (URI-encoded), so a stored value can never carry a
+  scheme. Edit form: website + 6 network inputs in a grid; empty ones don't
+  render. (2) FILE-INPUT RIM, his ask "grab the eye": new `fileInputCls` in
+  components/ui.tsx (dashed rim + sage browse pill via Tailwind file:
+  modifiers) applied to the three bare file inputs — profile avatar, profile
+  banner, upload-dialog cover. The main sale-file dropzone already had real
+  styling. (3) ask-a-question stays PROFILE-ONLY (Aleks's call after seeing
+  it — listing pages deliberately skip it). VERIFY: edit profile → fill 2–3
+  networks incl. a pasted full URL → chips render with correct hrefs;
+  pre-027 instagram value survived the backfill; file inputs visibly boxed
+  in profile edit + upload dialog cover; old deploy against new view = no
+  instagram chip until push (expected).
+- [ ] IDEA (from 5b testing): re-choosing the SAME file on edit could
+  backfill the 024 file details for pre-024 listings — today the
+  identical-hash skip (022) means only a genuinely new file captures
+  pages/bytes. Small change in the upload dialog if ever wanted; launch
+  wipe makes it moot for test data.
+- [x] 2026-08-15 **5b — instructor profile v2** (026 applied, pushed, and
+  VERIFIED live same day by Aleks — banner, links, member-since all render;
+  ask-a-question confirmed on the profile, non-owner views) — (BUILT
+  2026-08-15 — ⚠️ run migration 026
   FIRST, then push; needs live verify):** from the seller-profile comparison
   vs TpT/Etsy/Gumroad (Aleks's ask): kula already had the click-through
   table stakes (rating, bio, grid, per-listing reviews) — this adds the four
@@ -384,8 +413,10 @@ real launch.
   profile pages render fine (fields just absent). NOTE: instructors view
   RECREATED in 026 — any future column additions must keep appending LAST.
   Block 6 (next, per the gap report's numbering) = discount codes.
-- [ ] **Report-listing form + "more from this teacher" + freebie seller ping
-  (BUILT 2026-08-15 — no migration; push + live verify):** three small
+- [x] 2026-08-15 **Report-listing form + "more from this teacher" + freebie
+  seller ping** (pushed + VERIFIED live same day by Aleks: report form +
+  more-from row "work great", freebie seller ping "works fine") — (BUILT
+  2026-08-15 — no migration; push + live verify): three small
   closes in one push. (1) "report this listing" under the price card —
   REGISTERED USERS ONLY (Aleks's call: no drive-by spam; anon never sees
   the control). Tiny inline form (category select: copyright / inappropriate

@@ -6,6 +6,7 @@ import { coverUrl } from "@/lib/covers";
 import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
 import { CONTACT_EMAIL, SITE_URL } from "@/lib/site";
+import { presentSocials } from "@/lib/socials";
 import type { Instructor, Product } from "@/lib/types";
 import {
   Avatar,
@@ -93,6 +94,10 @@ export default async function InstructorProfilePage({
     .toLocaleDateString("en-US", { month: "short", year: "numeric" })
     .toLowerCase();
 
+  // Curated social chips (lib/socials.ts, migration 027) — every href is
+  // built by us from a bare handle, so nothing stored can carry a scheme.
+  const links = presentSocials(inst.socials);
+
   // "Ask a question" relays through the kula inbox — seller emails stay
   // private (Etsy-style direct messaging is a later build; this is the
   // honest startup version of the contact path every comparable has).
@@ -131,7 +136,7 @@ export default async function InstructorProfilePage({
                 ` · ${inst.specialisations.length} specialisation${inst.specialisations.length === 1 ? "" : "s"}`}
               {` · on kula since ${memberSince}`}
             </p>
-            {(inst.specialisations.length > 0 || website || inst.instagram_handle) && (
+            {(inst.specialisations.length > 0 || website || links.length > 0) && (
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {inst.specialisations.map((s) => (
                   <span
@@ -151,16 +156,20 @@ export default async function InstructorProfilePage({
                     {websiteLabel} <span aria-hidden>↗</span>
                   </a>
                 )}
-                {inst.instagram_handle && (
+                {links.map((l) => (
                   <a
-                    href={`https://instagram.com/${inst.instagram_handle}`}
+                    key={l.key}
+                    href={l.url}
                     target="_blank"
                     rel="me noopener noreferrer"
                     className={linkChip}
                   >
-                    @{inst.instagram_handle} <span aria-hidden>↗</span>
+                    {l.key === "instagram" || l.key === "tiktok" || l.key === "x"
+                      ? `@${l.handle}`
+                      : `${l.label}: ${l.handle}`}{" "}
+                    <span aria-hidden>↗</span>
                   </a>
-                )}
+                ))}
               </div>
             )}
             {inst.bio && <p className="mt-3 max-w-2xl text-fog">{inst.bio}</p>}
@@ -193,7 +202,7 @@ export default async function InstructorProfilePage({
               specialisations: inst.specialisations,
               avatar_path: inst.avatar_path,
               website_url: inst.website_url ?? "",
-              instagram_handle: inst.instagram_handle ?? "",
+              socials: inst.socials ?? {},
               banner_path: inst.banner_path ?? null,
             }}
           />
