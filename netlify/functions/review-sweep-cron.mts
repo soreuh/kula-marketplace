@@ -7,11 +7,13 @@
 //
 // process.env.URL is Netlify's own "this site's primary URL".
 // Schedule: daily 15:00 UTC ≈ 11:00 ET — mid-morning inbox time.
-export default async () => {
+const runSweep = async () => {
   await fetch(`${process.env.URL}/api/cron/review-sweep`, {
     method: "POST",
     headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
   }).catch(() => null);
 };
+
+export default runSweep;
 
 export const config = { schedule: "0 15 * * *" };

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatUsd, priceLabel, timeAgo } from "@/lib/fees";
 import { DURATIONS, TEACHABILITY } from "@/lib/categories";
@@ -227,18 +227,30 @@ function ContentTab({
   setShowForm: (v: boolean) => void;
 }) {
   const [q, setQ] = useState("");
-  const [editing, setEditing] = useState<Product | null>(null);
 
   // M9: "edit listing" deep link from your own /products page —
-  // /dashboard?edit=<id> auto-opens that listing's edit dialog, then
-  // clears the param (shallow) so refresh/close doesn't reopen it.
+  // /dashboard?edit=<id> opens with that listing's edit dialog already
+  // up. useSearchParams is SSR-consistent, so initializing state from it
+  // is hydration-safe and needs no effect (react-hooks/set-state-in-
+  // effect stays quiet). The initializer also checks the LIVE url: after
+  // the scrub below, a tab-switch remount must not reopen the dialog.
+  const editParam = useSearchParams().get("edit");
+  const [editing, setEditing] = useState<Product | null>(() => {
+    if (
+      typeof window !== "undefined" &&
+      !window.location.search.includes("edit=")
+    )
+      return null;
+    return editParam
+      ? (products.find((p) => p.id === editParam) ?? null)
+      : null;
+  });
+
+  // scrub the param (shallow, DOM-only — no state set here) so a refresh
+  // or dialog-close doesn't re-trigger the deep link
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("edit");
-    if (!id) return;
-    const target = products.find((p) => p.id === id);
-    if (target) setEditing(target);
-    window.history.replaceState(null, "", "/dashboard");
-  }, [products]);
+    if (editParam) window.history.replaceState(null, "", "/dashboard");
+  }, [editParam]);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "draft" | "suspended" | "archived"
   >("all");
