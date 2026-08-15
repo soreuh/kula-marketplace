@@ -361,8 +361,22 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M2 — nav clarity: drop the dashboard pill + "my library" (BUILT
-  2026-08-15 — no migration; push + live verify):** Aleks's calls: (1) the
+- [ ] **M3 — library rows mirror the dashboard list (BUILT 2026-08-15 — no
+  migration; push + live verify):** Aleks's call from side-by-side
+  screenshots: the library rendered SHOP-style ProductCards (big cover,
+  price, "view details") with a detached full-width download button —
+  clunky for things you already own. Rebuilt as the same compact row
+  anatomy as the dashboard "my content" list: thumb (h-14 w-20) · title
+  link + sub-line (type · price paid · stars when rated) · "view" outline
+  pill · sage "download" pill. Hidden-listing fallback keeps the same row
+  shape (title + purchased date + download still works). VERIFY: library
+  shows rows not cards · title + view → listing page · download works ·
+  a hidden/archived purchase still shows its row + download · mobile rows
+  wrap cleanly.
+- [x] 2026-08-15 **M2 — nav clarity: drop the dashboard pill + "my
+  library"** (pushed + VERIFIED same day by Aleks: pill gone, bell +
+  avatar intact, nav + avatar menu read "my library", sell still lands on
+  /dashboard) — (BUILT 2026-08-15 — no migration; push + live verify):** Aleks's calls: (1) the
   green "dashboard" button in the logged-in nav was REDUNDANT ("sell"
   links to /dashboard, so does the avatar menu) and reads seller-centric/
   confusing to plain buyers — removed; right side is now bell + avatar

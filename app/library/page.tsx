@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
-import { ProductCard, btnPrimary } from "@/components/ui";
+import { CoverArt, Stars, btnPrimary } from "@/components/ui";
 import type { Order, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,34 +65,66 @@ export default async function LibraryPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          /* Compact rows mirroring the dashboard "my content" list (M3,
+             Aleks 2026-08-15) — the shop-style ProductCard grid read as
+             clunky for things you already own. Same row anatomy as the
+             seller side: thumb · title + sub-line · action pills. */
+          <div className="flex flex-col gap-4">
             {paid.map((o) => {
               const p = productById.get(o.product_id);
+              const r = ratings[o.product_id];
               return (
-                <div key={o.id} className="flex flex-col gap-2">
+                <div
+                  key={o.id}
+                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm"
+                >
                   {p ? (
-                    <ProductCard
-                      product={p}
-                      priceLabel={priceLabel(o.amount_cents)}
-                      rating={ratings[p.id]?.avg ?? null}
-                      reviewCount={ratings[p.id]?.count ?? 0}
-                    />
+                    <>
+                      <CoverArt
+                        seed={`${p.category}-${p.title}`}
+                        imagePath={p.cover_path}
+                        className="h-14 w-20 shrink-0 rounded-xl"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="truncate font-display font-semibold hover:text-sage-600"
+                        >
+                          {p.title}
+                        </Link>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-fog">
+                          {p.content_type && <span>{p.content_type} ·</span>}
+                          <span>{priceLabel(o.amount_cents)}</span>
+                          {r && r.count > 0 && (
+                            <Stars rating={r.avg} count={r.count} />
+                          )}
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <div className="flex h-full flex-col justify-between rounded-2xl border border-ink/5 bg-white p-5 shadow-sm">
-                      <p className="font-display font-bold">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-semibold">
                         (listing no longer public)
                       </p>
-                      <p className="mt-1 text-sm text-fog">
+                      <p className="mt-1 text-fog">
                         purchased {new Date(o.created_at).toLocaleDateString()} —
                         your download still works.
                       </p>
                     </div>
                   )}
+                  {p && (
+                    <Link
+                      href={`/products/${p.id}`}
+                      className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30"
+                    >
+                      view
+                    </Link>
+                  )}
                   <a
                     href={`/api/download/${o.product_id}`}
-                    className="flex items-center justify-center gap-2 rounded-full bg-sage-500 px-5 py-2.5 font-display text-sm font-semibold lowercase text-white hover:bg-sage-600"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-sage-500 px-4 py-1.5 font-display font-semibold lowercase text-white hover:bg-sage-600"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d="M12 3v12" />
                       <path d="m7 10 5 5 5-5" />
                       <path d="M5 21h14" />
