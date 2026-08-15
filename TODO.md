@@ -375,8 +375,18 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M8+M9 — stripe line only beside a live buy button; edit from your
-  own listing (BUILT 2026-08-15 — no migration; push + live verify):** Aleks's follow-up catch to M1: the
+- [x] 2026-08-15 **M8+M9 — stripe line only beside a live buy button; edit
+  from your own listing** (pushed + VERIFIED same day by Aleks: stripe
+  line correct in all states · edit listing button opens the pre-filled
+  dialog · refresh-mid-dialog lands clean. SHIP NOTE: first deep-link
+  version initialized state behind a window.location guard — DEAD on
+  client-side nav because the OLD url is still live when initializers
+  run; second version's router-only scrub was ambiguous under fast
+  refresh — final form initializes from useSearchParams (SSR-consistent,
+  no setState-in-effect) and scrubs at BOTH layers, raw replaceState for
+  the url bar + router.replace for router state. The two-layer scrub
+  rides Aleks's NEXT push — retest the deep link once then) — (BUILT
+  2026-08-15 — no migration; push + live verify):** Aleks's follow-up catch to M1: the
   "Secure payment via Stripe" line was gated on price only, so the
   SELLER-own view ("it's your listing" + download) and the already-owned
   view still showed payment reassurance with no payment present. Now

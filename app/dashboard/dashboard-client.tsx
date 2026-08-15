@@ -240,13 +240,16 @@ function ContentTab({
     editParam ? (products.find((p) => p.id === editParam) ?? null) : null
   );
 
-  // scrub the param THROUGH the router (updates router state, so
-  // editParam goes null and a tab-switch remount can't reopen the
-  // dialog). One RSC refetch on a deliberate navigation is fine — the
-  // return-path rule's replaceState guidance targets per-keystroke
-  // writes, not one-shot doorways.
+  // scrub the param at BOTH layers. Raw replaceState first: it cleans
+  // the URL BAR instantly, so a hard refresh mid-dialog reloads plain
+  // /dashboard (router.replace alone proved swallowable while hydration
+  // settles — live find, 2026-08-15). Then router.replace syncs router
+  // state so editParam goes null and a tab-switch remount can't reopen
+  // the dialog. One RSC refetch on a one-shot doorway is fine.
   useEffect(() => {
-    if (editParam) router.replace("/dashboard", { scroll: false });
+    if (!editParam) return;
+    window.history.replaceState(null, "", "/dashboard");
+    router.replace("/dashboard", { scroll: false });
   }, [editParam, router]);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "draft" | "suspended" | "archived"
