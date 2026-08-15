@@ -375,8 +375,18 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M6 — mobile nav declutter + menu hierarchy (BUILT 2026-08-15 — no
-  migration; push + live verify):** Aleks: (1) the mobile mini-nav (lone
+- [ ] **M7 — menu parity: "my dashboard" (BUILT 2026-08-15 — no migration;
+  push + live verify):** Aleks's call after the merge-vs-two-pages
+  discussion (kept two pages): the member-facing labels now MATCH — nav
+  (logged-in) + avatar menu both say "my dashboard", pairing with "my
+  library" as the two named doors. Logged-OUT nav keeps "sell" → /signup
+  ON PURPOSE: it's the recruiting verb (Etsy pattern) — renaming it would
+  cost conversion clicks. VERIFY: logged in — nav + menu say "my
+  dashboard" · logged out (incognito) — nav still says "sell" → signup.
+- [x] 2026-08-15 **M6 — mobile nav declutter + menu hierarchy** (pushed +
+  VERIFIED same day by Aleks: "all good" — banner = wordmark + avatar,
+  menu's top two entries bold, desktop unchanged) — (BUILT 2026-08-15 —
+  no migration; push + live verify):** Aleks: (1) the mobile mini-nav (lone
   "explore" link by the wordmark) removed — no real function; homepage
   CTAs, footer, and sm+ nav still carry explore. (2) avatar-menu "my
   library" + "dashboard" now BOLD (MenuLink strong prop) — the two

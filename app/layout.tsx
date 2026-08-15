@@ -77,7 +77,9 @@ export default async function RootLayout({
                 href={profile ? "/dashboard" : "/signup"}
                 className="hover:text-sage-600"
               >
-                sell
+                {/* M7: members see the door's real name (parity with the
+                    avatar menu); visitors keep the recruiting verb */}
+                {profile ? "my dashboard" : "sell"}
               </Link>
               {profile && (
                 <Link href="/library" className="hover:text-sage-600">
