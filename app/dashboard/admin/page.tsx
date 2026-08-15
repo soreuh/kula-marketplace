@@ -5,13 +5,13 @@ import { StatusChip } from "@/components/ui";
 import type { Order, PlatformSettings, Product, Profile } from "@/lib/types";
 import {
   addProductOption,
-  updateNotificationSettings,
   deleteProductOption,
   setCommissionOverride,
   setProductStatus,
   toggleFeatured,
   updateFeeSettings,
 } from "./actions";
+import NotificationSwitches from "./notification-switches";
 import UsersPanel from "./users-panel";
 import PeriodTiles from "./period-tiles";
 import AdminSection from "@/components/admin-section";
@@ -102,52 +102,16 @@ export default async function AdminDashboard({
 
         <AdminSection
           title="notifications"
-          subtitle="platform-wide switches for every email the app sends. individual users keep their own toggles (sellers: sale emails in the earnings tab; buyers: update emails in their library) — these override everyone's."
+          subtitle="platform-wide switches for every email the app sends. individual users keep their own toggles in /settings — these override everyone's."
         >
-          <form action={updateNotificationSettings} className="flex flex-col gap-3 text-sm">
-            <label className="flex items-center gap-2.5">
-              <input
-                type="checkbox"
-                name="notify_sale_emails"
-                defaultChecked={s.notify_sale_emails !== false}
-                className="h-4 w-4 accent-[var(--color-sage-500)]"
-              />
-              sale emails to sellers (&quot;you made a sale&quot;)
-            </label>
-            <label className="flex items-center gap-2.5">
-              <input
-                type="checkbox"
-                name="notify_content_updates"
-                defaultChecked={s.notify_content_updates !== false}
-                className="h-4 w-4 accent-[var(--color-sage-500)]"
-              />
-              file-update emails to buyers (&quot;your content got better&quot;) —
-              max one per listing per day
-            </label>
-            <label className="flex items-center gap-2.5">
-              <input
-                type="checkbox"
-                name="notify_purchase_emails"
-                defaultChecked={s.notify_purchase_emails !== false}
-                className="h-4 w-4 accent-[var(--color-sage-500)]"
-              />
-              purchase confirmations to buyers (&quot;it&apos;s in your
-              library&quot;) — paid orders and free claims
-            </label>
-            <label className="flex items-center gap-2.5">
-              <input
-                type="checkbox"
-                name="notify_review_emails"
-                defaultChecked={s.notify_review_emails !== false}
-                className="h-4 w-4 accent-[var(--color-sage-500)]"
-              />
-              review emails, both directions (&quot;how was it?&quot; nudges to
-              buyers · &quot;you got a new review&quot; to sellers) — daily sweep
-            </label>
-            <button className="w-fit rounded-full bg-sage-500 px-5 py-2 font-display font-semibold lowercase text-white hover:bg-sage-600">
-              save
-            </button>
-          </form>
+          <NotificationSwitches
+            initial={{
+              notify_sale_emails: s.notify_sale_emails !== false,
+              notify_content_updates: s.notify_content_updates !== false,
+              notify_purchase_emails: s.notify_purchase_emails !== false,
+              notify_review_emails: s.notify_review_emails !== false,
+            }}
+          />
         </AdminSection>
 
         <OptionsSection options={(optionRows as OptionRow[] | null) ?? []} />

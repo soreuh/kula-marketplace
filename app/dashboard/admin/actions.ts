@@ -270,18 +270,25 @@ export async function updateGrowthModel(formData: FormData) {
   revalidatePath("/dashboard/admin");
 }
 
-/** Platform-wide email switches (admin → notifications, migrations 022 + 025 + 028). */
-export async function updateNotificationSettings(formData: FormData) {
+/** Platform-wide email switches (admin → notifications, migrations
+ *  022 + 025 + 028). One switch per call — instant apply from the shared
+ *  Switch pills (S2b), same feel as /settings. Key is allowlisted so the
+ *  client can never aim this at another column. */
+const NOTIFY_SWITCH_KEYS = [
+  "notify_sale_emails",
+  "notify_content_updates",
+  "notify_purchase_emails",
+  "notify_review_emails",
+] as const;
+export type NotifySwitchKey = (typeof NOTIFY_SWITCH_KEYS)[number];
+
+export async function setNotifySwitch(key: NotifySwitchKey, on: boolean) {
+  if (!NOTIFY_SWITCH_KEYS.includes(key)) return { ok: false };
   const supabase = await requireAdmin();
-  await supabase
+  const { error } = await supabase
     .from("platform_settings")
-    .update({
-      // unchecked boxes are absent from FormData — absence = off
-      notify_content_updates: formData.get("notify_content_updates") === "on",
-      notify_sale_emails: formData.get("notify_sale_emails") === "on",
-      notify_purchase_emails: formData.get("notify_purchase_emails") === "on",
-      notify_review_emails: formData.get("notify_review_emails") === "on",
-    })
+    .update({ [key]: on })
     .eq("id", true);
   revalidatePath("/dashboard/admin");
+  return { ok: !error };
 }

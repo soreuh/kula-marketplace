@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Note, btnSmall, inputCls } from "@/components/ui";
+import { Note, Switch, btnSmall, inputCls } from "@/components/ui";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
 
 /**
@@ -129,7 +129,7 @@ function Section({
 }
 
 /** One per-user email pref: optimistic own-row write, revert on failure.
- *  The switch visual moved here from the dashboard earnings tab (S2). */
+ *  Visual = the shared ui.tsx Switch (S2b — same pill as admin's). */
 function PrefToggle({
   userId,
   column,
@@ -162,24 +162,7 @@ function PrefToggle({
         <span className="block font-semibold lowercase">{label}</span>
         <span className="block text-fog">{sub}</span>
       </span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-label={label}
-        onClick={flip}
-        className={
-          "relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition " +
-          (on ? "bg-sage-500" : "bg-ink/15")
-        }
-      >
-        <span
-          className={
-            "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " +
-            (on ? "left-[22px]" : "left-0.5")
-          }
-        />
-      </button>
+      <Switch on={on} onClick={flip} label={label} />
     </div>
   );
 }
@@ -197,14 +180,21 @@ function EmailForm() {
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ email });
+    const { error } = await supabase.auth.updateUser(
+      { email },
+      // return-path rule: the confirm link lands on LOGIN (the clicker is
+      // usually logged out in that browser) and login returns to settings
+      {
+        emailRedirectTo: `${window.location.origin}/login?next=${encodeURIComponent("/settings")}`,
+      }
+    );
     setBusy(false);
     if (error) {
       setMsg({ tone: "error", text: error.message });
     } else {
       setMsg({
         tone: "success",
-        text: "confirmation sent — check your new inbox (and your current one) and click the link(s) to finish the change.",
+        text: "confirmation sent — check your new inbox (and your current one), click the link(s), then log in with your new email.",
       });
       setEmail("");
     }

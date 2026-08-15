@@ -387,6 +387,14 @@ real launch.
   owner decision, Aug 2026 — Mailchimp campaigns carry the unsubscribe;
   splitting consent is the EU/Canada-triggered change, not this block);
   paid-receipt opt-out (receipts are proof of purchase).
+  S2b (same day, from Aleks's live S2 feedback): ONE TOGGLE SCHEMA
+  project-wide — the pill switch extracted to ui.tsx as Switch; admin's
+  notifications card converted from checkbox+save form to instant
+  switches (new setNotifySwitch action, key-allowlisted; old
+  updateNotificationSettings removed) and its stale subtitle (still
+  pointing at library/earnings-tab toggle homes) fixed; change-email
+  confirm link now lands on /login?next=/settings (return-path rule —
+  Supabase's default dumped the clicker on the homepage with no login).
 - [x] 2026-08-15 **Settings S1 — /settings page + account section** (pushed
   + VERIFIED same day, all 5 checks: menu entry → page + correct email ·
   password change → re-login with new password · mismatch rejected ·

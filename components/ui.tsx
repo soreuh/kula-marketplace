@@ -93,6 +93,42 @@ export const btnSmall =
   "inline-flex items-center gap-1.5 rounded-full bg-sage-500 px-4 py-1.5 text-sm font-display font-semibold lowercase text-white transition hover:bg-sage-600 disabled:opacity-50";
 export const btnSmallOutline =
   "inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-4 py-1.5 text-sm font-display font-semibold lowercase text-ink transition hover:border-ink/40";
+/** THE toggle visual (settings S2b): one sage pill switch everywhere a
+ *  boolean setting flips — /settings user prefs AND the admin platform
+ *  switches. No "use client" here: state + handlers live in the CLIENT
+ *  components that render it; this stays a pure visual. Instant-apply by
+ *  convention — never pair it with a save button. */
+export function Switch({
+  on,
+  onClick,
+  label,
+}: {
+  on: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={onClick}
+      className={
+        "relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition " +
+        (on ? "bg-sage-500" : "bg-ink/15")
+      }
+    >
+      <span
+        className={
+          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all " +
+          (on ? "left-[22px]" : "left-0.5")
+        }
+      />
+    </button>
+  );
+}
+
 export const inputCls =
   "w-full rounded-xl border border-ink/10 bg-white px-4 py-2.5 text-ink placeholder:text-fog focus:border-sage-400 focus:outline-none focus:ring-2 focus:ring-sage-200";
 /** Bare `<input type="file">`s vanish against the page — this gives the
