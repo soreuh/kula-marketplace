@@ -111,7 +111,7 @@ export default function LibraryList({ rows }: { rows: LibraryRow[] }) {
           {filtered.map((r) => (
             <div
               key={r.orderId}
-              className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm"
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm"
             >
               {r.title ? (
                 <>
@@ -120,7 +120,7 @@ export default function LibraryList({ rows }: { rows: LibraryRow[] }) {
                     imagePath={r.coverPath}
                     className="h-14 w-20 shrink-0 rounded-xl"
                   />
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 basis-40">
                     <Link
                       href={`/products/${r.productId}`}
                       className="truncate font-display font-semibold hover:text-sage-600"
@@ -147,10 +147,12 @@ export default function LibraryList({ rows }: { rows: LibraryRow[] }) {
                   </p>
                 </div>
               )}
+              {/* M5: pills grouped — full-width line on phones, inline on sm+ */}
+              <div className="flex w-full items-center gap-2 sm:w-auto">
               {r.title && (
                 <Link
                   href={`/products/${r.productId}`}
-                  className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30"
+                  className="rounded-full border border-ink/10 bg-white px-3.5 py-1.5 lowercase hover:border-ink/30"
                 >
                   view
                 </Link>
@@ -166,6 +168,7 @@ export default function LibraryList({ rows }: { rows: LibraryRow[] }) {
                 </svg>
                 download
               </a>
+              </div>
             </div>
           ))}
         </div>

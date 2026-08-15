@@ -375,6 +375,23 @@ real launch.
 
 ## Tech — small
 
+- [ ] **M5 — mobile row-wrap sweep (BUILT 2026-08-15 — no migration; push
+  + live verify):** Aleks's phone screenshots: (1) dashboard "my content"
+  rows had NO flex-wrap — on phones the edit/unpublish/archive pills
+  collided with (transparent-bg pills: overlapped) the title/price text;
+  (2) the new library rows wrapped but let the view/download pills
+  interleave mid-line. Fix, both rows: flex-wrap + the action pills
+  grouped in ONE container (w-full on phones = own clean line under the
+  row; sm:w-auto = inline right on desktop, unchanged), pills get solid
+  bg-white, sub-lines get flex-wrap, middle gets basis-40 so title stays
+  beside the thumb. SWEPT the rest of the user-facing app for the same
+  anti-pattern: earnings performance table already overflow-x-auto ✓,
+  stat/upload grids stack via sm: ✓, profile-edit avatar row is 2-item
+  flex-1 ✓, explore has its own mobile panel ✓ — no other offenders.
+  NOT swept: admin panel on mobile (desktop-typical; separate pass if he
+  ever manages from the phone regularly). VERIFY (phone): dashboard my
+  content — pills on their own line, nothing overlapping, all 3 work ·
+  library — pills under the row, clean · desktop both pages unchanged.
 - [ ] housekeeping (external review 2026-08-15): (1) untrack the one
   binary in git — `git rm --cached kula-handover-guide.pdf` (+ .gitignore
   line ADDED same day; history keeps the blob, working tree stops shipping

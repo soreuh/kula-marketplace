@@ -458,31 +458,35 @@ function ProductRow({
 
   return (
     <div className="rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm">
-    <div className={"flex items-center gap-4 " + (isArchived ? "opacity-60" : "")}>
+    {/* M5 (2026-08-15): flex-wrap + one pill group — on phones the loose
+        trailing buttons used to collide with the title/price text (no wrap);
+        now the pills drop to their own full-width line under the row. */}
+    <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 " + (isArchived ? "opacity-60" : "")}>
       <CoverArt
         seed={`${product.category}-${product.title}`}
         imagePath={product.cover_path}
         className="h-14 w-20 shrink-0 rounded-xl"
       />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-40">
         <Link
           href={`/products/${product.id}`}
           className="truncate font-display font-semibold hover:text-sage-600"
         >
           {product.title}
         </Link>
-        <div className="mt-1 flex items-center gap-2">
+        <div className="mt-1 flex flex-wrap items-center gap-2">
           <StatusChip status={product.status} />
           <span className="text-fog">{priceLabel(product.price_cents)}</span>
           <span className="text-fog">· {product.views} views</span>
         </div>
       </div>
+      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
       {product.status !== "suspended" && !isArchived && (
         <>
           <button
             onClick={() => onEdit(product)}
             disabled={busy}
-            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
+            className="rounded-full border border-ink/10 bg-white px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
           >
             edit
           </button>
@@ -497,7 +501,7 @@ function ProductRow({
                 ? "Connect Stripe to publish paid listings — free ones publish now"
                 : undefined
             }
-            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full border border-ink/10 bg-white px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {product.status === "active" ? "unpublish" : "publish"}
           </button>
@@ -507,7 +511,7 @@ function ProductRow({
         <button
           onClick={restore}
           disabled={busy}
-          className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
+          className="rounded-full border border-ink/10 bg-white px-3.5 py-1.5 lowercase hover:border-ink/30 disabled:opacity-40"
         >
           restore
         </button>
@@ -517,12 +521,13 @@ function ProductRow({
             onClick={archive}
             disabled={busy}
             title="Takes it off the marketplace. Nothing is deleted — buyers keep their downloads and reviews still count toward your rating."
-            className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase text-fog hover:border-ink/30 disabled:opacity-40"
+            className="rounded-full border border-ink/10 bg-white px-3.5 py-1.5 lowercase text-fog hover:border-ink/30 disabled:opacity-40"
           >
             archive
           </button>
         )
       )}
+      </div>
     </div>
     {isArchived && (
       <p className="mt-2 rounded-xl bg-mist/70 px-3 py-2 text-xs text-fog">
