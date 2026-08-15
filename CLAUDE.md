@@ -138,6 +138,18 @@ owner before enabling in production).
   the block's final tests (build/lint + a live or E2E check when it touches
   anything user-facing or money-adjacent) BEFORE moving to the next block.
   Don't batch several blocks and test at the end.
+- RETURN-PATH INTEGRITY. Any new doorway — an auth wall or forced redirect,
+  a flow that navigates away, an email/notification linking into the app —
+  must carry and restore the user's context (where they were, what state
+  they had). Concretely: auth interruptions thread ?next=, honored ONLY via
+  safeNext() in lib/site.ts (same-site relative paths; never trust the raw
+  param); browsable state (search/sort/filters) lives in the URL, written
+  shallowly via history.replaceState (not router.replace — it refetches
+  force-dynamic pages per keystroke); emails/notifications deep-link to the
+  exact destination and assume the recipient may be LOGGED OUT (the ?next=
+  loop catches them). Every new feature gets the question: "if the user is
+  interrupted or navigates away here, do they get back with nothing lost?"
+  Blocks N1/N2 are the reference implementation.
 
 ## Commands
 

@@ -55,6 +55,9 @@ export default function UserMenu({
           <MenuLink href={`/profile/${userId}`} onClick={() => setOpen(false)}>
             my profile
           </MenuLink>
+          <MenuLink href="/settings" onClick={() => setOpen(false)}>
+            settings
+          </MenuLink>
           {isAdmin && (
             <MenuLink href="/dashboard/admin" onClick={() => setOpen(false)}>
               admin

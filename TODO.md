@@ -361,8 +361,39 @@ real launch.
 
 ## Tech — small
 
-- [ ] **N2 — explore state in the URL (BUILT 2026-08-15 — no migration; push
-  + live verify):** filters, search, and sort now LIVE in the querystring
+- [ ] **Settings consolidation (ANALYZED 2026-08-15 — Aleks's ask; his
+  go/no-go pending):** no /settings page exists; settings-ish controls are
+  scattered — buyer content-update email toggle on the LIBRARY page, seller
+  sale_notifications toggle inside the dashboard EARNINGS tab, profile edit
+  on own profile page, marketing_consent set ONCE at signup with no UI to
+  change it, password change only via the logged-out forgot-password loop,
+  change-email has NO surface at all (the drafted Supabase change-email
+  template is dormant). Per-user email-opt-out gaps: review NUDGES (buyer)
+  and purchase receipts have no individual toggle (platform switch only).
+  Full email-hook matrix + proposed /settings architecture (incl. the
+  column-per-pref vs email_prefs jsonb fork, mirroring the 027 socials
+  precedent) delivered in-chat 2026-08-15; when built, land the compact
+  matrix in CLAUDE.md.
+- [ ] HELD (Aleks 2026-08-15) — **gap-report tier-2 remainder, build on his
+  go:** 6 discount codes (fork decision still open: A platform-funded — 
+  seller nets full price, kula's fee absorbs the discount — vs B
+  proportional — fee recomputed on discounted total; admin-created codes
+  only either way) · 7 seller-chosen preview page · 8 favorites/wishlist.
+- [ ] PARKED (Aleks 2026-08-15) — **N3: in-app back affordance** ("← explore"
+  link/breadcrumb on listing pages). Held after N1+N2 landed: browser back
+  now restores full explore state, and direct-arrivals (email/shared links)
+  always have the nav "explore" link on desktop AND the mobile mini-nav, so
+  it's nearly redundant. Aleks's instinct to revisit: MOBILE users may still
+  want it (browser chrome hidden mid-scroll). Cheap build (~20min static
+  link) if her testers ever look lost on a listing.
+- [x] 2026-08-15 **N2 — explore state in the URL** (pushed + VERIFIED same
+  day, all 5 checks: filter/search/sort → URL updates live · listing →
+  browser back → everything restored incl. sort · filtered URL in incognito
+  → same view + chips · clear all → bare /explore (sort survives BY DESIGN —
+  matches Etsy/TpT "clear filters" norm; Aleks confirmed keep) · garbage
+  params (?style=Fakestyle) render safely — one Chrome "couldn't load" blip
+  mid-test was a network hiccup, clean on reload): filters, search, and sort
+  now LIVE in the querystring
   (?q= &sort= &free=1 &featured=1 &teach/style/type/level as repeated params
   &dur=lo-hi), so browser BACK from a listing restores the exact explore
   state — before this, every return trip wiped filters/search/sort because
@@ -373,11 +404,6 @@ real launch.
   would have); replace not push, so clicking checkboxes doesn't stack
   history entries; useSearchParams read once for initial state; defaults
   omitted (bare /explore stays bare); malformed params parse to defaults.
-  VERIFY: filter+search+sort → URL updates live · open a listing →
-  browser back → everything still applied incl. sort · copy a filtered
-  URL into incognito → same filtered view + chips · clear all → URL back
-  to bare /explore · paste garbage params (?dur=9-2&sort=nope) → page
-  renders with defaults.
 - [x] 2026-08-15 **N1 — auth return-path / "click behavior"** (pushed +
   VERIFIED same day, all 7 checks: buy→login→back-on-listing ·
   buy→signup-cross-link→back-on-listing · /library guard → library ·
