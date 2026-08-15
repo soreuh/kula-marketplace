@@ -81,7 +81,7 @@ export default async function RootLayout({
               </Link>
               {profile && (
                 <Link href="/library" className="hover:text-sage-600">
-                  library
+                  my library
                 </Link>
               )}
             </div>

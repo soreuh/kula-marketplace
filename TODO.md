@@ -361,14 +361,19 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M2 — drop the nav dashboard pill (BUILT 2026-08-15 — no migration;
-  push + live verify):** Aleks's call: the green "dashboard" button in the
-  logged-in nav was REDUNDANT ("sell" links to /dashboard, so does the
-  avatar menu) and reads seller-centric/confusing to plain buyers. Removed;
-  right side is now bell + avatar (Etsy/TpT pattern — account surfaces
-  behind the avatar). VERIFY: logged-in desktop — pill gone, bell + avatar
-  intact · "sell" still lands on /dashboard · avatar menu dashboard link
-  works · mobile unchanged (pill was sm+ only).
+- [ ] **M2 — nav clarity: drop the dashboard pill + "my library" (BUILT
+  2026-08-15 — no migration; push + live verify):** Aleks's calls: (1) the
+  green "dashboard" button in the logged-in nav was REDUNDANT ("sell"
+  links to /dashboard, so does the avatar menu) and reads seller-centric/
+  confusing to plain buyers — removed; right side is now bell + avatar
+  (Etsy/TpT pattern — account surfaces behind the avatar). (2) nav +
+  avatar-menu label "library" → "MY library": bare "library" reads like
+  the SITE's catalog to early users — wasted potential convert clicks
+  landing on their empty purchases page instead of explore. (Page h1 +
+  settings shortcut already said "your library".) VERIFY: logged-in
+  desktop — pill gone, bell + avatar intact · nav + avatar menu say
+  "my library" and land on /library · "sell" still lands on /dashboard ·
+  mobile unchanged.
 - [x] 2026-08-15 **M1 — mobile buy CTA placement + freebie stripe-line**
   (pushed + VERIFIED same day: phone screenshot shows price card + CTA
   directly under title/stars, first screen · "Secure payment via Stripe"

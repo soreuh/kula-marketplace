@@ -45,7 +45,7 @@ export default function UserMenu({
             <div className="truncate text-xs text-fog">{email}</div>
           </div>
           <MenuLink href="/library" onClick={() => setOpen(false)}>
-            library
+            my library
           </MenuLink>
           <MenuLink href="/dashboard" onClick={() => setOpen(false)}>
             dashboard
