@@ -134,6 +134,16 @@ export default async function AdminDashboard({
               purchase confirmations to buyers (&quot;it&apos;s in your
               library&quot;) — paid orders and free claims
             </label>
+            <label className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                name="notify_review_emails"
+                defaultChecked={s.notify_review_emails !== false}
+                className="h-4 w-4 accent-[var(--color-sage-500)]"
+              />
+              review emails, both directions (&quot;how was it?&quot; nudges to
+              buyers · &quot;you got a new review&quot; to sellers) — daily sweep
+            </label>
             <button className="w-fit rounded-full bg-sage-500 px-5 py-2 font-display font-semibold lowercase text-white hover:bg-sage-600">
               save
             </button>

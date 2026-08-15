@@ -1,0 +1,23 @@
+<!-- kula · Supabase auth template: CONFIRM SIGNUP
+     Paste into: Supabase Dashboard → Authentication → Emails → Templates → "Confirm sign up"
+     Suggested subject line (set in the same screen):  confirm your kula email 🌿
+     Variables: {{ .ConfirmationURL }} is filled by Supabase at send time.
+     Design mirrors lib/email.ts's shell (globals.css palette, system fonts,
+     no images) — if the brand shell changes, change this by hand too. -->
+<div style="background:#f6f6f2;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+  <div style="max-width:480px;margin:0 auto">
+    <p style="text-align:center;margin:0 0 14px;font-size:24px;font-weight:700;letter-spacing:.01em;color:#4b6a52">kula</p>
+    <div style="background:#ffffff;border:1px solid #e4e6de;border-radius:16px;padding:28px 26px;color:#26281f;font-size:15px;line-height:1.55">
+      <h2 style="margin:0 0 12px;font-size:20px;letter-spacing:-.01em;color:#4b6a52">confirm your email</h2>
+      <p style="margin:0 0 20px">welcome to kula — a marketplace by yoga teachers, for yoga
+      teachers. one click and your account is ready.</p>
+      <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#6b8f72;color:#ffffff;font-weight:600;text-decoration:none;padding:12px 26px;border-radius:999px">confirm my email</a>
+      <p style="color:#7d8078;font-size:13px;margin:18px 0 0">if you didn&#39;t create a kula
+      account, you can safely ignore this email.</p>
+    </div>
+    <p style="text-align:center;margin:14px 0 0;font-size:12px;color:#7d8078">
+      kula — buy and sell yoga teaching content ·
+      <a href="https://kula-marketplace.com" style="color:#7d8078">kula-marketplace.com</a>
+    </p>
+  </div>
+</div>

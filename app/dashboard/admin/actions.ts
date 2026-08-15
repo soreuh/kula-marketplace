@@ -270,7 +270,7 @@ export async function updateGrowthModel(formData: FormData) {
   revalidatePath("/dashboard/admin");
 }
 
-/** Platform-wide email switches (admin → notifications, migrations 022 + 025). */
+/** Platform-wide email switches (admin → notifications, migrations 022 + 025 + 028). */
 export async function updateNotificationSettings(formData: FormData) {
   const supabase = await requireAdmin();
   await supabase
@@ -280,6 +280,7 @@ export async function updateNotificationSettings(formData: FormData) {
       notify_content_updates: formData.get("notify_content_updates") === "on",
       notify_sale_emails: formData.get("notify_sale_emails") === "on",
       notify_purchase_emails: formData.get("notify_purchase_emails") === "on",
+      notify_review_emails: formData.get("notify_review_emails") === "on",
     })
     .eq("id", true);
   revalidatePath("/dashboard/admin");

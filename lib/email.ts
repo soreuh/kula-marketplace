@@ -188,6 +188,72 @@ export async function sendReportEmail(opts: {
 }
 
 /**
+ * One-time "how was it?" nudge to a BUYER, ~3 days after purchase — sent
+ * by the daily review sweep (/api/cron/review-sweep), stamped on the
+ * order so it can never repeat. Reviews are the flywheel: featured score,
+ * instructor rating, and the search stars all run on them.
+ */
+export async function sendReviewNudgeEmail(opts: {
+  to: string;
+  productTitle: string;
+  productId: string;
+  siteUrl: string;
+}): Promise<boolean> {
+  return sendViaResend(
+    opts.to,
+    `how was "${opts.productTitle}"? 🌿`,
+    shell(`
+      ${h2("how was it?")}
+      <p style="margin:0 0 20px">you picked up <strong>${esc(opts.productTitle)}</strong> a few
+      days ago. if you&#39;ve had a chance to teach with it, a quick rating
+      helps other teachers find the good stuff — and tells the teacher who
+      made it that it landed.</p>
+      ${btn(`${opts.siteUrl}/products/${opts.productId}`, "leave a review →")}
+      ${fine("this is a one-time note — you own the content forever either way.")}
+    `)
+  );
+}
+
+/**
+ * "You got a new review" to a SELLER — batched by the daily sweep into
+ * one email per seller per run, stamped per review. Respects the platform
+ * review switch AND the seller's own sale_notifications toggle.
+ */
+export async function sendNewReviewEmail(opts: {
+  to: string;
+  items: { productTitle: string; productId: string; rating: number }[];
+  siteUrl: string;
+}): Promise<boolean> {
+  const stars = (r: number) => "★".repeat(r) + "☆".repeat(Math.max(0, 5 - r));
+  const lines = opts.items
+    .map(
+      (i) => `
+      <p style="margin:0 0 10px"><span style="color:#b58900;letter-spacing:2px">${stars(i.rating)}</span>
+      &nbsp;on <a href="${opts.siteUrl}/products/${i.productId}"
+      style="color:${T.sageDark};font-weight:600">${esc(i.productTitle)}</a></p>`
+    )
+    .join("");
+  const n = opts.items.length;
+  return sendViaResend(
+    opts.to,
+    n === 1 ? `you got a new review 🌿` : `you got ${n} new reviews 🌿`,
+    shell(`
+      ${h2(n === 1 ? "someone reviewed your content" : "new reviews on your content")}
+      ${lines}
+      <p style="margin:8px 0 20px">a short reply goes a long way — buyers read
+      how teachers respond.</p>
+      ${btn(
+        n === 1
+          ? `${opts.siteUrl}/products/${opts.items[0].productId}`
+          : `${opts.siteUrl}/dashboard`,
+        n === 1 ? "read + reply →" : "open your dashboard →"
+      )}
+      ${fine("you're receiving this because sale notifications are on in your earnings tab.")}
+    `)
+  );
+}
+
+/**
  * Seller ping when a FREE listing is claimed. Free claims never touch the
  * Stripe webhook, so without this the seller heard nothing. Rides the
  * SALE-email controls (platform notify_sale_emails switch + the seller's

@@ -7,6 +7,7 @@ import "@fontsource-variable/nunito-sans";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { Wordmark, KulaMark } from "@/components/ui";
+import BellMenu from "@/components/bell-menu";
 import UserMenu from "@/components/user-menu";
 import Analytics from "@/components/analytics";
 import { CONTACT_EMAIL, CONTACT_MAILTO } from "@/lib/site";
@@ -103,6 +104,9 @@ export default async function RootLayout({
                   >
                     dashboard
                   </Link>
+                  {/* derived to-do bell (reviews to leave / replies owed) —
+                      renders nothing while there's nothing to do */}
+                  <BellMenu />
                   <UserMenu
                     userId={user.id}
                     name={displayName}

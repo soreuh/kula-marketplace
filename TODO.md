@@ -92,7 +92,8 @@ real launch.
   empties both storage buckets (rows don't cascade files). Off-DB afterlist in
   the script header: Mailchimp test contacts, launch_date reset in admin,
   her avatar re-upload. RUN AT LAUNCH, not before.
-- [ ] Supabase: turn email confirmations back ON (Auth → Sign In / Providers) — deliberately left OFF 2026-08-14 while testing; SMTP is already live, so this is now a one-toggle change
+- [ ] Supabase: turn email confirmations back ON (Auth → Sign In / Providers) — deliberately left OFF 2026-08-14 while testing; SMTP is already live, so this is now a one-toggle change. **Paste the branded confirm-signup template first** (supabase/auth-emails/ — built 2026-08-15, paste instructions in its README)
+- [ ] Paste the branded auth email templates (supabase/auth-emails/, built 2026-08-15 to match the transactional shell): **reset-password can go in TODAY** (that flow is live and currently sends Supabase's stock template) · change-email whenever · confirm-signup pairs with the confirmations toggle above. Verify by sending yourself a password reset from /login
 - [x] 2026-08-14 Supabase custom SMTP via her Resend (Auth → Emails → SMTP: smtp.resend.com:587 / user `resend` / pass = RESEND_API_KEY / from `Kula Marketplace <noreply@kula-marketplace.com>`) — verified: password-reset mail delivers to Gmail **Inbox**, not spam. Note: noreply@ has NO Porkbun forward (replies vanish); auth mail now counts against her Resend send cap. Auth rate limit (Auth → Rate Limits) still at Supabase's low default — raise it when confirmations go on.
 - [ ] Stripe live mode: she completes activation → swap `sk_live_`, create live webhook (same 4 events) → **check the Accounts v1 flag applies in live mode before the first real seller connects** → turn ON customer card receipts (Settings → Emails → "Successful payments") so buyers get Stripe's receipt alongside kula's own "it's in your library" mail
 - [ ] Her real content: 3–5 paid listings + 1–2 strong freebies, real covers, filled instructor profile + avatar (kills the placeholder look and seeds the featured shelf)
@@ -360,8 +361,51 @@ real launch.
 
 ## Tech — small
 
-- [ ] **5b.1 — polish pass on 5b (BUILT 2026-08-15 — ⚠️ run migration 027
-  FIRST, then push; needs live verify):** three fixes from Aleks's 5b review.
+- [ ] **Block 9 — review flywheel: nudges, seller notices, header bell
+  (BUILT 2026-08-15 — ⚠️ run migration 028 FIRST, set CRON_SECRET in
+  Netlify env (any long random string) + redeploy, then verify):** reviews
+  power the featured score / instructor rating / JSON-LD stars, so this
+  block engineers their collection. ONE daily sweep does both emails:
+  /api/cron/review-sweep (POST, Bearer CRON_SECRET; feature stays dark
+  without the env var), triggered by netlify/functions/review-sweep-cron.mts
+  (daily 15:00 UTC ≈ 11am ET — a dumb 10-line alarm clock; all logic lives
+  in the app route. Why not a Supabase edge function: second runtime that
+  can't reuse lib/email.ts, second deploy tool, third secret store).
+  BUYER nudge: paid orders (free claims included) 3–14 days old, no review
+  yet, once per order EVER (orders.review_nudge_sent_at stamp; stamped only
+  after a successful send so failures retry; already-reviewed orders get
+  stamped without mail). SELLER notice: reviews without seller_notified_at,
+  batched into one email per seller (star lines + reply prompt); respects
+  the seller's sale_notifications toggle (opt-outs get stamped, not queued
+  forever); 028 backfills pre-existing reviews as notified so run #1 can't
+  spam history. Platform switch #4 notify_review_emails covers both
+  directions (admin → notifications). HEADER BELL (the "basket", by design
+  DERIVED — no notifications table, no read/unread state): /api/me/tasks
+  computes, under the CALLER's RLS, purchases-you-haven't-reviewed +
+  reviews-awaiting-your-reply; components/bell-menu.tsx renders a badge +
+  dropdown of direct links and renders NOTHING when the count is 0. Acting
+  is what clears it. Future derived items join the same payload; a real
+  notifications table only earns its migration if event-style alerts
+  ("someone bought your listing") are ever wanted. TEST without waiting a
+  day: `curl -X POST -H "authorization: Bearer $CRON_SECRET"
+  https://kula-marketplace.com/api/cron/review-sweep` → JSON counters.
+  VERIFY: buy on a test account, backdate the order 4 days in SQL
+  (`update orders set created_at = now() - interval '4 days', review_nudge_sent_at = null where id = '…'`),
+  curl the sweep → nudge lands + second curl sends nothing (stamp) · leave
+  a review → curl → seller gets the batched notice (sale_notifications on)
+  · bell shows for a buyer with an unreviewed purchase and for the seller
+  with an unreplied review, links land on the right pages, disappears
+  after acting · admin switch off → curl reports skipped. Netlify:
+  confirm the scheduled function appears under Functions after deploy.
+- [x] 2026-08-15 **5b.1 — polish pass on 5b** (VERIFIED live same day by
+  Aleks: socials save + chips render, rims visible. Two lessons from the
+  rollout, both recorded in 027's header: (a) code was pushed before the SQL
+  — failed SAFE, profile saves rejected whole with the schema-cache error
+  until the migration landed, everything else untouched; (b) 027 v1 hit
+  2BP01 — dependent views must DROP before their columns; the corrected,
+  fully idempotent 027 is what ran. ⚠️ the corrected 027 file still needs
+  committing — `git add supabase` rides the NEXT commit): three fixes from
+  Aleks's 5b review.
   (1) SOCIALS EXPANSION, his ask "tiktok, fb, x etc as options": one
   `profiles.socials` jsonb map (027) + curated allowlist in NEW lib/socials.ts
   (instagram/tiktok/youtube/facebook/pinterest/x) replaces 026's

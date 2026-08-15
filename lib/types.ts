@@ -135,4 +135,7 @@ export interface PlatformSettings {
   /** Migration 025 — platform kill switch for buyer purchase confirmations
    *  ("it's in your library", paid + free claims). */
   notify_purchase_emails?: boolean | null;
+  /** Migration 028 — platform kill switch for the daily review sweep
+   *  (buyer "how was it?" nudges + seller new-review notices). */
+  notify_review_emails?: boolean | null;
 }
