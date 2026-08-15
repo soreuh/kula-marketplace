@@ -221,6 +221,20 @@ real launch.
 
 ## Security — open items (from the 2026-08-14 audit review)
 
+- [ ] WATCH (external review 2026-08-15) — `increment_views` RPC is
+  anon-granted (002): anyone can script view inflation, which depresses a
+  victim's conversion component (sales÷views, weight 30) in the featured
+  score. MITIGATED at current scale: admin ★ picks always override the
+  shelf, and bayesian rating (weight 50) dominates — a successful attack
+  only reorders unpinned autofill slots. FIX WHEN it matters: move the
+  ping server-side behind the 018 rate limiter.
+- [ ] PRE-BROAD-LAUNCH (external review 2026-08-15) — pdfjs worker loads
+  from cdnjs in the upload preview (version-pinned, NO integrity hash): a
+  CDN compromise would run third-party JS with the SELLER's live session.
+  One-line self-host fix (workerSrc = new URL("pdfjs-dist/build/
+  pdf.worker.min.mjs", import.meta.url).toString()) — build as its OWN
+  small block WITH the live upload/preview E2E (block rule). Reviewer
+  supplied the diff; deliberately not applied untested.
 - [x] 2026-08-14 **Second security sweep (post-hygiene/admin-redesign code) — 5
   patches, all verified by tsc/lint/build:** (1) email HTML injection: listing
   titles (seller-typed free text) were interpolated raw into the sale + content-
@@ -361,8 +375,19 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M3+M4 — library rows mirror the dashboard list, + search & type
-  filters (BUILT 2026-08-15 — no migration; push + live verify):**
+- [ ] housekeeping (external review 2026-08-15): (1) untrack the one
+  binary in git — `git rm --cached kula-handover-guide.pdf` (+ .gitignore
+  line ADDED same day; history keeps the blob, working tree stops shipping
+  it — mirrors the kula-handoff2 handling). (2) fold-when-touched: drop
+  unused `export` on PLACEHOLDER_COVERS (cover-placeholders) /
+  mailchimpEnabled (mailchimp) / socialUrl (socials) — no dedicated
+  commit, per the bloat rule. (3) covers-fallback JPGs (~1.7MB) — leave;
+  real covers displace placeholders as her content lands.
+- [x] 2026-08-15 **M3+M4 — library rows mirror the dashboard list, +
+  search & type filters** (pushed + VERIFIED same day by Aleks: "clean" —
+  rows not cards, search narrows + ?q= in URL, type chips filter, no-match
+  clear works, download/view land, mobile wraps) — (BUILT 2026-08-15 — no
+  migration; push + live verify):**
   M4 (Aleks: "did we give them a search bar for their own content?" — we
   hadn't): library gets the dashboard's own tools — search box + content-
   type filter chips (chips render only when the shelf spans >1 type), in a
