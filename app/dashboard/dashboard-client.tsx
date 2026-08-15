@@ -231,26 +231,23 @@ function ContentTab({
   // M9: "edit listing" deep link from your own /products page —
   // /dashboard?edit=<id> opens with that listing's edit dialog already
   // up. useSearchParams is SSR-consistent, so initializing state from it
-  // is hydration-safe and needs no effect (react-hooks/set-state-in-
-  // effect stays quiet). The initializer also checks the LIVE url: after
-  // the scrub below, a tab-switch remount must not reopen the dialog.
+  // is hydration-safe and needs no setState-in-effect. Do NOT gate this
+  // on window.location — during a client-side nav the old URL is still
+  // live when initializers run (the first ship of this broke exactly so).
   const editParam = useSearchParams().get("edit");
-  const [editing, setEditing] = useState<Product | null>(() => {
-    if (
-      typeof window !== "undefined" &&
-      !window.location.search.includes("edit=")
-    )
-      return null;
-    return editParam
-      ? (products.find((p) => p.id === editParam) ?? null)
-      : null;
-  });
+  const router = useRouter();
+  const [editing, setEditing] = useState<Product | null>(() =>
+    editParam ? (products.find((p) => p.id === editParam) ?? null) : null
+  );
 
-  // scrub the param (shallow, DOM-only — no state set here) so a refresh
-  // or dialog-close doesn't re-trigger the deep link
+  // scrub the param THROUGH the router (updates router state, so
+  // editParam goes null and a tab-switch remount can't reopen the
+  // dialog). One RSC refetch on a deliberate navigation is fine — the
+  // return-path rule's replaceState guidance targets per-keystroke
+  // writes, not one-shot doorways.
   useEffect(() => {
-    if (editParam) window.history.replaceState(null, "", "/dashboard");
-  }, [editParam]);
+    if (editParam) router.replace("/dashboard", { scroll: false });
+  }, [editParam, router]);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "draft" | "suspended" | "archived"
   >("all");
