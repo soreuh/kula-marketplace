@@ -94,7 +94,7 @@ real launch.
   her avatar re-upload. RUN AT LAUNCH, not before.
 - [ ] Supabase: turn email confirmations back ON (Auth → Sign In / Providers) — deliberately left OFF 2026-08-14 while testing; SMTP is already live, so this is now a one-toggle change
 - [x] 2026-08-14 Supabase custom SMTP via her Resend (Auth → Emails → SMTP: smtp.resend.com:587 / user `resend` / pass = RESEND_API_KEY / from `Kula Marketplace <noreply@kula-marketplace.com>`) — verified: password-reset mail delivers to Gmail **Inbox**, not spam. Note: noreply@ has NO Porkbun forward (replies vanish); auth mail now counts against her Resend send cap. Auth rate limit (Auth → Rate Limits) still at Supabase's low default — raise it when confirmations go on.
-- [ ] Stripe live mode: she completes activation → swap `sk_live_`, create live webhook (same 4 events) → **check the Accounts v1 flag applies in live mode before the first real seller connects**
+- [ ] Stripe live mode: she completes activation → swap `sk_live_`, create live webhook (same 4 events) → **check the Accounts v1 flag applies in live mode before the first real seller connects** → turn ON customer card receipts (Settings → Emails → "Successful payments") so buyers get Stripe's receipt alongside kula's own "it's in your library" mail
 - [ ] Her real content: 3–5 paid listings + 1–2 strong freebies, real covers, filled instructor profile + avatar (kills the placeholder look and seeds the featured shelf)
 - [ ] Mailchimp footer address: swap her home address for a PO box / virtual mailbox if she wants (CAN-SPAM requires *an* address; every campaign prints it)
 - [ ] Decide backup posture: Supabase free-tier backups vs paid PITR before real sales exist
@@ -360,8 +360,29 @@ real launch.
 
 ## Tech — small
 
-- [ ] **File details / "what you get" (BUILT 2026-08-15 — ⚠️ run migration 024
-  FIRST, then push; needs live verify):** the product page now discloses the
+- [ ] **Buyer purchase email — "it's in your library" (BUILT 2026-08-15 —
+  ⚠️ run migration 025 FIRST, then push; needs live verify):** buyers
+  previously got NO email after buying (Resend mail went to the seller;
+  Stripe receipts are a separate dashboard toggle, still off in test). Now:
+  webhook sends the buyer a branded confirmation on paid orders, and
+  /api/claim-free sends the free-claim variant ("a gift from the teacher") —
+  both with an "open your library" link, from the same Resend sender as sale
+  emails. Transactional: no per-buyer toggle (receipts are expected mail);
+  admin's notifications section gains a third platform switch
+  (notify_purchase_emails), checked tolerantly by both send paths (missing
+  column = ON) — the admin FORM is why 025 must run before the push (it
+  writes all three switches at once). lib/email.ts also deduped in passing:
+  one shared sendViaResend() scaffold now carries all three email types
+  (anti-bloat rule in action; behavior unchanged). VERIFY: test purchase →
+  buyer inbox gets "it's in your library" AND seller still gets the sale
+  email · claim a freebie → free variant arrives · admin switch off → no
+  buyer email, switch back on · hostile title (`<b>x</b>`) renders as
+  literal text (esc() shared). Related go-live item: flip Stripe's own
+  customer receipt toggle at live activation (added to that checklist line).
+  Origin: gap report tier 1.
+- [x] 2026-08-15 **File details / "what you get"** (024 applied, pushed, and
+  VERIFIED LIVE same day by Aleks — fresh 27-page PDF showed "PDF · 27 pages ·
+  276 KB" in all three placements): the product page now discloses the
   file before purchase, three placements: "file — PDF · 12 pages · 2.1 MB"
   leading the metadata card · "instant download · pdf · 12 pages · 2.1 mb"
   echo under the price (the decision point) · preview pill upgraded to
@@ -378,7 +399,11 @@ real launch.
   second — the dialog writes the new columns, so new code against an
   un-migrated DB fails every listing save. VERIFY: fresh PDF listing shows
   all three placements · PPTX shows type + size only · metadata-only edit
-  leaves values untouched · pre-024 listing shows bare "PDF". Origin: gap
+  leaves values untouched · pre-024 listing shows bare "PDF". NOTE from the
+  verify (lesson worth keeping): a dashboard tab left open across a deploy
+  keeps running the OLD client bundle — the first test upload wrote no
+  pages/bytes and looked like a bug; a hard refresh (⌘⇧R) fixed it. When
+  testing upload-dialog changes, refresh the tab first. Origin: gap
   report tier 1 (../kula-functional-gap-analysis.md).
 - [x] 2026-08-15 **Explore sort** (built + lint/build gates + pushed live via
   push-live.sh same day, Aleks): sort select on explore next to search — recommended

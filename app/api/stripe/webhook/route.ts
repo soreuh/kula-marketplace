@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, siteUrl } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSaleEmail } from "@/lib/email";
+import { sendPurchaseEmail, sendSaleEmail } from "@/lib/email";
 
 /**
  * POST /api/stripe/webhook
@@ -67,35 +67,59 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      // Sale notification (feature-flagged on RESEND_API_KEY; fail-soft).
+      // Emails (feature-flagged on RESEND_API_KEY; fail-soft): sale
+      // notification to the seller, purchase confirmation to the buyer.
+      // Platform switches from admin → notifications; tolerant reads —
+      // an un-migrated column is undefined, which counts as ON.
       const { data: product } = await admin
         .from("products")
         .select("title, seller_id")
         .eq("id", meta.product_id)
         .single();
       if (product) {
-        const { data: seller } = await admin
-          .from("profiles")
-          .select("email, sale_notifications")
-          .eq("id", product.seller_id)
-          .single();
-        // Platform switch (admin → notifications) AND the seller's own
-        // preference. Tolerant: un-migrated column reads undefined = ON.
         const { data: notifSettings } = await admin
           .from("platform_settings")
           .select("*")
           .single();
-        const platformOn =
-          (notifSettings as { notify_sale_emails?: boolean } | null)
-            ?.notify_sale_emails !== false;
-        if (platformOn && seller?.sale_notifications) {
-          await sendSaleEmail({
-            to: seller.email,
-            productTitle: product.title,
-            netCents,
-            grossCents: session.amount_total ?? priceCents,
-            feeCents,
-          });
+        const ns = notifSettings as {
+          notify_sale_emails?: boolean;
+          notify_purchase_emails?: boolean;
+        } | null;
+
+        // seller side — platform switch AND the seller's own preference
+        if (ns?.notify_sale_emails !== false) {
+          const { data: seller } = await admin
+            .from("profiles")
+            .select("email, sale_notifications")
+            .eq("id", product.seller_id)
+            .single();
+          if (seller?.sale_notifications) {
+            await sendSaleEmail({
+              to: seller.email,
+              productTitle: product.title,
+              netCents,
+              grossCents: session.amount_total ?? priceCents,
+              feeCents,
+            });
+          }
+        }
+
+        // buyer side — transactional "it's in your library" (025); no
+        // per-buyer toggle, receipts are expected mail
+        if (ns?.notify_purchase_emails !== false) {
+          const { data: buyer } = await admin
+            .from("profiles")
+            .select("email")
+            .eq("id", meta.buyer_id)
+            .single();
+          if (buyer?.email) {
+            await sendPurchaseEmail({
+              to: buyer.email,
+              productTitle: product.title,
+              paidCents: session.amount_total ?? priceCents,
+              siteUrl: siteUrl(),
+            });
+          }
         }
       }
       break;

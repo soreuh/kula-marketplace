@@ -270,7 +270,7 @@ export async function updateGrowthModel(formData: FormData) {
   revalidatePath("/dashboard/admin");
 }
 
-/** Platform-wide email switches (admin → notifications, migration 022). */
+/** Platform-wide email switches (admin → notifications, migrations 022 + 025). */
 export async function updateNotificationSettings(formData: FormData) {
   const supabase = await requireAdmin();
   await supabase
@@ -279,6 +279,7 @@ export async function updateNotificationSettings(formData: FormData) {
       // unchecked boxes are absent from FormData — absence = off
       notify_content_updates: formData.get("notify_content_updates") === "on",
       notify_sale_emails: formData.get("notify_sale_emails") === "on",
+      notify_purchase_emails: formData.get("notify_purchase_emails") === "on",
     })
     .eq("id", true);
   revalidatePath("/dashboard/admin");

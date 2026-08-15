@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser, requireActiveAccount } from "@/lib/api-guards";
+import { sendPurchaseEmail } from "@/lib/email";
+import { siteUrl } from "@/lib/stripe";
 
 /**
  * POST /api/claim-free  { productId }
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
   // fetched with the USER's client — RLS ghosting/visibility applies
   const { data: product } = await supabase
     .from("products")
-    .select("id, seller_id, price_cents, status")
+    .select("id, seller_id, title, price_cents, status")
     .eq("id", productId)
     .eq("status", "active")
     .single();
@@ -66,6 +68,25 @@ export async function POST(request: Request) {
   });
   if (error)
     return NextResponse.json({ error: "Could not add to library" }, { status: 500 });
+
+  // "It's in your library" confirmation — same email the webhook sends for
+  // paid orders (025). Transactional, platform-switchable, fail-soft: the
+  // claim already succeeded, so nothing past this point can undo it.
+  const { data: settings } = await supabase
+    .from("platform_settings")
+    .select("*")
+    .single();
+  const purchaseEmailsOn =
+    (settings as { notify_purchase_emails?: boolean } | null)
+      ?.notify_purchase_emails !== false;
+  if (purchaseEmailsOn && user.email) {
+    await sendPurchaseEmail({
+      to: user.email,
+      productTitle: product.title,
+      paidCents: 0,
+      siteUrl: siteUrl(),
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

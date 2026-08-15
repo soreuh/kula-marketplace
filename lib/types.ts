@@ -121,4 +121,7 @@ export interface PlatformSettings {
   notify_content_updates?: boolean | null;
   /** Migration 022 — platform kill switch for seller sale emails. */
   notify_sale_emails?: boolean | null;
+  /** Migration 025 — platform kill switch for buyer purchase confirmations
+   *  ("it's in your library", paid + free claims). */
+  notify_purchase_emails?: boolean | null;
 }
