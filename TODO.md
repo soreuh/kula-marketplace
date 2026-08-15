@@ -361,8 +361,16 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M3 — library rows mirror the dashboard list (BUILT 2026-08-15 — no
-  migration; push + live verify):** Aleks's call from side-by-side
+- [ ] **M3+M4 — library rows mirror the dashboard list, + search & type
+  filters (BUILT 2026-08-15 — no migration; push + live verify):**
+  M4 (Aleks: "did we give them a search bar for their own content?" — we
+  hadn't): library gets the dashboard's own tools — search box + content-
+  type filter chips (chips render only when the shelf spans >1 type), in a
+  new client app/library/library-list.tsx that also owns the M3 rows; the
+  server page just preps row data. Search/type state mirrors to the URL
+  (?q= &type=, shallow replaceState) per the return-path rule — back
+  restores it, bare /library stays bare. No-match state offers one-click
+  clear. Aleks's call from side-by-side
   screenshots: the library rendered SHOP-style ProductCards (big cover,
   price, "view details") with a detached full-width download button —
   clunky for things you already own. Rebuilt as the same compact row

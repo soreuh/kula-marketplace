@@ -3,12 +3,17 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { fetchProductRatings } from "@/lib/ratings";
 import { priceLabel } from "@/lib/fees";
-import { CoverArt, Stars, btnPrimary } from "@/components/ui";
+import { btnPrimary } from "@/components/ui";
+import LibraryList, { type LibraryRow } from "./library-list";
 import type { Order, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-/** The buyer's permanent shelf — everything purchased, downloadable forever. */
+/** The buyer's permanent shelf — everything purchased, downloadable forever.
+ *  Server side: auth + fetches + row prep. Rendering, search, and type
+ *  filters live in the client LibraryList (M3+M4, 2026-08-15) — compact
+ *  rows mirroring the dashboard "my content" list, with search/filter
+ *  state mirrored to the URL per the return-path rule. */
 export default async function LibraryPage() {
   const supabase = await createClient();
   const {
@@ -38,6 +43,22 @@ export default async function LibraryPage() {
     ((products as Product[] | null) ?? []).map((p) => [p.id, p])
   );
 
+  const rows = paid.map((o): LibraryRow => {
+    const p = productById.get(o.product_id);
+    const r = ratings[o.product_id];
+    return {
+      orderId: o.id,
+      productId: o.product_id,
+      title: p?.title ?? null,
+      contentType: p?.content_type ?? null,
+      category: p?.category ?? null,
+      coverPath: p?.cover_path ?? null,
+      paidLabel: priceLabel(o.amount_cents),
+      rating: r && r.count > 0 ? { avg: r.avg, count: r.count } : null,
+      purchased: o.created_at,
+    };
+  });
+
   return (
     <div>
       <section className="bg-mist/60 px-5 py-10">
@@ -54,7 +75,7 @@ export default async function LibraryPage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-5 py-8">
-        {!paid.length ? (
+        {!rows.length ? (
           <div className="rounded-2xl border border-dashed border-ink/15 bg-white/60 p-12 text-center">
             <h3 className="font-display text-2xl font-bold lowercase">
               nothing here yet
@@ -65,76 +86,7 @@ export default async function LibraryPage() {
             </Link>
           </div>
         ) : (
-          /* Compact rows mirroring the dashboard "my content" list (M3,
-             Aleks 2026-08-15) — the shop-style ProductCard grid read as
-             clunky for things you already own. Same row anatomy as the
-             seller side: thumb · title + sub-line · action pills. */
-          <div className="flex flex-col gap-4">
-            {paid.map((o) => {
-              const p = productById.get(o.product_id);
-              const r = ratings[o.product_id];
-              return (
-                <div
-                  key={o.id}
-                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-ink/5 bg-white p-3 text-sm shadow-sm"
-                >
-                  {p ? (
-                    <>
-                      <CoverArt
-                        seed={`${p.category}-${p.title}`}
-                        imagePath={p.cover_path}
-                        className="h-14 w-20 shrink-0 rounded-xl"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/products/${p.id}`}
-                          className="truncate font-display font-semibold hover:text-sage-600"
-                        >
-                          {p.title}
-                        </Link>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-fog">
-                          {p.content_type && <span>{p.content_type} ·</span>}
-                          <span>{priceLabel(o.amount_cents)}</span>
-                          {r && r.count > 0 && (
-                            <Stars rating={r.avg} count={r.count} />
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="min-w-0 flex-1">
-                      <p className="font-display font-semibold">
-                        (listing no longer public)
-                      </p>
-                      <p className="mt-1 text-fog">
-                        purchased {new Date(o.created_at).toLocaleDateString()} —
-                        your download still works.
-                      </p>
-                    </div>
-                  )}
-                  {p && (
-                    <Link
-                      href={`/products/${p.id}`}
-                      className="rounded-full border border-ink/10 px-3.5 py-1.5 lowercase hover:border-ink/30"
-                    >
-                      view
-                    </Link>
-                  )}
-                  <a
-                    href={`/api/download/${o.product_id}`}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-sage-500 px-4 py-1.5 font-display font-semibold lowercase text-white hover:bg-sage-600"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M12 3v12" />
-                      <path d="m7 10 5 5 5-5" />
-                      <path d="M5 21h14" />
-                    </svg>
-                    download
-                  </a>
-                </div>
-              );
-            })}
-          </div>
+          <LibraryList rows={rows} />
         )}
       </div>
     </div>
