@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser, requireActiveAccount } from "@/lib/api-guards";
-import { sendPurchaseEmail } from "@/lib/email";
+import { sendFreeClaimEmail, sendPurchaseEmail } from "@/lib/email";
 import { siteUrl } from "@/lib/stripe";
 
 /**
@@ -69,23 +69,47 @@ export async function POST(request: Request) {
   if (error)
     return NextResponse.json({ error: "Could not add to library" }, { status: 500 });
 
-  // "It's in your library" confirmation — same email the webhook sends for
-  // paid orders (025). Transactional, platform-switchable, fail-soft: the
-  // claim already succeeded, so nothing past this point can undo it.
+  // Emails — fail-soft: the claim already succeeded, so nothing past this
+  // point can undo it. Both platform switches come from the one settings
+  // row, read tolerantly (missing column = ON).
   const { data: settings } = await supabase
     .from("platform_settings")
     .select("*")
     .single();
-  const purchaseEmailsOn =
-    (settings as { notify_purchase_emails?: boolean } | null)
-      ?.notify_purchase_emails !== false;
-  if (purchaseEmailsOn && user.email) {
+  const ns = settings as {
+    notify_purchase_emails?: boolean;
+    notify_sale_emails?: boolean;
+  } | null;
+
+  // buyer — "it's in your library", same mail the webhook sends for paid
+  // orders (025), in its free-claim wording
+  if (ns?.notify_purchase_emails !== false && user.email) {
     await sendPurchaseEmail({
       to: user.email,
       productTitle: product.title,
       paidCents: 0,
       siteUrl: siteUrl(),
     });
+  }
+
+  // seller — "someone grabbed your freebie". Free claims never hit the
+  // Stripe webhook, so this is the seller's only signal. Rides the
+  // SALE-email controls (platform switch + seller's own toggle): no new
+  // knob to maintain. Duplicate claims return early above, so a buyer
+  // re-clicking never re-pings the seller.
+  if (ns?.notify_sale_emails !== false) {
+    const { data: seller } = await admin
+      .from("profiles")
+      .select("email, sale_notifications")
+      .eq("id", product.seller_id)
+      .single();
+    if (seller?.sale_notifications) {
+      await sendFreeClaimEmail({
+        to: seller.email,
+        productTitle: product.title,
+        siteUrl: siteUrl(),
+      });
+    }
   }
 
   return NextResponse.json({ ok: true });

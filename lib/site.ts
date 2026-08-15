@@ -23,6 +23,17 @@ export const CONTACT_EMAIL =
 export const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
 
 /**
+ * SITE_URL — the site's public origin for places that need an ABSOLUTE
+ * url (emails, mailto bodies). Env-first like everything else; the
+ * fallback is the production domain, never localhost — a link in an
+ * email or a report should never point at a dev box. (lib/stripe's
+ * siteUrl() keeps its own localhost-friendly fallback for checkout
+ * redirects, which SHOULD hit the box you're testing on.)
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://kula-marketplace.com";
+
+/**
  * TERMS_VERSION — which revision of /terms + /privacy a user agreed to.
  *
  * The signup checkbox sends this string with the account; migration 014

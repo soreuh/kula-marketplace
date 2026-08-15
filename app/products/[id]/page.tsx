@@ -4,15 +4,18 @@ import InstructorRating from "@/components/instructor-rating";
 import { formatUsd, priceLabel } from "@/lib/fees";
 import { durationLabel } from "@/lib/categories";
 import { coverUrl } from "@/lib/covers";
+import { fetchProductRatings } from "@/lib/ratings";
 import type { Instructor, Product, Review } from "@/lib/types";
 import {
   Chip,
   CoverArt,
   InstructorCard,
+  ProductCard,
   Stars,
   TeachabilityBadge,
 } from "@/components/ui";
 import BuyButton from "./buy-button";
+import ReportListing from "./report-listing";
 import ReviewForm from "./review-form";
 import ReviewReply from "./review-reply";
 import ViewPing from "./view-ping";
@@ -96,7 +99,13 @@ export default async function ProductPage({
   const user = auth.user;
   const isSeller = !!user && p.seller_id === user.id;
 
-  const [{ data: instructor }, { data: reviews }, ownedRes] = await Promise.all([
+  const [
+    { data: instructor },
+    { data: reviews },
+    ownedRes,
+    { data: moreRows },
+    ratings,
+  ] = await Promise.all([
     supabase.from("instructors").select("*").eq("id", p.seller_id).maybeSingle(),
     supabase
       .from("reviews")
@@ -112,8 +121,20 @@ export default async function ProductPage({
           .eq("status", "paid")
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    // "more from this teacher" — the seller's other live listings.
+    // RLS-scoped like everything else, so ghosted/draft rows can't appear.
+    supabase
+      .from("products")
+      .select("*")
+      .eq("seller_id", p.seller_id)
+      .eq("status", "active")
+      .neq("id", p.id)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    fetchProductRatings(supabase), // stars for those cards (shared helper)
   ]);
 
+  const more = (moreRows as Product[] | null) ?? [];
   const alreadyOwned = !!ownedRes.data;
   const reviewList = (reviews as Review[] | null) ?? [];
   const avg =
@@ -284,6 +305,28 @@ export default async function ProductPage({
             </div>
           )}
 
+          {/* more from this teacher — the cheap, honest slice of
+              "recommendations": no algorithm, just the seller's other live
+              work (Etsy/TpT both cross-sell the shop on the listing page). */}
+          {more.length > 0 && (
+            <div className="mt-8">
+              <h2 className="mb-3 font-display text-2xl font-bold lowercase">
+                more from this teacher
+              </h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {more.map((m) => (
+                  <ProductCard
+                    key={m.id}
+                    product={m}
+                    priceLabel={priceLabel(m.price_cents)}
+                    rating={ratings[m.id]?.avg ?? null}
+                    reviewCount={ratings[m.id]?.count ?? 0}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* reviews */}
           <div className="mt-8">
             <h2 className="mb-3 font-display text-2xl font-bold lowercase">
@@ -419,6 +462,10 @@ export default async function ProductPage({
             </svg>
             Secure payment via Stripe
           </p>
+          {/* Registered users only (Aleks's call — no drive-by spam):
+              anon visitors never see the control, and /api/report is the
+              real gate (auth + moderation + 5/day rate limit). */}
+          {user && <ReportListing productId={p.id} />}
         </div>
       </div>
     </div>

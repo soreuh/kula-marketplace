@@ -360,8 +360,37 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Buyer purchase email — "it's in your library" (BUILT 2026-08-15 —
-  ⚠️ run migration 025 FIRST, then push; needs live verify):** buyers
+- [ ] **Report-listing form + "more from this teacher" + freebie seller ping
+  (BUILT 2026-08-15 — no migration; push + live verify):** three small
+  closes in one push. (1) "report this listing" under the price card —
+  REGISTERED USERS ONLY (Aleks's call: no drive-by spam; anon never sees
+  the control). Tiny inline form (category select: copyright / inappropriate
+  / misleading / other + optional details) → POST /api/report → auth +
+  moderation gate + 5/day/user via the 018 counters → report emailed to
+  CONTACT_EMAIL on the branded shell with listing link + reporter address
+  (reply = one click). No reports table on purpose — the inbox is the queue
+  at this scale; failed send returns an error (this mail IS the feature).
+  (2) "more from this teacher" on the product page — up to 4 of the seller's
+  other ACTIVE listings (RLS-scoped query, shared fetchProductRatings for
+  stars) rendered as ProductCards after the instructor card; the no-algorithm
+  slice of "recommendations" Etsy/TpT both ship. (3) sellers now get
+  "someone grabbed your freebie" when a $0 listing is claimed (Aleks's
+  catch: free claims never hit the Stripe webhook, so sellers heard
+  NOTHING) — new sendFreeClaimEmail in lib/email.ts on the shared branded
+  shell, sent from /api/claim-free, riding the EXISTING sale-email controls
+  (platform notify_sale_emails + seller's sale_notifications toggle — no new
+  knob; duplicate claims return early and never re-ping). Also: SITE_URL
+  moved to lib/site.ts as the one absolute-origin source for emails/mailtos
+  (email.ts's local copy removed). VERIFY: report link opens prefilled mail ·
+  product page of a seller with 2+ listings shows the row (and hides it for
+  single-listing sellers) · freebie claim → seller ping + buyer email both
+  arrive · seller toggle off → buyer email only. Origin: gap report tier 1
+  (items 4 + 5 — closes tier 1).
+- [x] 2026-08-15 **Buyer purchase email — "it's in your library"** (SHIPPED
+  2026-08-15, 025 applied; paid path VERIFIED live same day — both emails
+  arrived, fee math exact ($999 → net $699.05); freebie-claim variant +
+  switch spot-checks confirmed by Aleks same day — "all good on both"):
+  buyers
   previously got NO email after buying (Resend mail went to the seller;
   Stripe receipts are a separate dashboard toggle, still off in test). Now:
   webhook sends the buyer a branded confirmation on paid orders, and
@@ -379,6 +408,13 @@ real launch.
   buyer email, switch back on · hostile title (`<b>x</b>`) renders as
   literal text (esc() shared). Related go-live item: flip Stripe's own
   customer receipt toggle at live activation (added to that checklist line).
+  SAME-DAY RESTYLE (Aleks's ask — "better, not gaudy"): all four email
+  variants now share a branded shell in lib/email.ts — cream backdrop, white
+  rounded card, lowercase "kula" wordmark, sage pill CTA, muted footer,
+  palette mirrored from globals.css. Deliberately image-free + inline-styled
+  + system fonts (email clients strip stylesheets, block remote images, and
+  won't load Poppins; Outlook just renders square corners). Sale email
+  gained a "view your earnings" button. Titles still esc()'d.
   Origin: gap report tier 1.
 - [x] 2026-08-15 **File details / "what you get"** (024 applied, pushed, and
   VERIFIED LIVE same day by Aleks — fresh 27-page PDF showed "PDF · 27 pages ·
