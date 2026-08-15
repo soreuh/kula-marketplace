@@ -361,13 +361,32 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Settings S3 — close-out (IN PROGRESS 2026-08-15):** email-hooks
-  matrix landed in CLAUDE.md (the durable annotation) + the one deferred
-  live check: sweep RESPECTS the new nudge opt-out (backdate an order into
-  the 3–14d window, flip the buyer's review-reminders toggle off, curl the
-  sweep → nudges_sent 0 AND the order comes back STAMPED so opt-outs never
-  requeue). Positive nudge path already proven in block 9. Tick on Aleks's
-  zeros.
+- [ ] **M1 — mobile buy CTA placement (BUILT 2026-08-15 — no migration;
+  push + live verify):** Aleks's phone find: on mobile the price card (and
+  the buy button in it) rendered LAST — the 2-col product grid stacks on
+  small screens and the card was the second grid child, so phones scrolled
+  past cover, description, details, preview, seller card and ALL reviews
+  before any CTA. Fix = pure DOM reorder, Gumroad/Etsy mobile pattern:
+  grid split into three blocks — (1) cover+title+stars, (2) price card,
+  (3) description onward — so mobile order puts the buy decision on the
+  FIRST screen; desktop pixel-identical (card pinned lg:col-start-2
+  row-span-2, still sticky). Mobile stack gap tightened gap-6 (lg:gap-10
+  unchanged). No new UI, no logic touched. VERIFY (phone): buy button
+  visible right under title without scrolling past content · owned
+  listing shows download in same spot · desktop 2-col layout unchanged,
+  card still sticky on scroll.
+- [x] 2026-08-15 **Settings S3 — close-out** (VERIFIED same day: email-hooks
+  matrix + dropped-sends lesson landed in CLAUDE.md; live opt-out check
+  passed — backdated order + buyer's review-reminders toggle OFF via the
+  real /settings UI → curl {"ok":true,"nudges_sent":0,...} AND
+  review_nudge_sent_at stamped 2026-08-15 17:45 UTC, so opt-outs never
+  requeue. Positive nudge path was proven in block 9). CLOSES the settings
+  consolidation block: S1 page/account · S2 prefs+seam+031+2 regression
+  fixes · S2b one-Switch-schema + login-returning change-email · S3 docs +
+  final gate test. NOTE for the next few days: today's live-test freebie
+  claims are $0 PAID orders — they enter the 3–14d nudge window ~08-18 and
+  may nudge the test inboxes (expected behavior, not a bug; leave a review
+  or ignore — they stamp either way).
 - [x] 2026-08-15 **Settings S2 + S2b — prefs in one place** (031 run +
   pushed + VERIFIED same day, all checks: toggles live in /settings and
   stick after reload (3 buyer / 4 seller) · old homes empty (library

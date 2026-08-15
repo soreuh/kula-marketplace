@@ -4,18 +4,15 @@ import InstructorRating from "@/components/instructor-rating";
 import { formatUsd, priceLabel } from "@/lib/fees";
 import { durationLabel } from "@/lib/categories";
 import { coverUrl } from "@/lib/covers";
-import { fetchProductRatings } from "@/lib/ratings";
 import type { Instructor, Product, Review } from "@/lib/types";
 import {
   Chip,
   CoverArt,
   InstructorCard,
-  ProductCard,
   Stars,
   TeachabilityBadge,
 } from "@/components/ui";
 import BuyButton from "./buy-button";
-import ReportListing from "./report-listing";
 import ReviewForm from "./review-form";
 import ReviewReply from "./review-reply";
 import ViewPing from "./view-ping";
@@ -99,13 +96,7 @@ export default async function ProductPage({
   const user = auth.user;
   const isSeller = !!user && p.seller_id === user.id;
 
-  const [
-    { data: instructor },
-    { data: reviews },
-    ownedRes,
-    { data: moreRows },
-    ratings,
-  ] = await Promise.all([
+  const [{ data: instructor }, { data: reviews }, ownedRes] = await Promise.all([
     supabase.from("instructors").select("*").eq("id", p.seller_id).maybeSingle(),
     supabase
       .from("reviews")
@@ -121,20 +112,8 @@ export default async function ProductPage({
           .eq("status", "paid")
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    // "more from this teacher" — the seller's other live listings.
-    // RLS-scoped like everything else, so ghosted/draft rows can't appear.
-    supabase
-      .from("products")
-      .select("*")
-      .eq("seller_id", p.seller_id)
-      .eq("status", "active")
-      .neq("id", p.id)
-      .order("created_at", { ascending: false })
-      .limit(4),
-    fetchProductRatings(supabase), // stars for those cards (shared helper)
   ]);
 
-  const more = (moreRows as Product[] | null) ?? [];
   const alreadyOwned = !!ownedRes.data;
   const reviewList = (reviews as Review[] | null) ?? [];
   const avg =
@@ -200,9 +179,9 @@ export default async function ProductPage({
     />
     <div className="mx-auto max-w-6xl px-5 py-10">
       <ViewPing productId={p.id} />
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-        {/* ── left: art, description, metadata, seller, reviews ── */}
-        <div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
+        {/* ── art + title (mobile: first thing on the page) ── */}
+        <div className="lg:col-start-1">
           <CoverArt
             seed={`${p.category}-${p.title}`}
             imagePath={p.cover_path}
@@ -222,8 +201,100 @@ export default async function ProductPage({
             <div className="mt-2">
               <Stars rating={avg} count={reviewList.length} />
             </div>
-            <p className="mt-4 whitespace-pre-wrap text-fog">{p.description}</p>
           </div>
+        </div>
+
+        {/* ── price card (M1, 2026-08-15): SECOND in DOM so on MOBILE it
+            renders right under the title — the buy decision was the LAST
+            thing on the page before this. Desktop unchanged: pinned to the
+            right column (col-start-2, spanning both left rows), sticky. ── */}
+        <div className="h-fit rounded-2xl border border-ink/5 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+          <div className="flex items-baseline justify-between">
+            <span className="lowercase text-fog">price</span>
+            <span className="font-display text-4xl font-bold">
+              {priceLabel(p.price_cents)}
+            </span>
+          </div>
+          <p className="mt-1 text-right text-sm text-fog">
+            {p.price_cents === 0
+              ? "a gift from the teacher. lifetime access."
+              : "one-time payment. lifetime access."}
+          </p>
+          {/* Etsy-pattern disclosure at the decision point: what exactly the
+              money buys, right where the buy decision happens. */}
+          {fileMeta && (
+            <p className="mt-0.5 text-right text-xs text-fog">
+              instant download · {fileMeta.toLowerCase()}
+            </p>
+          )}
+          {/* Note: no fee breakdown here on purpose — commission is between
+              kula and the seller (and partner rates are private). */}
+
+          <div className="mt-6">
+            {/* Order matters: ownership is checked BEFORE availability.
+                "not currently available" used to come first, so a buyer who
+                already owned a draft/archived/suspended listing was told their
+                own purchase was unavailable and lost the download button on
+                this page (the library still worked, and /api/download only
+                ever checks for a paid order — so the page was simply lying).
+                Access is permanent; only the ability to BUY goes away. */}
+            {isSeller ? (
+              <div className="flex flex-col gap-2">
+                <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
+                  you own this — it&apos;s your listing.
+                </p>
+                <a
+                  href={`/api/download/${p.id}`}
+                  className="flex w-full items-center justify-center rounded-full border border-ink/15 px-6 py-3 font-display font-semibold lowercase hover:border-ink/40"
+                >
+                  download your file
+                </a>
+              </div>
+            ) : alreadyOwned ? (  // owns it — status is irrelevant
+              <div className="flex flex-col gap-2">
+                <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
+                  you&apos;ve purchased this.
+                </p>
+                <a
+                  href={`/api/download/${p.id}`}
+                  className="flex w-full items-center justify-center rounded-full bg-sage-500 px-6 py-3.5 font-display font-semibold lowercase text-white hover:bg-sage-600"
+                >
+                  download
+                </a>
+              </div>
+            ) : p.status !== "active" ? (
+              // Doesn't own it and it isn't live — no buy button. (Mostly
+              // unreachable: RLS hides non-active rows from anyone who isn't
+              // the seller, an admin, or a prior buyer, so this is the admin
+              // view. Kept so the UI can never offer an unbuyable listing.)
+              <p className="rounded-xl bg-mist p-4 text-center text-sm text-fog">
+                this listing is not currently available.
+              </p>
+            ) : (
+              <BuyButton
+                productId={p.id}
+                loggedIn={!!user}
+                totalLabel={formatUsd(p.price_cents)}
+                free={p.price_cents === 0}
+              />
+            )}
+          </div>
+          {/* only when money actually moves — a freebie showing "secure
+              payment" reads wrong (Aleks's phone screenshot, M1) */}
+          {p.price_cents > 0 && (
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-fog">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <rect x="4" y="11" width="16" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+              Secure payment via Stripe
+            </p>
+          )}
+        </div>
+
+        {/* ── description, metadata, preview, seller, reviews ── */}
+        <div className="lg:col-start-1">
+          <p className="whitespace-pre-wrap text-fog">{p.description}</p>
 
           {metaRows.length > 0 && (
             <div className="mt-6 overflow-hidden rounded-2xl border border-ink/5 bg-white text-sm shadow-sm">
@@ -305,28 +376,6 @@ export default async function ProductPage({
             </div>
           )}
 
-          {/* more from this teacher — the cheap, honest slice of
-              "recommendations": no algorithm, just the seller's other live
-              work (Etsy/TpT both cross-sell the shop on the listing page). */}
-          {more.length > 0 && (
-            <div className="mt-8">
-              <h2 className="mb-3 font-display text-2xl font-bold lowercase">
-                more from this teacher
-              </h2>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {more.map((m) => (
-                  <ProductCard
-                    key={m.id}
-                    product={m}
-                    priceLabel={priceLabel(m.price_cents)}
-                    rating={ratings[m.id]?.avg ?? null}
-                    reviewCount={ratings[m.id]?.count ?? 0}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* reviews */}
           <div className="mt-8">
             <h2 className="mb-3 font-display text-2xl font-bold lowercase">
@@ -383,90 +432,6 @@ export default async function ProductPage({
           </div>
         </div>
 
-        {/* ── right: price card ── */}
-        <div className="h-fit rounded-2xl border border-ink/5 bg-white p-6 shadow-sm lg:sticky lg:top-24">
-          <div className="flex items-baseline justify-between">
-            <span className="lowercase text-fog">price</span>
-            <span className="font-display text-4xl font-bold">
-              {priceLabel(p.price_cents)}
-            </span>
-          </div>
-          <p className="mt-1 text-right text-sm text-fog">
-            {p.price_cents === 0
-              ? "a gift from the teacher. lifetime access."
-              : "one-time payment. lifetime access."}
-          </p>
-          {/* Etsy-pattern disclosure at the decision point: what exactly the
-              money buys, right where the buy decision happens. */}
-          {fileMeta && (
-            <p className="mt-0.5 text-right text-xs text-fog">
-              instant download · {fileMeta.toLowerCase()}
-            </p>
-          )}
-          {/* Note: no fee breakdown here on purpose — commission is between
-              kula and the seller (and partner rates are private). */}
-
-          <div className="mt-6">
-            {/* Order matters: ownership is checked BEFORE availability.
-                "not currently available" used to come first, so a buyer who
-                already owned a draft/archived/suspended listing was told their
-                own purchase was unavailable and lost the download button on
-                this page (the library still worked, and /api/download only
-                ever checks for a paid order — so the page was simply lying).
-                Access is permanent; only the ability to BUY goes away. */}
-            {isSeller ? (
-              <div className="flex flex-col gap-2">
-                <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
-                  you own this — it&apos;s your listing.
-                </p>
-                <a
-                  href={`/api/download/${p.id}`}
-                  className="flex w-full items-center justify-center rounded-full border border-ink/15 px-6 py-3 font-display font-semibold lowercase hover:border-ink/40"
-                >
-                  download your file
-                </a>
-              </div>
-            ) : alreadyOwned ? (  // owns it — status is irrelevant
-              <div className="flex flex-col gap-2">
-                <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
-                  you&apos;ve purchased this.
-                </p>
-                <a
-                  href={`/api/download/${p.id}`}
-                  className="flex w-full items-center justify-center rounded-full bg-sage-500 px-6 py-3.5 font-display font-semibold lowercase text-white hover:bg-sage-600"
-                >
-                  download
-                </a>
-              </div>
-            ) : p.status !== "active" ? (
-              // Doesn't own it and it isn't live — no buy button. (Mostly
-              // unreachable: RLS hides non-active rows from anyone who isn't
-              // the seller, an admin, or a prior buyer, so this is the admin
-              // view. Kept so the UI can never offer an unbuyable listing.)
-              <p className="rounded-xl bg-mist p-4 text-center text-sm text-fog">
-                this listing is not currently available.
-              </p>
-            ) : (
-              <BuyButton
-                productId={p.id}
-                loggedIn={!!user}
-                totalLabel={formatUsd(p.price_cents)}
-                free={p.price_cents === 0}
-              />
-            )}
-          </div>
-          <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-fog">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <rect x="4" y="11" width="16" height="10" rx="2" />
-              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-            </svg>
-            Secure payment via Stripe
-          </p>
-          {/* Registered users only (Aleks's call — no drive-by spam):
-              anon visitors never see the control, and /api/report is the
-              real gate (auth + moderation + 5/day rate limit). */}
-          {user && <ReportListing productId={p.id} />}
-        </div>
       </div>
     </div>
     </>
