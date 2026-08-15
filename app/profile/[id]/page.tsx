@@ -26,11 +26,18 @@ export async function generateMetadata({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: inst } = await supabase
-    .from("instructors")
-    .select("display_name, shop_name, bio")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: inst }, { count: listingCount }] = await Promise.all([
+    supabase
+      .from("instructors")
+      .select("display_name, shop_name, bio")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("seller_id", id)
+      .eq("status", "active"),
+  ]);
   if (!inst) return {};
   const name = inst.shop_name || inst.display_name || "kula instructor";
   const bio = inst.bio?.replace(/\s+/g, " ").trim();
@@ -42,6 +49,10 @@ export async function generateMetadata({
         : bio
       : `yoga teaching content by ${name} on kula.`,
     alternates: { canonical: `/profile/${id}` },
+    // 029: every account has a page, but only profiles with published
+    // content belong in search — empty ones (buyers) stay reachable by
+    // shared URL and nothing more. Pairs with the sitemap restriction.
+    ...(listingCount ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
@@ -173,7 +184,9 @@ export default async function InstructorProfilePage({
               </div>
             )}
             {inst.bio && <p className="mt-3 max-w-2xl text-fog">{inst.bio}</p>}
-            {!isOwner && (
+            {/* only when there's content to ask about (029: buyers have
+                profiles too, and "this teacher's content" needs content) */}
+            {!isOwner && listings.length > 0 && (
               <p className="mt-3 text-xs">
                 <a
                   href={askHref}

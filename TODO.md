@@ -361,9 +361,42 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Block 9 — review flywheel: nudges, seller notices, header bell
-  (BUILT 2026-08-15 — ⚠️ run migration 028 FIRST, set CRON_SECRET in
-  Netlify env (any long random string) + redeploy, then verify):** reviews
+- [ ] **Every account gets a profile page (029, BUILT 2026-08-15 mid-block-9
+  testing — run 029 any time, order-safe; push + verify):** Aleks's product
+  call, surfaced when his test BUYER's "my profile" menu link 404'd — a
+  PRE-EXISTING trap: the instructors view was sellers/admins-only from v1,
+  yet the menu offered the link to everyone, and buyers couldn't even set an
+  avatar (profile editing lives on the page they couldn't reach). Rationale:
+  kula has no buyer/seller fork, so a profile from day one that grows a
+  shelf when you post IS the account model; buyers here are teachers.
+  029 drops the role filter (view keeps its historical name — renaming
+  churns every consumer for zero behavior; treat as "public member
+  directory"). Privacy carve-outs in code: sitemap now lists only sellers
+  with ≥1 active listing (derived from the catalog query — the separate
+  instructors fetch was deleted, anti-bloat) · empty profiles get
+  robots noindex in generateMetadata · ask-a-question renders only when
+  the profile has published content · no directory exists and nothing
+  links buyer profiles, so they're shared-URL-only. Also in this pass:
+  bell dropdown links pin text-ink (they inherited white over the dark
+  404 page) and the interim hide-for-buyers menu hotfix was reverted in
+  favor of the real fix. VERIFY: buyer's "my profile" now renders (avatar/
+  bio/member-since, empty-shelf state, "+ add content"), buyer can edit
+  profile + set an avatar · view-source on the buyer profile shows the
+  noindex meta, seller profile doesn't · /sitemap.xml lists seller
+  profiles only · ask-a-question absent on the buyer profile, present on
+  sellers'.
+- [x] 2026-08-15 **Block 9 — review flywheel: nudges, seller notices, header
+  bell** (028 applied, CRON_SECRET set, deployed, and VERIFIED live same day
+  by full walkthrough: auth gate 401/401/200 · backdated order → nudge
+  email on the branded shell, repeat curl 0 (stamp holds) · review left →
+  bell cleared itself · next sweep → seller notice sent, reviews_covered 1 ·
+  kill switch returned skipped:"switched off", then re-enabled ·
+  "Scheduling functions: review-sweep-cron" confirmed in the deploy log;
+  remaining passive check: tomorrow's ~11am ET scheduled run should send
+  nothing. Debug lesson recorded: a curl returning honest zeros meant "no
+  order in the 3–14d window" — the step-2 backdate hadn't run; also the
+  sweep's silent catch blocks made that slower to see than it should have
+  been — if it ever needs deeper debugging, add error detail to its JSON):** reviews
   power the featured score / instructor rating / JSON-LD stars, so this
   block engineers their collection. ONE daily sweep does both emails:
   /api/cron/review-sweep (POST, Bearer CRON_SECRET; feature stays dark

@@ -74,7 +74,7 @@ export default function BellMenu() {
                   key={t.productId}
                   href={`/products/${t.productId}`}
                   onClick={() => setOpen(false)}
-                  className="block truncate px-4 py-2 text-sm hover:bg-mist"
+                  className="block truncate px-4 py-2 text-sm text-ink hover:bg-mist"
                 >
                   {t.title}
                 </Link>
@@ -91,7 +91,7 @@ export default function BellMenu() {
                   key={`${t.productId}-${i}`}
                   href={`/products/${t.productId}`}
                   onClick={() => setOpen(false)}
-                  className="block truncate px-4 py-2 text-sm hover:bg-mist"
+                  className="block truncate px-4 py-2 text-sm text-ink hover:bg-mist"
                 >
                   <span className="text-sage-600">{"★".repeat(t.rating)}</span>{" "}
                   on {t.title}

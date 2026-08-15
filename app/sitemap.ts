@@ -26,13 +26,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { auth: { persistSession: false } }
     );
-    const [{ data: products }, { data: instructors }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("id, updated_at")
-        .eq("status", "active"),
-      supabase.from("instructors").select("id, created_at"),
-    ]);
+    const { data: products } = await supabase
+      .from("products")
+      .select("id, updated_at, seller_id")
+      .eq("status", "active");
+    // Profiles in the sitemap = sellers with at least one ACTIVE listing,
+    // derived from the same catalog query (029: EVERY account has a
+    // profile page now, but empty ones stay unlisted + noindexed — no
+    // googleable pages for accounts that only buy). RLS already excludes
+    // ghosted sellers' listings, so the derivation inherits moderation.
+    const sellerIds = [...new Set((products ?? []).map((p) => p.seller_id))];
     return [
       ...staticPages,
       ...(products ?? []).map((p) => ({
@@ -40,8 +43,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(p.updated_at),
         priority: 0.8,
       })),
-      ...(instructors ?? []).map((i) => ({
-        url: `${base}/profile/${i.id}`,
+      ...sellerIds.map((id) => ({
+        url: `${base}/profile/${id}`,
         lastModified: now,
         priority: 0.5,
       })),

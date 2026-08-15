@@ -50,6 +50,8 @@ export default function UserMenu({
           <MenuLink href="/dashboard" onClick={() => setOpen(false)}>
             dashboard
           </MenuLink>
+          {/* every account has a profile page since 029 — buyers included
+              (their page is just avatar/bio/member-since until they post) */}
           <MenuLink href={`/profile/${userId}`} onClick={() => setOpen(false)}>
             my profile
           </MenuLink>
