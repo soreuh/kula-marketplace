@@ -983,12 +983,19 @@ function UploadDialog({
     }
   }
 
-  async function generatePreview(f: File): Promise<Blob | null> {
+  /** Blurred page-1 preview + page count from ONE pdf.js pass — pages is
+   *  read the moment the doc opens, so even a failed render still reports
+   *  it. Both are best-effort and never block publishing. */
+  async function generatePreview(
+    f: File
+  ): Promise<{ blob: Blob | null; pages: number | null }> {
+    let pages: number | null = null;
     try {
       const pdfjs = await import("pdfjs-dist");
       pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
       const data = await f.arrayBuffer();
       const doc = await pdfjs.getDocument({ data }).promise;
+      pages = doc.numPages;
       const page = await doc.getPage(1);
       const base = page.getViewport({ scale: 1 });
       const vp = page.getViewport({ scale: 700 / base.width });
@@ -996,20 +1003,21 @@ function UploadDialog({
       canvas.width = Math.round(vp.width);
       canvas.height = Math.round(vp.height);
       const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
+      if (!ctx) return { blob: null, pages };
       await page.render({ canvas, canvasContext: ctx, viewport: vp }).promise;
       const out = document.createElement("canvas");
       out.width = canvas.width;
       out.height = canvas.height;
       const octx = out.getContext("2d");
-      if (!octx) return null;
+      if (!octx) return { blob: null, pages };
       octx.filter = "blur(7px)";
       octx.drawImage(canvas, 0, 0);
-      return await new Promise((resolve) =>
+      const blob = await new Promise<Blob | null>((resolve) =>
         out.toBlob((b) => resolve(b), "image/jpeg", 0.75)
       );
+      return { blob, pages };
     } catch {
-      return null; // preview is best-effort — never block publishing
+      return { blob: null, pages }; // best-effort — never block publishing
     }
   }
 
@@ -1075,11 +1083,16 @@ function UploadDialog({
         if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
       }
 
-      // 2) blurred preview (PDF only) → public covers bucket
+      // 2) blurred preview (PDF only) → public covers bucket. The same
+      //    pdf.js pass reports the page count for the "what you get" row
+      //    (024) — auto-captured, the seller never types it. Non-PDFs get
+      //    no preview and a null count (type + size still display).
       let previewPath: string | null = editing?.preview_path ?? null;
+      let filePages: number | null = null;
       if (effectiveFile && effectiveFile.name.toLowerCase().endsWith(".pdf")) {
         setProgress("creating blurred preview…");
-        const blob = await generatePreview(effectiveFile);
+        const { blob, pages } = await generatePreview(effectiveFile);
+        filePages = pages;
         if (blob) {
           previewPath = `${userId}/preview-${crypto.randomUUID()}.jpg`;
           const { error } = await supabase.storage
@@ -1136,6 +1149,11 @@ function UploadDialog({
         preview_path: previewPath,
         // undefined = leave the stored hash untouched (no new file)
         ...(fileHash !== undefined ? { file_sha256: fileHash } : {}),
+        // new file → auto-captured size + page count (024); no new file →
+        // both columns stay untouched, same pattern as the hash above
+        ...(effectiveFile
+          ? { file_bytes: effectiveFile.size, file_pages: filePages }
+          : {}),
       };
 
       if (isEdit) {

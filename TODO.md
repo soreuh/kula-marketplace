@@ -360,8 +360,28 @@ real launch.
 
 ## Tech — small
 
-- [ ] **Explore sort (BUILT 2026-08-15 — needs Mac `npm run build` + push +
-  live verify):** sort select on explore next to search — recommended
+- [ ] **File details / "what you get" (BUILT 2026-08-15 — ⚠️ run migration 024
+  FIRST, then push; needs live verify):** the product page now discloses the
+  file before purchase, three placements: "file — PDF · 12 pages · 2.1 MB"
+  leading the metadata card · "instant download · pdf · 12 pages · 2.1 mb"
+  echo under the price (the decision point) · preview pill upgraded to
+  "page 1 of N — full file unlocks after purchase". ZERO seller input: bytes
+  off the File object, pages from the SAME pdf.js pass that bakes the blurred
+  preview (PDFs only — PPT/PPTX show type + size), type derived from
+  file_path's extension so even pre-024 rows show "PDF". No new file on edit
+  → columns untouched (mirrors the file_sha256 pattern); identical-hash
+  re-upload → untouched too. No backfill: the launch wipe covers test rows,
+  and the UI renders whatever parts exist. Future file types (docx/jpg/…)
+  need only the dropzone accept list widened — type + size work as-is, page
+  counting is a per-format plug-in at the one capture point.
+  ⚠️ DEPLOY ORDER is the REVERSE of 023: SQL editor first (024), code push
+  second — the dialog writes the new columns, so new code against an
+  un-migrated DB fails every listing save. VERIFY: fresh PDF listing shows
+  all three placements · PPTX shows type + size only · metadata-only edit
+  leaves values untouched · pre-024 listing shows bare "PDF". Origin: gap
+  report tier 1 (../kula-functional-gap-analysis.md).
+- [x] 2026-08-15 **Explore sort** (built + lint/build gates + pushed live via
+  push-live.sh same day, Aleks): sort select on explore next to search — recommended
   (default) / top rated / price low→high / high→low / newest. "Recommended"
   reuses the featured_products blended score (013): page.tsx fetches an
   id→featured_score map alongside the products query; rows still come from

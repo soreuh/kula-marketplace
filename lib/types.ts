@@ -54,6 +54,11 @@ export interface Product {
   file_path: string | null;
   /** Migration 022 — sha256 of the sale file; gates buyer update emails. */
   file_sha256?: string | null;
+  /** Migration 024 — auto-captured at upload, never typed by the seller.
+   *  Pages from the pdf.js doc that bakes the preview (PDFs only, else
+   *  null); bytes from the File object. Both null on pre-024 rows. */
+  file_pages?: number | null;
+  file_bytes?: number | null;
   status: ProductStatus;
   created_at: string;
   updated_at: string;

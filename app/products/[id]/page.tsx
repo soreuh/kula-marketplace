@@ -27,6 +27,25 @@ function excerpt(text: string | null): string | undefined {
   return clean.length > 155 ? clean.slice(0, 152).trimEnd() + "…" : clean;
 }
 
+/** "PDF · 12 pages · 2.1 MB" from whatever exists — type derives from
+ *  file_path's extension (works on pre-024 rows too), pages/bytes are the
+ *  auto-captured 024 columns. Missing parts simply drop out; empty string
+ *  when nothing is known, and the callers render nothing. */
+function fileMetaLabel(p: Product): string {
+  const ext = p.file_path?.split(".").pop()?.toUpperCase();
+  const parts: string[] = [];
+  if (ext && ext.length <= 4) parts.push(ext);
+  if (p.file_pages)
+    parts.push(`${p.file_pages} page${p.file_pages === 1 ? "" : "s"}`);
+  if (p.file_bytes)
+    parts.push(
+      p.file_bytes >= 1048576
+        ? `${(p.file_bytes / 1048576).toFixed(1)} MB`
+        : `${Math.max(1, Math.round(p.file_bytes / 1024))} KB`
+    );
+  return parts.join(" · ");
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -135,7 +154,11 @@ export default async function ProductPage({
       : {}),
   };
 
+  const fileMeta = fileMetaLabel(p);
   const meta: [string, string | null][] = [
+    // "what you get" leads — the space's norm (TpT/Etsy/Gumroad all
+    // disclose format + length + size before purchase)
+    ["file", fileMeta || null],
     ["duration", durationLabel(p.duration_minutes)],
     ["level", p.level],
     ["props needed", p.props],
@@ -239,7 +262,9 @@ export default async function ProductPage({
                 />
                 <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-white/85 via-transparent p-4">
                   <span className="rounded-full bg-white/90 px-4 py-1.5 text-sm font-semibold text-fog shadow-sm">
-                    full file unlocks after purchase
+                    {p.file_pages
+                      ? `page 1 of ${p.file_pages} — full file unlocks after purchase`
+                      : "full file unlocks after purchase"}
                   </span>
                 </div>
               </div>
@@ -328,6 +353,13 @@ export default async function ProductPage({
               ? "a gift from the teacher. lifetime access."
               : "one-time payment. lifetime access."}
           </p>
+          {/* Etsy-pattern disclosure at the decision point: what exactly the
+              money buys, right where the buy decision happens. */}
+          {fileMeta && (
+            <p className="mt-0.5 text-right text-xs text-fog">
+              instant download · {fileMeta.toLowerCase()}
+            </p>
+          )}
           {/* Note: no fee breakdown here on purpose — commission is between
               kula and the seller (and partner rates are private). */}
 
