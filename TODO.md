@@ -375,8 +375,28 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M7 — menu parity: "my dashboard" (BUILT 2026-08-15 — no migration;
-  push + live verify):** Aleks's call after the merge-vs-two-pages
+- [ ] **M8+M9 — stripe line only beside a live buy button; edit from your
+  own listing (BUILT 2026-08-15 — no migration; push + live verify):** Aleks's follow-up catch to M1: the
+  "Secure payment via Stripe" line was gated on price only, so the
+  SELLER-own view ("it's your listing" + download) and the already-owned
+  view still showed payment reassurance with no payment present. Now
+  renders only when the paid BUY button itself renders (price > 0, not
+  seller, not owned, status active).
+  M9 (same card, Aleks's follow-up): owners had NO edit path from their
+  own listing page — new "edit listing" button (sage, above download)
+  deep-links /dashboard?edit=<id>; the dashboard content tab reads the
+  param once on mount, auto-opens that listing's edit dialog, and clears
+  the param shallowly so refresh/close doesn't reopen. Return-path rule:
+  the doorway carries the intent.
+  VERIFY: own paid listing — stripe line gone + edit listing button opens
+  the edit dialog pre-filled · own freebie — same · owned-by-buyer paid
+  listing — line gone, no edit button · fresh paid listing logged out —
+  line SHOWS under buy · freebie logged out — no line · /dashboard plain
+  — no dialog auto-opens.
+- [x] 2026-08-15 **M7 — menu parity: "my dashboard"** (pushed + VERIFIED
+  same day by Aleks: "looks good" — nav + menu match for members,
+  logged-out "sell" intact) — (BUILT 2026-08-15 — no migration; push +
+  live verify):** Aleks's call after the merge-vs-two-pages
   discussion (kept two pages): the member-facing labels now MATCH — nav
   (logged-in) + avatar menu both say "my dashboard", pairing with "my
   library" as the two named doors. Logged-OUT nav keeps "sell" → /signup

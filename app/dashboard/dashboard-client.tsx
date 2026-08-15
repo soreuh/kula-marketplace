@@ -228,6 +228,17 @@ function ContentTab({
 }) {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Product | null>(null);
+
+  // M9: "edit listing" deep link from your own /products page —
+  // /dashboard?edit=<id> auto-opens that listing's edit dialog, then
+  // clears the param (shallow) so refresh/close doesn't reopen it.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("edit");
+    if (!id) return;
+    const target = products.find((p) => p.id === id);
+    if (target) setEditing(target);
+    window.history.replaceState(null, "", "/dashboard");
+  }, [products]);
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "draft" | "suspended" | "archived"
   >("all");

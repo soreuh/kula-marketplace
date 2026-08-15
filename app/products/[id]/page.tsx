@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import InstructorRating from "@/components/instructor-rating";
@@ -243,6 +244,14 @@ export default async function ProductPage({
                 <p className="rounded-xl bg-sage-50 p-3 text-center text-sm text-sage-700">
                   you own this — it&apos;s your listing.
                 </p>
+                {/* M9: owners edit from where they're standing — deep-links
+                    into the dashboard with the dialog already open */}
+                <Link
+                  href={`/dashboard?edit=${p.id}`}
+                  className="flex w-full items-center justify-center rounded-full bg-sage-500 px-6 py-3 font-display font-semibold lowercase text-white hover:bg-sage-600"
+                >
+                  edit listing
+                </Link>
                 <a
                   href={`/api/download/${p.id}`}
                   className="flex w-full items-center justify-center rounded-full border border-ink/15 px-6 py-3 font-display font-semibold lowercase hover:border-ink/40"
@@ -279,9 +288,11 @@ export default async function ProductPage({
               />
             )}
           </div>
-          {/* only when money actually moves — a freebie showing "secure
-              payment" reads wrong (Aleks's phone screenshot, M1) */}
-          {p.price_cents > 0 && (
+          {/* only beside a LIVE buy button (M1 + M8): a freebie, the
+              seller's own listing, an already-owned copy, and an
+              unavailable listing all show no payment — so no payment
+              reassurance either */}
+          {p.price_cents > 0 && !isSeller && !alreadyOwned && p.status === "active" && (
             <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-fog">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <rect x="4" y="11" width="16" height="10" rx="2" />
