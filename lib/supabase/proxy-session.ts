@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNext } from "@/lib/site";
 
 /**
  * Runs on every request (see proxy.ts): refreshes the auth session cookie
- * and bounces logged-out visitors away from /dashboard.
+ * and bounces visitors who are on the wrong side of an auth wall —
+ * logged-OUT away from /dashboard, logged-IN away from /login + /signup.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -39,6 +41,17 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // The inverse guard: a logged-IN visitor has no business on the auth
+  // forms — the homepage "start selling" buttons, old emails, and
+  // bookmarks all land here. Send them where they were headed (?next=,
+  // honored only via safeNext — N1) or to the dashboard, which is where
+  // every "start selling" door means to end up anyway.
+  if (user && ["/login", "/signup"].includes(request.nextUrl.pathname)) {
+    const dest =
+      safeNext(request.nextUrl.searchParams.get("next")) ?? "/dashboard";
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Stickiness signal (migration 021): stamp profiles.last_seen_at, at most
