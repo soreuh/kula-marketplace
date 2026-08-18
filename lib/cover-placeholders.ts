@@ -28,6 +28,25 @@ export const PLACEHOLDER_COVERS = [
   "pexels-ray-lei-2809836-13849116.jpg",
   "pexels-ray-lei-2809836-13849179.jpg",
   "pexels-vlada-karpovich-4534645.jpg",
+  // 2026-08-18 batch (owner-curated drop, resized 1500px/q75 like the rest)
+  "pexels-abdullahg-14051375.jpg",
+  "pexels-elly-fairytale-3822668.jpg",
+  "pexels-fbyf-studio-1601304170-29735924.jpg",
+  "pexels-gabdu-jomart-807859773-33239336.jpg",
+  "pexels-gurukulyogashala-28821006.jpg",
+  "pexels-gustavo-fring-3984353.jpg",
+  "pexels-hengga-wang-2148790340-33626767.jpg",
+  "pexels-quang-nguyen-vinh-222549-14025562.jpg",
+  "pexels-ray-lei-2809836-13849091.jpg",
+  "pexels-ray-lei-2809836-13849202.jpg",
+  "pexels-ray-lei-2809836-13849310.jpg",
+  "pexels-vlada-karpovich-4534667.jpg",
+  "pexels-vlada-karpovich-4534670.jpg",
+  "pexels-yankrukov-8436610.jpg",
+  "pexels-yankrukov-8436617.jpg",
+  "pexels-yankrukov-8436622.jpg",
+  "pexels-yankrukov-8436626.jpg",
+  "pexels-yankrukov-8436748.jpg",
 ];
 
 export function placeholderCover(seed: string): string | null {

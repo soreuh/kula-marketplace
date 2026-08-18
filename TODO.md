@@ -375,8 +375,32 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M13 — seller dashboard tiles headline the seller's number (BUILT
-  2026-08-18, no migration):** Aleks's call from a live screenshot: the
+- [ ] **M14 — glance stats on my-content rows (BUILT 2026-08-18, no
+  migration):** Aleks's ask (with mid-build refinement): each dashboard
+  listing row's meta line is now status · price · N views · N downloads
+  · ★ stars — "a scroll-past read on whether it's looked at, taken, and
+  liked." Downloads = paid-status orders incl. free claims (refunds out,
+  same rule as EarningsTab), counted in ONE Map pass; stars reuse the
+  shared Stars + RatingMap pipeline (rows with zero reviews show no
+  stars). Plumbing: sales+ratings now flow into ContentTab (were
+  earnings-tab-only).
+- [x] 2026-08-18 **housekeeping — placeholder-cover batch #2 filed:**
+  Aleks dropped 18 new Pexels yoga photos in the Dropbox "Yoga App"
+  folder (one level ABOVE the repo — same spot as the Aug-15 batch's
+  leftovers). Converted on-device to the folder convention (max 1500px,
+  q75, stripped; convert(1) in the workspace VM) into
+  public/covers-fallback/ (now 37 photos, 4.3MB total), registered all
+  18 in lib/cover-placeholders.ts PLACEHOLDER_COVERS, credits appended
+  to covers-fallback/LICENSES.md. Originals left in the Dropbox folder
+  (his stash, outside the repo). NOTE: hash-pick means EXISTING
+  cover-less listings will keep/change art deterministically — the list
+  length changed, so some placeholder assignments will shuffle once,
+  then stick.
+- [x] 2026-08-18 **M13 — seller dashboard tiles headline the seller's
+  number (pushed + VERIFIED live same day: tiles clean, payout note
+  showing, per-sale gross·fee rows intact — and the row-level breakdown
+  was EXPLICITLY RATIFIED as keep-as-is after review: reconciliation
+  beats resentment; no migration):** Aleks's call from a live screenshot: the
   stat tiles' "kula fees $X all time / this month" subtext re-reminded
   sellers of the platform's cut on every login. Removed — fee
   transparency stays where it matters (fee-rate label, NetPreview at

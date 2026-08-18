@@ -26,3 +26,21 @@ Compressed for web delivery; otherwise unmodified.
 | `pexels-ray-lei-2809836-13849116.jpg` | ray lei | https://www.pexels.com/photo/13849116/ |
 | `pexels-ray-lei-2809836-13849179.jpg` | ray lei | https://www.pexels.com/photo/13849179/ |
 | `pexels-vlada-karpovich-4534645.jpg` | vlada karpovich | https://www.pexels.com/photo/4534645/ |
+| `pexels-abdullahg-14051375.jpg` | abdullah g | https://www.pexels.com/photo/14051375/ |
+| `pexels-elly-fairytale-3822668.jpg` | elly fairytale | https://www.pexels.com/photo/3822668/ |
+| `pexels-fbyf-studio-1601304170-29735924.jpg` | fbyf studio | https://www.pexels.com/photo/29735924/ |
+| `pexels-gabdu-jomart-807859773-33239336.jpg` | gabdu jomart | https://www.pexels.com/photo/33239336/ |
+| `pexels-gurukulyogashala-28821006.jpg` | gurukul yogashala | https://www.pexels.com/photo/28821006/ |
+| `pexels-gustavo-fring-3984353.jpg` | gustavo fring | https://www.pexels.com/photo/3984353/ |
+| `pexels-hengga-wang-2148790340-33626767.jpg` | hengga wang | https://www.pexels.com/photo/33626767/ |
+| `pexels-quang-nguyen-vinh-222549-14025562.jpg` | quang nguyen vinh | https://www.pexels.com/photo/14025562/ |
+| `pexels-ray-lei-2809836-13849091.jpg` | ray lei | https://www.pexels.com/photo/13849091/ |
+| `pexels-ray-lei-2809836-13849202.jpg` | ray lei | https://www.pexels.com/photo/13849202/ |
+| `pexels-ray-lei-2809836-13849310.jpg` | ray lei | https://www.pexels.com/photo/13849310/ |
+| `pexels-vlada-karpovich-4534667.jpg` | vlada karpovich | https://www.pexels.com/photo/4534667/ |
+| `pexels-vlada-karpovich-4534670.jpg` | vlada karpovich | https://www.pexels.com/photo/4534670/ |
+| `pexels-yankrukov-8436610.jpg` | yan krukau | https://www.pexels.com/photo/8436610/ |
+| `pexels-yankrukov-8436617.jpg` | yan krukau | https://www.pexels.com/photo/8436617/ |
+| `pexels-yankrukov-8436622.jpg` | yan krukau | https://www.pexels.com/photo/8436622/ |
+| `pexels-yankrukov-8436626.jpg` | yan krukau | https://www.pexels.com/photo/8436626/ |
+| `pexels-yankrukov-8436748.jpg` | yan krukau | https://www.pexels.com/photo/8436748/ |
