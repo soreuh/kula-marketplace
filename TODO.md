@@ -392,10 +392,13 @@ real launch.
   public/covers-fallback/ (now 37 photos, 4.3MB total), registered all
   18 in lib/cover-placeholders.ts PLACEHOLDER_COVERS, credits appended
   to covers-fallback/LICENSES.md. Originals left in the Dropbox folder
-  (his stash, outside the repo). NOTE: hash-pick means EXISTING
-  cover-less listings will keep/change art deterministically — the list
-  length changed, so some placeholder assignments will shuffle once,
-  then stick.
+  (his stash, outside the repo). FOLLOW-UP same day (Aleks: "lets fix
+  it"): placeholderCover switched from hash % length (which re-dealt
+  almost every cover-less listing whenever the list length changed) to
+  RENDEZVOUS hashing — score seed|photo per photo, take the max. Future
+  batches now re-deal only the few listings the new photos win. ONE
+  final shuffle ships with this change (algorithm swap), then stable
+  across all future adds/removals.
 - [x] 2026-08-18 **M13 — seller dashboard tiles headline the seller's
   number (pushed + VERIFIED live same day: tiles clean, payout note
   showing, per-sale gross·fee rows intact — and the row-level breakdown

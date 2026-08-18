@@ -5,8 +5,10 @@
  * public/covers-fallback/LICENSES.md. Curated by the owners.
  *
  * Adding/removing photos: update the folder AND this list together.
- * The pick is a hash of the listing's seed, so each listing keeps the
- * same photo across visits (no reshuffling).
+ * The pick is rendezvous hashing on the listing's seed (2026-08-18,
+ * replacing hash % length): each listing keeps the same photo across
+ * visits AND across catalog changes — adding N photos re-deals only the
+ * few listings the new photos win, removing one re-deals only its own.
  */
 export const PLACEHOLDER_COVERS = [
   "pexels-alena-orehova-92810214-11001515.jpg",
@@ -51,7 +53,20 @@ export const PLACEHOLDER_COVERS = [
 
 export function placeholderCover(seed: string): string | null {
   if (!PLACEHOLDER_COVERS.length) return null;
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return `/covers-fallback/${PLACEHOLDER_COVERS[h % PLACEHOLDER_COVERS.length]}`;
+  // Rendezvous (highest-random-weight): score seed|photo for every photo,
+  // keep the winner. ~37 tiny hashes per card render — negligible — in
+  // exchange for assignments that survive list changes (hash % length
+  // re-dealt almost every listing whenever the length moved).
+  let best = PLACEHOLDER_COVERS[0];
+  let bestScore = -1;
+  for (const file of PLACEHOLDER_COVERS) {
+    const s = `${seed}|${file}`;
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    if (h > bestScore) {
+      bestScore = h;
+      best = file;
+    }
+  }
+  return `/covers-fallback/${best}`;
 }
