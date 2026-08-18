@@ -641,15 +641,21 @@ function EarningsTab({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Headline the SELLER's number only (owner call, 2026-08-18):
+            the aggregate "kula fees $X" subtext was a per-login reminder
+            of the platform's cut — the rate is already disclosed where it
+            matters (fee-rate label, NetPreview at pricing, per-sale rows
+            below). Comps (Etsy/TpT/Stripe) keep fees at transaction level
+            too. The payout note answers the question sellers actually
+            have here: when do I get it. */}
         <StatTile
           label="your earnings"
           value={formatUsd(sum(paid, "seller_amount_cents"))}
-          sub={`kula fees ${formatUsd(sum(paid, "fee_cents"))} all time`}
+          sub="paid out monthly via stripe"
         />
         <StatTile
           label="this month"
           value={formatUsd(sum(monthPaid, "seller_amount_cents"))}
-          sub={`kula fees ${formatUsd(sum(monthPaid, "fee_cents"))}`}
         />
         <StatTile
           label="products sold"

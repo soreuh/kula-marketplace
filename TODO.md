@@ -375,8 +375,18 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M12 — social icons on profile chips (BUILT 2026-08-18, no
-  migration):** Aleks's ask: platform favicons next to active socials on
+- [ ] **M13 — seller dashboard tiles headline the seller's number (BUILT
+  2026-08-18, no migration):** Aleks's call from a live screenshot: the
+  stat tiles' "kula fees $X all time / this month" subtext re-reminded
+  sellers of the platform's cut on every login. Removed — fee
+  transparency stays where it matters (fee-rate label, NetPreview at
+  pricing, per-sale fee column in the sales rows); comps (Etsy/TpT/
+  Stripe) keep fees at transaction level too. Earnings tile sub now
+  answers the seller's real question instead: "paid out monthly via
+  stripe". "this month" tile has no sub; "products sold" untouched.
+- [x] 2026-08-18 **M12 — social icons on profile chips (pushed + VERIFIED
+  live same day — glyphs render, links open correctly, no-socials
+  profiles unchanged, mobile wrap clean; no migration):** Aleks's ask: platform favicons next to active socials on
   the profile page. Implementation deliberately NOT "free icons online" —
   the 6 Simple Icons glyph paths (CC0) are INLINED in
   app/profile/[id]/page.tsx as SOCIAL_ICON_PATHS (Record keyed by
