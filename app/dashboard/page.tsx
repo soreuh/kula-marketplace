@@ -78,13 +78,21 @@ export default async function DashboardPage() {
   // the Verified badge without an API call.
   let chargesEnabled = false;
   if (prof.stripe_account_id) {
+    let stripeAnswered = true;
     try {
       const account = await getStripe().accounts.retrieve(prof.stripe_account_id);
       chargesEnabled = !!account.charges_enabled;
     } catch {
-      chargesEnabled = false;
+      // Stripe didn't ANSWER — not the same as Stripe saying "no". Render
+      // the last known state and skip the sync below: a transient API blip
+      // must never un-verify a connected seller in the DB (it blocked new
+      // publishes and flashed the "connect stripe" banner until the next
+      // clean load — seen live during G1 testing, 2026-08-18). Only a
+      // successful retrieve may persist a change, in either direction.
+      stripeAnswered = false;
+      chargesEnabled = !!prof.stripe_charges_enabled;
     }
-    if (chargesEnabled !== prof.stripe_charges_enabled) {
+    if (stripeAnswered && chargesEnabled !== prof.stripe_charges_enabled) {
       // stripe_charges_enabled is a guarded column (migration 008): it may
       // only be set by the trusted server, never by the user's own session.
       const { createAdminClient } = await import("@/lib/supabase/admin");

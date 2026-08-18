@@ -375,8 +375,10 @@ real launch.
 
 ## Tech — small
 
-- [ ] **M11 — listing freshness rows (BUILT 2026-08-18 — migration 033
-  FIRST, then push):** Aleks's ask: "date added" + "content updated" rows
+- [x] 2026-08-18 **M11 — listing freshness rows (033 + pushed + VERIFIED
+  live same day, all 4 tests: existing listing shows "added" only ·
+  title-only edit = no stamp · real file swap = "content updated" appears
+  · same-file re-upload = no-op):** Aleks's ask: "date added" + "content updated" rows
   in the product details card. created_at covers "added" (month grain,
   "aug 2026", the profile page's member-since idiom); NEW
   products.file_updated_at (033) is stamped ONLY by the dashboard save
@@ -407,10 +409,13 @@ real launch.
   30 min · All Levels · theme "building your shop" · Inspiration Only).
   REMAINING: Izzy voice-edits (send line edits → fold into source →
   re-render) → she uploads as the kula account's free listing → admin
-  welcome-gift picker swap (currently points at TEST listing asdasdas). OPTIONAL rider while in the area: don't
-  persist "disconnected" when the dashboard's live Stripe check merely
-  ERRORS (transient blip currently un-verifies the seller in DB until the
-  next clean load — self-heals, but one line fixes it).
+  welcome-gift picker swap (currently points at TEST listing asdasdas).
+  Rider SHIPPED 2026-08-18: the dashboard Stripe sync no longer persists
+  "disconnected" when the retrieve merely ERRORS — stripeAnswered flag in
+  app/dashboard/page.tsx; an errored check renders last known DB state and
+  skips the sync, only a successful retrieve may persist a change (either
+  direction). Error path is code-reviewed, not live-testable on demand;
+  healthy-path sync re-verified live via the forced-flip recipe.
 - [x] 2026-08-18 **G1 — seller welcome gift** (032 + pushed + VERIFIED
   end-to-end same day on a BRAND-NEW account: library empty at signup ·
   Stripe test onboarding → gift + "added to your library" email · reloads
