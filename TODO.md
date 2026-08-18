@@ -375,6 +375,18 @@ real launch.
 
 ## Tech — small
 
+- [x] 2026-08-17 **M10 — row thumbnails link like their titles** (pushed +
+  VERIFIED same day by Aleks: "looks great" — dashboard + library thumbs
+  land on their listings, card grids unchanged) — (BUILT 2026-08-17 — no
+  migration; push + live verify):** Aleks's ask: dashboard "my content"
+  rows + library rows had linked titles but dead thumbnails. Wrapped the
+  two CoverArt call sites in the SAME /products link (tabIndex -1 so the
+  title stays the single accessible tab stop) — no new components, no
+  CoverArt API change (bloat rule). Swept for other dead thumbs: NONE —
+  ProductCard (explore/home/profile/more-from) is already one whole-card
+  link, the product-page hero is on its own page, the upload-dialog cover
+  is a form preview. VERIFY: click a thumb on my dashboard → listing ·
+  click a thumb in my library → listing · card grids unchanged.
 - [x] 2026-08-15 **M8+M9 — stripe line only beside a live buy button; edit
   from your own listing** (pushed + VERIFIED same day by Aleks: stripe
   line correct in all states · edit listing button opens the pre-filled

@@ -115,11 +115,18 @@ export default function LibraryList({ rows }: { rows: LibraryRow[] }) {
             >
               {r.title ? (
                 <>
-                  <CoverArt
-                    seed={`${r.category}-${r.title}`}
-                    imagePath={r.coverPath}
-                    className="h-14 w-20 shrink-0 rounded-xl"
-                  />
+                  {/* M10: thumb links like the title */}
+                  <Link
+                    href={`/products/${r.productId}`}
+                    tabIndex={-1}
+                    className="shrink-0"
+                  >
+                    <CoverArt
+                      seed={`${r.category}-${r.title}`}
+                      imagePath={r.coverPath}
+                      className="h-14 w-20 rounded-xl"
+                    />
+                  </Link>
                   <div className="min-w-0 flex-1 basis-40">
                     <Link
                       href={`/products/${r.productId}`}

@@ -485,11 +485,15 @@ function ProductRow({
         trailing buttons used to collide with the title/price text (no wrap);
         now the pills drop to their own full-width line under the row. */}
     <div className={"flex flex-wrap items-center gap-x-4 gap-y-2 " + (isArchived ? "opacity-60" : "")}>
-      <CoverArt
-        seed={`${product.category}-${product.title}`}
-        imagePath={product.cover_path}
-        className="h-14 w-20 shrink-0 rounded-xl"
-      />
+      {/* M10: thumb links like the title (tabIndex -1 — the title is
+          the accessible link, no duplicate tab stop) */}
+      <Link href={`/products/${product.id}`} tabIndex={-1} className="shrink-0">
+        <CoverArt
+          seed={`${product.category}-${product.title}`}
+          imagePath={product.cover_path}
+          className="h-14 w-20 rounded-xl"
+        />
+      </Link>
       <div className="min-w-0 flex-1 basis-40">
         <Link
           href={`/products/${product.id}`}
