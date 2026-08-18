@@ -375,7 +375,51 @@ real launch.
 
 ## Tech — small
 
-- [ ] **G1 — seller welcome gift (BUILT 2026-08-18 — migration 032 FIRST,
+- [ ] **M11 — listing freshness rows (BUILT 2026-08-18 — migration 033
+  FIRST, then push):** Aleks's ask: "date added" + "content updated" rows
+  in the product details card. created_at covers "added" (month grain,
+  "aug 2026", the profile page's member-since idiom); NEW
+  products.file_updated_at (033) is stamped ONLY by the dashboard save
+  path's sha256 fork — a REAL file replacement, the same test that gates
+  the buyer update email — so metadata edits never fake freshness. The
+  "content updated" row renders only once the column is set (no
+  duplicate-date noise on fresh listings). Ties to guide ch.4: updates
+  re-engage; now buyers can SEE maintenance.
+- [x] 2026-08-18 **auth-bounce fix (found live by Aleks: logged-in
+  "start selling" showed the signup form):** proxy-session.ts now bounces
+  logged-IN visitors off /login + /signup to safeNext(?next) ?? /dashboard
+  — the inverse of its existing logged-out /dashboard guard, one home for
+  both directions. Signup needed NOTHING: live signup already honors
+  ?next= (N1-complete incl. emailRedirectTo threading + /explore default)
+  — my draft patch was built on a STALE uploads copy and would have
+  regressed it; caught by the re-stage diff. LESSON (2nd stale-mirror
+  near-miss): NEVER edit from an uploads copy without a same-turn re-stage
+  of that exact file — the staging result's mtimeMs is both the freshness
+  proof and the commit guard value.
+- [ ] **G1b — the welcome-gift GUIDE itself:** DRAFT DELIVERED 2026-08-18
+  and approved by Aleks ("i love this"): 10-page kula-brand PDF
+  (kula-seller-guide.pdf — cover w/ contents · welcome · 6 chapters:
+  make-what-they-ask · price with a spine ($5–15 band + fee-math table) ·
+  listing that converts · freebie-as-best-ad · reviews compound (+270%
+  Spiegel stat) · you-already-have-an-audience · 30-day plan (metric:
+  five honest reviews) · back page), plus a 1600×1000 listing cover PNG
+  and a field-by-field posting sheet (free · Training Material · Other ·
+  30 min · All Levels · theme "building your shop" · Inspiration Only).
+  REMAINING: Izzy voice-edits (send line edits → fold into source →
+  re-render) → she uploads as the kula account's free listing → admin
+  welcome-gift picker swap (currently points at TEST listing asdasdas). OPTIONAL rider while in the area: don't
+  persist "disconnected" when the dashboard's live Stripe check merely
+  ERRORS (transient blip currently un-verifies the seller in DB until the
+  next clean load — self-heals, but one line fixes it).
+- [x] 2026-08-18 **G1 — seller welcome gift** (032 + pushed + VERIFIED
+  end-to-end same day on a BRAND-NEW account: library empty at signup ·
+  Stripe test onboarding → gift + "added to your library" email · reloads
+  = one copy (idempotent) · $0 paid order with review_nudge_sent_at
+  PRE-STAMPED (nudge exemption). Debug lesson RE-LEARNED: first picker
+  save silently failed on the PostgREST schema cache (032 ran after the
+  cache was built) — NOTIFY pgrst, 'reload schema' after EVERY migration,
+  and remember admin config saves ignore update errors, so cache staleness
+  looks like success) — (BUILT 2026-08-18 — migration 032 FIRST,
   then push; ships DARK until admin picks a gift):** Aleks's idea: the
   first time a seller's charges_enabled flips true (dashboard Stripe sync
   — the one place that column is written), auto-drop an admin-designated

@@ -1144,6 +1144,12 @@ function UploadDialog({
         ...(effectiveFile
           ? { file_bytes: effectiveFile.size, file_pages: filePages }
           : {}),
+        // Real content change → buyer-visible freshness stamp (033), from
+        // the same sha256 fork that offers the update email. New listings
+        // and metadata-only edits leave it untouched.
+        ...(contentChanged
+          ? { file_updated_at: new Date().toISOString() }
+          : {}),
       };
 
       if (isEdit) {

@@ -47,6 +47,15 @@ function fileMetaLabel(p: Product): string {
   return parts.join(" · ");
 }
 
+/** "aug 2026" — the profile page's member-since idiom. Month grain keeps
+ *  freshness honest without false day-level precision. */
+function monthYear(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  return new Date(iso)
+    .toLocaleDateString("en-US", { month: "short", year: "numeric" })
+    .toLowerCase();
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -167,6 +176,11 @@ export default async function ProductPage({
     ["target audience", p.target_audience],
     ["peak pose", p.peak_pose],
     ["anatomy focus", p.anatomy_focus],
+    // shelf-life metadata last (owner ask, 2026-08-18): "added" always;
+    // "content updated" only after a real re-upload has stamped 033 —
+    // the null-filter below hides it until then.
+    ["added", monthYear(p.created_at)],
+    ["content updated", monthYear(p.file_updated_at)],
   ];
   const metaRows = meta.filter(([, v]) => v);
 

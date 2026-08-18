@@ -74,6 +74,10 @@ export interface Product {
    *  null); bytes from the File object. Both null on pre-024 rows. */
   file_pages?: number | null;
   file_bytes?: number | null;
+  /** Migration 033 — stamped only on a REAL file replacement (the
+   *  sha256-verified fork that also offers the buyer update email).
+   *  Buyer-visible freshness; null until the first re-upload. */
+  file_updated_at?: string | null;
   status: ProductStatus;
   created_at: string;
   updated_at: string;
