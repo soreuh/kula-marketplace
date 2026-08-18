@@ -375,6 +375,16 @@ real launch.
 
 ## Tech — small
 
+- [ ] **M12 — social icons on profile chips (BUILT 2026-08-18, no
+  migration):** Aleks's ask: platform favicons next to active socials on
+  the profile page. Implementation deliberately NOT "free icons online" —
+  the 6 Simple Icons glyph paths (CC0) are INLINED in
+  app/profile/[id]/page.tsx as SOCIAL_ICON_PATHS (Record keyed by
+  SocialKey, so adding a network in lib/socials.ts without a path fails
+  the build loudly), plus a stroke GlobeIcon for the website chip. Zero
+  CDN/network deps (per the cdnjs security stance). Chips condensed:
+  icon + handle, "label:" prefixes and ↗ dropped (icon carries platform
+  identity; title= keeps the hover hint).
 - [x] 2026-08-18 **M11 — listing freshness rows (033 + pushed + VERIFIED
   live same day, all 4 tests: existing listing shows "added" only ·
   title-only edit = no stamp · real file swap = "content updated" appears
