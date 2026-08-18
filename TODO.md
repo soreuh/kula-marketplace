@@ -375,6 +375,32 @@ real launch.
 
 ## Tech — small
 
+- [ ] **G1 — seller welcome gift (BUILT 2026-08-18 — migration 032 FIRST,
+  then push; ships DARK until admin picks a gift):** Aleks's idea: the
+  first time a seller's charges_enabled flips true (dashboard Stripe sync
+  — the one place that column is written), auto-drop an admin-designated
+  $0 listing into their library. Three wins: a real gift at the welcome
+  moment · sellers get a marketing playbook that turns them into kula's
+  distribution (the TpT/Etsy growth engine) · dogfooding — their first
+  taste of the BUYER loop before they have buyers. Comps validated:
+  Etsy/TpT run official seller handbooks as help content, and third
+  parties literally SELL "how to sell here" PDFs on both platforms — the
+  auto-drop-in-library mechanic is ours. Build: 032 adds
+  platform_settings.welcome_gift_product_id (null = off) · lib/
+  welcome-gift.ts grantWelcomeGift() — service-role, active-$0-only,
+  idempotent, fail-soft, rides the free-download email + its gates, NO
+  seller ping · dashboard sync calls it on false→true only · admin →
+  "welcome gift" section: select over active $0 listings + none, server-
+  validated, amber note if the chosen gift later goes paid/inactive
+  (grants auto-pause — helper re-checks at grant time). INVARIANT
+  AMENDED in CLAUDE.md: orders now have THREE documented writers; a
+  fourth requires amending the bullet in the same commit. STILL TO DO:
+  the actual guide PDF (research + draft in brand, her voice-edit, upload
+  as the kula account's free listing, pick in admin). VERIFY: migration ·
+  admin picker shows free listings + saves + none turns off · fresh test
+  seller completes Stripe onboarding → gift appears in their library +
+  "it's in your library" email · re-visiting dashboard doesn't double-
+  gift · with gift set to none, onboarding grants nothing.
 - [x] 2026-08-17 **M10 — row thumbnails link like their titles** (pushed +
   VERIFIED same day by Aleks: "looks great" — dashboard + library thumbs
   land on their listings, card grids unchanged) — (BUILT 2026-08-17 — no

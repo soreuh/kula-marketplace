@@ -28,10 +28,16 @@ owner before enabling in production).
 
 ## Invariants — never violate
 
-- Orders are written ONLY by two server routes: `app/api/stripe/webhook/`
-  (signature-verified, all PAID-money orders) and `app/api/claim-free/`
-  ($0 rows for active free listings only). Client code never writes orders
-  or confirms payments.
+- Orders are written ONLY by three server code paths:
+  `app/api/stripe/webhook/` (signature-verified, all PAID-money orders),
+  `app/api/claim-free/` ($0 rows for active free listings only), and
+  `lib/welcome-gift.ts` (G1 amendment, 2026-08-18: ONE $0 row for the
+  admin-designated welcome-gift listing —
+  platform_settings.welcome_gift_product_id — granted at a seller's first
+  charges_enabled flip; service-role only, active-$0-listing only,
+  idempotent per user, fail-soft). Client code never writes orders or
+  confirms payments. Adding a fourth writer requires amending THIS bullet
+  in the same commit.
 - `product-files` bucket stays private. File access only via
   `app/api/download/[productId]/route.ts` (paid-order check → signed URL).
 - The service-role client (`lib/supabase/admin.ts`) is server-only. Everything

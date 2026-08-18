@@ -10,6 +10,7 @@ import {
   setProductStatus,
   toggleFeatured,
   updateFeeSettings,
+  setWelcomeGift,
 } from "./actions";
 import NotificationSwitches from "./notification-switches";
 import UsersPanel from "./users-panel";
@@ -61,6 +62,10 @@ export default async function AdminDashboard({
   const allProducts = (products as Product[] | null) ?? [];
   const allUsers = (users as Profile[] | null) ?? [];
   const suspendedCount = allProducts.filter((p) => p.status === "suspended").length;
+  // G1: only ACTIVE $0 listings qualify as the welcome gift
+  const freeActive = allProducts.filter(
+    (p) => p.price_cents === 0 && p.status === "active"
+  );
   const inputCls =
     "mt-1 block w-28 rounded-xl border border-ink/10 bg-white px-3 py-2 focus:border-sage-400 focus:outline-none";
 
@@ -112,6 +117,39 @@ export default async function AdminDashboard({
               notify_review_emails: s.notify_review_emails !== false,
             }}
           />
+        </AdminSection>
+
+        <AdminSection
+          title="welcome gift"
+          subtitle="a free listing auto-added to every seller's library the first time they connect stripe — their welcome present and your marketing playbook. pick none to turn it off."
+        >
+          <form
+            action={setWelcomeGift}
+            className="flex flex-wrap items-center gap-3 text-sm"
+          >
+            <select
+              name="welcome_gift_product_id"
+              defaultValue={s.welcome_gift_product_id ?? ""}
+              className="rounded-xl border border-ink/10 bg-white px-3.5 py-2"
+            >
+              <option value="">none — feature off</option>
+              {freeActive.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+            <button className="rounded-full bg-sage-500 px-5 py-2 font-display font-semibold lowercase text-white hover:bg-sage-600">
+              save
+            </button>
+          </form>
+          {s.welcome_gift_product_id &&
+            !freeActive.some((p) => p.id === s.welcome_gift_product_id) && (
+              <p className="mt-2 text-xs text-amber-700">
+                the selected gift is no longer a free active listing — grants
+                are paused until you pick another.
+              </p>
+            )}
         </AdminSection>
 
         <OptionsSection options={(optionRows as OptionRow[] | null) ?? []} />

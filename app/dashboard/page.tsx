@@ -92,6 +92,13 @@ export default async function DashboardPage() {
         .from("profiles")
         .update({ stripe_charges_enabled: chargesEnabled })
         .eq("id", user.id);
+      // G1: the FIRST false→true flip is the seller's welcome moment —
+      // drop the admin-designated gift in their library (idempotent,
+      // fail-soft, dark while no gift is configured).
+      if (chargesEnabled && !prof.stripe_charges_enabled) {
+        const { grantWelcomeGift } = await import("@/lib/welcome-gift");
+        await grantWelcomeGift(user.id);
+      }
     }
   }
 

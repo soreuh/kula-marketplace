@@ -282,6 +282,30 @@ const NOTIFY_SWITCH_KEYS = [
 ] as const;
 export type NotifySwitchKey = (typeof NOTIFY_SWITCH_KEYS)[number];
 
+/** G1: the welcome-gift picker (admin → welcome gift). Server-validates:
+ *  null (off) or an ACTIVE $0 listing. The grant helper re-checks at grant
+ *  time too, so a gift that later goes paid/inactive PAUSES the feature
+ *  rather than gifting something wrong. */
+export async function setWelcomeGift(formData: FormData) {
+  const supabase = await requireAdmin();
+  const raw = String(formData.get("welcome_gift_product_id") ?? "");
+  let value: string | null = null;
+  if (raw) {
+    const { data: gift } = await supabase
+      .from("products")
+      .select("id, price_cents, status")
+      .eq("id", raw)
+      .single();
+    if (!gift || gift.price_cents !== 0 || gift.status !== "active") return;
+    value = gift.id;
+  }
+  await supabase
+    .from("platform_settings")
+    .update({ welcome_gift_product_id: value })
+    .eq("id", true);
+  revalidatePath("/dashboard/admin");
+}
+
 export async function setNotifySwitch(key: NotifySwitchKey, on: boolean) {
   if (!NOTIFY_SWITCH_KEYS.includes(key)) return { ok: false };
   const supabase = await requireAdmin();

@@ -124,6 +124,9 @@ export interface Review {
 }
 
 export interface PlatformSettings {
+  /** G1 (032) — admin-designated $0 listing auto-granted at a seller's
+   *  first Stripe connect; null = feature off. */
+  welcome_gift_product_id?: string | null;
   id: boolean;
   fee_percent: number;
   fee_flat_cents: number;
