@@ -396,7 +396,12 @@ real launch.
   AMENDED in CLAUDE.md: orders now have THREE documented writers; a
   fourth requires amending the bullet in the same commit. STILL TO DO:
   the actual guide PDF (research + draft in brand, her voice-edit, upload
-  as the kula account's free listing, pick in admin). VERIFY: migration ·
+  as the kula account's free listing, pick in admin). PARKED (Aleks
+  2026-08-18): a SECOND gift slot at signup — every new member gets one of
+  Izzy's own listings (free sampler) at account creation; right gift right
+  moment vs moving the seller guide there (peak relevance is the connect
+  moment). One more settings column + a grant call when wanted; gift
+  orders are already nudge-exempt (pre-stamped at grant). VERIFY: migration ·
   admin picker shows free listings + saves + none turns off · fresh test
   seller completes Stripe onboarding → gift appears in their library +
   "it's in your library" email · re-visiting dashboard doesn't double-

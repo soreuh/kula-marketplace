@@ -56,6 +56,10 @@ export async function grantWelcomeGift(userId: string): Promise<void> {
       fee_cents: 0,
       seller_amount_cents: 0,
       status: "paid",
+      // a gift is exempt from the review-nudge sweep ("you picked up X"
+      // reads wrong for something they never chose) — pre-stamped, though
+      // reviewing it voluntarily still works like any owned listing
+      review_nudge_sent_at: new Date().toISOString(),
     });
     if (error) return;
 
