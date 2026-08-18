@@ -44,11 +44,14 @@ export default function UserMenu({
             <div className="truncate font-display font-semibold">{name}</div>
             <div className="truncate text-xs text-fog">{email}</div>
           </div>
-          <MenuLink href="/library" onClick={() => setOpen(false)} strong>
-            my library
-          </MenuLink>
+          {/* M15: same order as the header nav (explore aside) — dashboard
+              then library. One canonical order everywhere; the header is
+              the reference (M7 parity principle). */}
           <MenuLink href="/dashboard" onClick={() => setOpen(false)} strong>
             my dashboard
+          </MenuLink>
+          <MenuLink href="/library" onClick={() => setOpen(false)} strong>
+            my library
           </MenuLink>
           {/* every account has a profile page since 029 — buyers included
               (their page is just avatar/bio/member-since until they post) */}

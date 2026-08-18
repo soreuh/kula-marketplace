@@ -375,6 +375,21 @@ real launch.
 
 ## Tech — small
 
+- [ ] **M15 — avatar-menu order matches header nav (BUILT 2026-08-18, no
+  migration):** Aleks's screenshot catch: header runs explore · my
+  dashboard · my library, dropdown ran library-first. Dropdown flipped
+  to dashboard → library (header is the canonical order; extends M7's
+  header⇄menu parity principle). Rest of menu (profile · settings ·
+  admin · log out) unchanged.
+- [ ] PARKED (owner: "hold off for now", 2026-08-18) **marketplace
+  template fork:** strip kula to a generic reusable marketplace template
+  for Aleks's other ideas. Tier 1 (~half day): new repo, lorem all copy
+  + legal (Izzy's text OUT), generic categories, drop yoga-only detail
+  fields from UI, empty covers-fallback, fresh README; keep 33
+  migrations + internal naming. Tier 2 (+1–2 days): squash migrations
+  to one clean init, instructor→seller rename, one config file for
+  vocab/brand, genericized CLAUDE.md invariants. Never copies: per-
+  deploy accounts (Stripe v1 flag!, Supabase, env), anything Izzy's.
 - [ ] **M14 — glance stats on my-content rows (BUILT 2026-08-18, no
   migration):** Aleks's ask (with mid-build refinement): each dashboard
   listing row's meta line is now status · price · N views · N downloads
